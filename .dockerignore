@@ -1,0 +1,66 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.docker
+
+# Documentation
+*.md
+LICENSE
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.eggs
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.mypy_cache
+
+# Virtual environments
+venv
+.venv
+env
+.env.local
+.env.*.local
+
+# Node
+vaccine-scheduler-frontend/node_modules
+vaccine-scheduler-frontend/dist
+vaccine-scheduler-frontend/.vite
+vaccine-scheduler-frontend/.eslintcache
+
+# Backend data (handled separately)
+vaccine-scheduler/db/*.db
+vaccine-scheduler/db/*.sqlite3
+
+# Logs
+*.log
+logs
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+tests
+*_test.py
+test_*.py
+
+# Local development files
+*.local

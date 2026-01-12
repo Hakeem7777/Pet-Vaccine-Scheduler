@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist SQLite database
+      - sqlite_data:/app/db
+      # Mount vaccine rules and documents
+      - ./data:/app/data:ro
+      - ./llm_context:/app/llm_context:ro
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=False
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gemini-2.5-flash}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.3}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      load_vaccines:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  migrate:
+    build: .
+    command: python manage.py migrate --noinput
+    volumes:
+      - sqlite_data:/app/db
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - SECRET_KEY=${SECRET_KEY}
+
+  load_vaccines:
+    build: .
+    command: python manage.py load_vaccines
+    volumes:
+      - sqlite_data:/app/db
+      - ./data:/app/data:ro
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Development service with auto-reload
+  dev:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - sqlite_data:/app/db
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    command: python manage.py runserver 0.0.0.0:8000
+    profiles:
+      - dev
+
+volumes:
+  sqlite_data:
+    name: vaccine_scheduler_db

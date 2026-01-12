@@ -1,0 +1,132 @@
+.ai-analysis {
+  background: var(--color-gray-50);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.ai-analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.ai-analysis-header h3 {
+  margin: 0;
+}
+
+.ai-unavailable {
+  color: var(--color-gray-600);
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.ai-error-detail {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+}
+
+.ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+}
+
+.ai-analysis-content {
+  margin-top: var(--spacing-md);
+}
+
+.ai-analysis-text {
+  line-height: 1.6;
+}
+
+.ai-analysis-text p {
+  margin-bottom: var(--spacing-sm);
+}
+
+.ai-schedule-summary {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--radius);
+}
+
+.ai-schedule-summary h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.875rem;
+}
+
+.summary-stats {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.summary-stats .stat {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.summary-stats .stat.overdue {
+  background: var(--schedule-overdue-bg);
+  color: var(--schedule-overdue-border);
+}
+
+.summary-stats .stat.upcoming {
+  background: var(--schedule-upcoming-bg);
+  color: #92400e;
+}
+
+.summary-stats .stat.future {
+  background: var(--schedule-future-bg);
+  color: var(--schedule-future-border);
+}
+
+.ai-sources {
+  margin-top: var(--spacing-md);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius);
+}
+
+.ai-sources summary {
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  font-weight: 500;
+  background: white;
+}
+
+.sources-list {
+  padding: var(--spacing-md);
+  background: white;
+}
+
+.source-item {
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.source-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.source-item strong {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-primary);
+}
+
+.source-item blockquote {
+  margin: 0;
+  padding-left: var(--spacing-md);
+  border-left: 3px solid var(--color-gray-200);
+  color: var(--color-gray-600);
+  font-style: italic;
+  font-size: 0.875rem;
+}

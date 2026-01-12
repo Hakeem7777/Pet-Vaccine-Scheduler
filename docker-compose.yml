@@ -1,0 +1,42 @@
+# Docker Compose for local development and testing
+# Run: docker-compose up --build
+
+version: '3.8'
+
+services:
+  # Combined frontend + backend service (mirrors Render deployment)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist SQLite database
+      - sqlite_data:/app/db
+      # Mount vaccine rules and documents (for development)
+      - ./vaccine-scheduler/data:/app/data:ro
+      - ./vaccine-scheduler/llm_context:/app/llm_context:ro
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - SECRET_KEY=${SECRET_KEY:-local-dev-secret-key-change-me}
+      - DEBUG=False
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - SECURE_SSL_REDIRECT=False  # Disable for local testing
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gemini-2.0-flash}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.3}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - GUNICORN_WORKERS=2
+      - GUNICORN_TIMEOUT=120
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sqlite_data:
+    name: vaccine_scheduler_combined_db

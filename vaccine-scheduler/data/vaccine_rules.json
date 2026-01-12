@@ -1,0 +1,232 @@
+[
+  {
+    "id": "core_dap",
+    "name": "Distemper, Hepatitis, Parvovirus, Parainfluenza (DHPP)",
+    "type": "core",
+    "description": "Protects against four deadly viral diseases: Distemper (affects nervous system), Adenovirus/Hepatitis (causes liver and respiratory illness), Parvovirus (severe gastrointestinal disease with high mortality in puppies), and Parainfluenza (respiratory virus contributing to kennel cough).",
+    "side_effects": {
+      "common": [
+        "Soreness, swelling, or redness at injection site",
+        "Lethargy and decreased appetite (24-48 hours)",
+        "Low-grade fever",
+        "Small bump at injection site (may last up to 14 days)"
+      ],
+      "seek_vet_if": [
+        "Facial swelling, hives, or severe itchiness",
+        "Vomiting or diarrhea",
+        "Difficulty breathing or collapse",
+        "Symptoms lasting more than 48 hours"
+      ]
+    },
+    "min_start_age_weeks": 6,
+    "rules": [
+      {
+        "condition": "age_weeks <= 16",
+        "doses": 3,
+        "interval_days": 28,
+        "min_interval": 14,
+        "max_interval": 28,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 1095,
+        "notes": "Start between 6-16 weeks. 3 doses min."
+      },
+      {
+        "condition": "age_weeks > 16",
+        "doses": 2,
+        "interval_days": 28,
+        "min_interval": 14,
+        "max_interval": 28,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 1095,
+        "notes": "2 doses spaced 2-4 weeks apart."
+      }
+    ]
+  },
+  {
+    "id": "core_lepto",
+    "name": "Leptospirosis",
+    "type": "core_conditional",
+    "description": "Prevents a bacterial infection spread through contaminated water and wildlife urine. Can cause kidney and liver failure, and is transmissible to humans (zoonotic).",
+    "side_effects": {
+      "common": [
+        "Mild redness or swelling at injection site (1-2 days)",
+        "Fatigue and low-grade fever",
+        "Temporary loss of appetite (1-2 days)",
+        "Note: Small dogs (<10 lbs) may have higher reaction risk"
+      ],
+      "seek_vet_if": [
+        "Swelling of face, muzzle, or legs",
+        "Hives, vomiting, or diarrhea",
+        "Shortness of breath or collapse"
+      ]
+    },
+    "min_start_age_weeks": 12,
+    "rules": [
+      {
+        "condition": "all_ages",
+        "doses": 2,
+        "interval_days": 28,
+        "min_interval": 14,
+        "max_interval": 28,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 365,
+        "notes": "Start at 12 weeks regardless of size."
+      }
+    ]
+  },
+  {
+    "id": "core_rabies",
+    "name": "Rabies",
+    "type": "core",
+    "description": "Legally required vaccine that protects against the fatal rabies virus, which attacks the nervous system. Essential for public health as rabies is transmissible to humans through bites.",
+    "side_effects": {
+      "common": [
+        "Mild fever and loss of appetite (24-36 hours)",
+        "Soreness and mild swelling at injection site",
+        "Small, painless lump at injection site (may last 1-2 weeks)",
+        "Mild lethargy"
+      ],
+      "seek_vet_if": [
+        "Facial swelling, hives, or difficulty breathing",
+        "Vomiting or diarrhea",
+        "Injection site swelling that is hot, painful, or growing",
+        "Collapse or pale gums (anaphylaxis - emergency)"
+      ]
+    },
+    "min_start_age_weeks": 12,
+    "rules": [
+      {
+        "condition": "all_ages",
+        "doses": 1,
+        "interval_days": 0,
+        "min_interval": 0,
+        "max_interval": 0,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 1095,
+        "notes": "Required by law. Typically 1 year then 3 years."
+      }
+    ]
+  },
+  {
+    "id": "noncore_lyme",
+    "name": "Lyme (Borrelia)",
+    "type": "noncore",
+    "description": "Protects against Lyme disease transmitted by ticks. Important for dogs in wooded or grassy areas where deer ticks are common. Prevents joint pain, fever, and kidney problems.",
+    "side_effects": {
+      "common": [
+        "Tenderness and slight swelling at injection site",
+        "Tiredness for 1-2 days",
+        "Mild fever for about 24 hours",
+        "Note: Small breeds may have higher reaction risk"
+      ],
+      "seek_vet_if": [
+        "Facial swelling, hives, or severe itching",
+        "Vomiting, diarrhea, or difficulty breathing"
+      ]
+    },
+    "min_start_age_weeks": 12,
+    "rules": [
+      {
+        "condition": "all_ages",
+        "doses": 2,
+        "interval_days": 28,
+        "min_interval": 14,
+        "max_interval": 28,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 365,
+        "notes": "Recommended for tick-endemic areas."
+      }
+    ]
+  },
+  {
+    "id": "noncore_bord_inj",
+    "name": "Bordetella (Injection)",
+    "type": "noncore",
+    "description": "Prevents kennel cough, a highly contagious respiratory infection. Essential for dogs that visit groomers, boarding facilities, dog parks, or training classes.",
+    "side_effects": {
+      "common": [
+        "Lump, tenderness, or stiffness at injection site",
+        "Lethargy and mild fever (1-2 days)",
+        "Decreased appetite"
+      ],
+      "seek_vet_if": [
+        "Facial swelling, hives, or vomiting",
+        "Difficulty breathing or diarrhea",
+        "Symptoms lasting more than 48 hours"
+      ]
+    },
+    "min_start_age_weeks": 8,
+    "rules": [
+      {
+        "condition": "all_ages",
+        "doses": 2,
+        "interval_days": 28,
+        "min_interval": 14,
+        "max_interval": 28,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 365,
+        "notes": "Parenteral (SQ) requires 2 doses initially."
+      }
+    ]
+  },
+  {
+    "id": "noncore_bord_in",
+    "name": "Bordetella (Intranasal/Oral)",
+    "type": "noncore",
+    "description": "Prevents kennel cough, a highly contagious respiratory infection. Essential for dogs that visit groomers, boarding facilities, dog parks, or training classes.",
+    "side_effects": {
+      "common": [
+        "Sneezing, coughing, and runny nose (normal response)",
+        "Mild lethargy (1-2 days)"
+      ],
+      "seek_vet_if": [
+        "Facial swelling or hives",
+        "Vomiting, difficulty breathing, or diarrhea",
+        "Cold-like symptoms lasting more than a few days"
+      ]
+    },
+    "min_start_age_weeks": 8,
+    "rules": [
+      {
+        "condition": "all_ages",
+        "doses": 1,
+        "interval_days": 0,
+        "min_interval": 0,
+        "max_interval": 0,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 365,
+        "notes": "Single dose indicated for IN or Oral."
+      }
+    ]
+  },
+  {
+    "id": "noncore_flu",
+    "name": "Canine Influenza (H3N8/H3N2)",
+    "type": "noncore",
+    "description": "Protects against highly contagious dog flu strains that cause coughing, fever, and respiratory illness. Recommended for dogs in social settings or multi-dog households.",
+    "side_effects": {
+      "common": [
+        "Sleepiness and soreness at injection site",
+        "Mild lethargy (1-2 days)"
+      ],
+      "seek_vet_if": [
+        "Vomiting, diarrhea, or hives",
+        "Facial swelling or difficulty breathing",
+        "Severe lethargy or collapse"
+      ]
+    },
+    "min_start_age_weeks": 8,
+    "rules": [
+      {
+        "condition": "all_ages",
+        "doses": 2,
+        "interval_days": 28,
+        "min_interval": 14,
+        "max_interval": 28,
+        "initial_booster_days": 365,
+        "subsequent_booster_days": 365,
+        "notes": "Two doses, 2-4 weeks apart."
+      }
+    ]
+  }
+]

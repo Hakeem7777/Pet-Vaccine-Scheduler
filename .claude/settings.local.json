@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 10 npm run dev:*)",
+      "Bash(findstr:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python manage.py makemigrations:*)",
+      "Bash(.venvScriptspython.exe manage.py makemigrations patients)",
+      "Bash(c:\\\\Users\\\\Subhan\\\\Desktop\\\\vaccine\\\\vaccine-scheduler\\\\venv\\\\Scripts\\\\python.exe:*)",
+      "Bash(powershell -Command \"cd ''c:\\\\Users\\\\Subhan\\\\Desktop\\\\vaccine\\\\vaccine-scheduler''; .\\\\venv\\\\Scripts\\\\python.exe manage.py makemigrations patients\")",
+      "Bash(powershell -Command \"cd ''c:\\\\Users\\\\Subhan\\\\Desktop\\\\vaccine\\\\vaccine-scheduler''; .\\\\venv\\\\Scripts\\\\python.exe manage.py migrate patients\")",
+      "Bash(powershell -Command \"cd ''c:\\\\Users\\\\Subhan\\\\Desktop\\\\vaccine\\\\vaccine-scheduler''; .\\\\venv\\\\Scripts\\\\python.exe manage.py load_vaccines\")",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add tick exposure tracking and enhance vaccine scheduling\n\n- Add env_tick_exposure field to Dog model for tick-endemic area tracking\n- Add DocumentExtractNewDogView API endpoint for extracting dog info from \n  documents without requiring an existing dog \\(supports new dog creation flow\\)\n- Update vaccine_rules.json with detailed descriptions, rename DAP to DHPP,\n  and add min_start_age_weeks for all vaccines\n- Enhance scheduler to enforce AAHA/WSAVA guideline: final DHPP dose must be\n  after 16 weeks to ensure maternal antibodies have waned\n- Include vaccine descriptions in schedule notes for better user education\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add guest mode and enhance schedule UI with calendar export\n\nGuest Mode:\n- Allow unauthenticated users to create one dog and view vaccine schedule\n- Add useGuestStore \\(Zustand\\) for local guest dog and vaccination storage\n- Create GuestScheduleView, GuestScheduleItem, GuestVaccinationList components\n- Implement client-side guestScheduler.js for offline schedule calculation\n- Update routing to make Dashboard public, protect dog detail appropriately\n- Add guest banners prompting signup for full features\n\nUI Enhancements:\n- Redesign DogForm with floating labels, progress indicator, and hero header\n- Add env_tick_exposure option with automatic Lyme vaccine recommendation\n- Add individual vaccine calendar export \\(ICS for Apple, Google Calendar URL\\)\n- Add expandable/collapsible vaccine description notes\n- Implement custom scrollbar styling\n- Add optimistic UI states for dog cards during creation\n- Update header button styles for better visibility on dark background\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(copy:*)",
+      "Bash(wc:*)",
+      "Bash(rename:*)",
+      "Bash(ren:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

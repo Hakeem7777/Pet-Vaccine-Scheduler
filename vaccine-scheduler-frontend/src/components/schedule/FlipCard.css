@@ -1,0 +1,164 @@
+.flip-card-container {
+  cursor: pointer;
+  position: relative;
+  width: 100%;
+}
+
+/* Hidden divs for measuring content heights */
+.flip-card-measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  width: 100%;
+  left: 0;
+  top: 0;
+  z-index: -1;
+}
+
+/* Ensure the animated container takes full width */
+.flip-card-animated {
+  width: 100%;
+  overflow: hidden;
+}
+
+.flip-card-face {
+  width: 100%;
+}
+
+.flip-card-back-content {
+  background: var(--color-surface, #fff);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+/* Safety info sections */
+.flip-card-back-content h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text-main, #1f2937);
+}
+
+.flip-card-back-content .vaccine-description {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.flip-card-back-content .safety-section {
+  margin-bottom: 1rem;
+}
+
+.flip-card-back-content .safety-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.flip-card-back-content .safety-section ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.flip-card-back-content .safety-section li {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.flip-card-back-content .safety-section li:last-child {
+  margin-bottom: 0;
+}
+
+.flip-card-back-content .safety-section--common h4 {
+  color: #059669;
+}
+
+.flip-card-back-content .safety-section--common {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 3px solid #10b981;
+  padding: 0.75rem;
+  border-radius: 0 6px 6px 0;
+}
+
+.flip-card-back-content .safety-section--warning h4 {
+  color: #dc2626;
+}
+
+.flip-card-back-content .safety-section--warning {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 3px solid #ef4444;
+  padding: 0.75rem;
+  border-radius: 0 6px 6px 0;
+}
+
+.flip-card-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #9ca3af);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+/* Flip hint on front of card */
+.schedule-item-flip-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #9ca3af);
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color, #e5e7eb);
+}
+
+/* Vaccine name on back of card */
+.flip-card-vaccine-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary, #006D9C);
+  margin: 0 0 0.75rem 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .flip-card-back-content {
+    padding: 1rem;
+  }
+
+  .flip-card-back-content h4 {
+    font-size: 0.8125rem;
+  }
+
+  .flip-card-back-content .safety-section ul {
+    font-size: 0.75rem;
+  }
+}
+
+/* Print styles - don't flip */
+@media print {
+  .flip-card-container {
+    perspective: none;
+    cursor: default;
+    height: auto !important;
+  }
+
+  .flip-card-face {
+    transform: none !important;
+  }
+
+  .flip-card-back {
+    display: none;
+  }
+
+  .flip-card-hint {
+    display: none;
+  }
+
+  .schedule-item-flip-hint {
+    display: none;
+  }
+}

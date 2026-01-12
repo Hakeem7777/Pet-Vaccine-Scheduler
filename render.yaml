@@ -1,0 +1,78 @@
+# Render Blueprint - Vaccine Scheduler
+# Deploy with: render blueprint apply
+
+services:
+  # Combined Frontend + Backend Service
+  - type: web
+    name: vaccine-scheduler
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Render region (optional - defaults to Oregon)
+    # region: oregon
+
+    # Instance type - start with free/starter tier
+    plan: free  # Options: free, starter, standard, pro
+
+    # Health check configuration
+    healthCheckPath: /api/health/
+
+    # Auto-deploy on push to main branch
+    autoDeploy: true
+
+    # Environment variables
+    envVars:
+      # Django settings
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+
+      - key: SECRET_KEY
+        generateValue: true  # Render auto-generates a secure key
+
+      - key: DEBUG
+        value: "False"
+
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"  # Allows all Render subdomains
+
+      # LLM Configuration (set these in Render dashboard)
+      - key: LLM_PROVIDER
+        value: gemini
+
+      - key: GOOGLE_API_KEY
+        sync: false  # Must be set manually in dashboard
+
+      - key: LLM_MODEL
+        value: gemini-2.0-flash
+
+      - key: LLM_TEMPERATURE
+        value: "0.3"
+
+      # Optional: OpenAI (if using OpenAI instead of Gemini)
+      # - key: OPENAI_API_KEY
+      #   sync: false
+
+      # Email service (optional - set in dashboard)
+      - key: RESEND_API_KEY
+        sync: false
+
+      - key: RESEND_FROM_EMAIL
+        value: "onboarding@resend.dev"
+
+      # Gunicorn settings
+      - key: GUNICORN_WORKERS
+        value: "2"
+
+      - key: GUNICORN_TIMEOUT
+        value: "120"
+
+      # Python settings
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+    # Persistent disk for SQLite database
+    disk:
+      name: vaccine-db
+      mountPath: /app/db
+      sizeGB: 1  # Adjust as needed (1GB minimum on Render)
