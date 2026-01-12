@@ -55,10 +55,6 @@ COPY --from=frontend-builder /frontend/dist /app/frontend_build
 # Create directories for data persistence
 RUN mkdir -p /app/db /app/data /app/llm_context /app/staticfiles
 
-# Copy startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app
@@ -75,5 +71,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/api/health/ || curl -f http://localhost:8000/api/auth/login/ || exit 1
 
-# Run startup script (handles migrations and starts gunicorn)
-CMD ["/app/start.sh"]
+# Run migrations and start server
+CMD python manage.py migrate --noinput && \
+    python manage.py load_vaccines || true && \
+    gunicorn --bind 0.0.0.0:${PORT:-8000} --workers ${GUNICORN_WORKERS:-2} --timeout ${GUNICORN_TIMEOUT:-120} --access-logfile - --error-logfile - config.wsgi:application
