@@ -18,8 +18,9 @@ SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-# Allowed hosts from environment
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'pet-vaccine-scheduler.onrender.com,.onrender.com').split(',')
+# Allowed hosts from environment (use default if env var is empty or not set)
+_allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '').strip()
+ALLOWED_HOSTS = _allowed_hosts_env.split(',') if _allowed_hosts_env else ['pet-vaccine-scheduler.onrender.com', '.onrender.com']
 ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS if h.strip()]
 
 # WhiteNoise for static file serving
