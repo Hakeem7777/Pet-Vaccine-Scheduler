@@ -101,6 +101,33 @@ def generate_schedule_pdf(
         textColor=colors.HexColor("#5F6B76"),
     )
 
+    # Table cell styles for text wrapping
+    header_cell_style = ParagraphStyle(
+        'HeaderCell',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.HexColor("#5F6B76"),
+        fontName='Helvetica-Bold',
+        leading=11,
+    )
+
+    cell_style = ParagraphStyle(
+        'Cell',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=NEUTRAL_DARK,
+        leading=11,
+    )
+
+    danger_cell_style = ParagraphStyle(
+        'DangerCell',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=DANGER_COLOR,
+        fontName='Helvetica-Bold',
+        leading=11,
+    )
+
     # Build document elements
     elements = []
 
@@ -160,8 +187,17 @@ def generate_schedule_pdf(
             )
             elements.append(Paragraph(f"● {section_title}", header_style))
 
-            # Create table for vaccines
-            table_data = [["Vaccine", "Dose", "Date", "Window", "Notes"]]
+            # Create table for vaccines with Paragraph objects for text wrapping
+            # Choose cell style based on section (danger style for overdue)
+            row_cell_style = danger_cell_style if section_key == "overdue" else cell_style
+
+            table_data = [[
+                Paragraph("Vaccine", header_cell_style),
+                Paragraph("Dose", header_cell_style),
+                Paragraph("Date", header_cell_style),
+                Paragraph("Window", header_cell_style),
+                Paragraph("Notes", header_cell_style)
+            ]]
             for item in items:
                 # Format date range if available
                 date_range = ""
@@ -169,47 +205,39 @@ def generate_schedule_pdf(
                     date_range = f"{item['date_range_start']} - {item['date_range_end']}"
 
                 table_data.append([
-                    item.get("vaccine", "Unknown"),
-                    item.get("dose", "N/A"),
-                    item.get("date", "N/A"),
-                    date_range or "-",
-                    item.get("notes", "") or "-"
+                    Paragraph(item.get("vaccine", "Unknown"), row_cell_style),
+                    Paragraph(item.get("dose", "N/A"), row_cell_style),
+                    Paragraph(item.get("date", "N/A"), row_cell_style),
+                    Paragraph(date_range or "-", row_cell_style),
+                    Paragraph(item.get("notes", "") or "-", row_cell_style)
                 ])
 
-            vaccine_table = Table(table_data, colWidths=[120, 55, 70, 95, 130])
+            # Adjusted column widths for better text distribution
+            vaccine_table = Table(table_data, colWidths=[130, 80, 70, 100, 100])
 
-            # Base table style
+            # Base table style (font styling handled by Paragraph objects)
             table_style = [
-                # Header row
+                # Header row background
                 ('BACKGROUND', (0, 0), (-1, 0), NEUTRAL_LIGHT),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor("#5F6B76")),
-
-                # Data rows
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('TEXTCOLOR', (0, 1), (-1, -1), NEUTRAL_DARK),
 
                 # Grid
                 ('GRID', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
                 ('TOPPADDING', (0, 0), (-1, -1), 8),
-                ('LEFTPADDING', (0, 0), (-1, -1), 8),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
 
                 # Left border color for data rows
                 ('LINECOLOR', (0, 1), (0, -1), section_color),
                 ('LINEWIDTH', (0, 1), (0, -1), 3),
             ]
 
-            # For overdue items, make all text red and bold
+            # For overdue items, add light red background
             if section_key == "overdue":
-                table_style.extend([
-                    ('TEXTCOLOR', (0, 1), (-1, -1), DANGER_COLOR),
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica-Bold'),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#FFF5F5")),
-                ])
+                table_style.append(
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#FFF5F5"))
+                )
 
             vaccine_table.setStyle(TableStyle(table_style))
             elements.append(vaccine_table)
