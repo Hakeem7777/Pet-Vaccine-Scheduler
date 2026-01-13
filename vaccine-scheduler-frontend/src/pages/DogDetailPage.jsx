@@ -32,6 +32,7 @@ function DogDetailPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [currentSelectedNoncore, setCurrentSelectedNoncore] = useState([]);
 
   useEffect(() => {
     if (isGuestDog) {
@@ -56,14 +57,14 @@ function DogDetailPage() {
   // Set dog context for chat when dog data is loaded (only for authenticated users)
   useEffect(() => {
     if (dog && isAuthenticated && !isGuestDog) {
-      setDogContext(parseInt(dogId, 10), dog);
+      setDogContext(parseInt(dogId, 10), dog, currentSelectedNoncore);
     }
     return () => {
       if (isAuthenticated) {
-        setDogContext(null, null);
+        setDogContext(null, null, []);
       }
     };
-  }, [dog, dogId, setDogContext, isAuthenticated, isGuestDog]);
+  }, [dog, dogId, setDogContext, isAuthenticated, isGuestDog, currentSelectedNoncore]);
 
   async function fetchDog() {
     try {
@@ -245,6 +246,7 @@ function DogDetailPage() {
               dogName={dog.name}
               dog={dog}
               onVaccinationAdded={handleVaccinationUpdate}
+              onScheduleLoad={setCurrentSelectedNoncore}
             />
           )}
         </div>

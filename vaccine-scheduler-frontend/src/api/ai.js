@@ -20,13 +20,15 @@ export async function getDogAIAnalysis(dogId, options = {}) {
   return response.data;
 }
 
-export async function sendChatMessage(message, dogId = null, dogIds = null, conversationHistory = []) {
+export async function sendChatMessage(message, dogId = null, dogIds = null, conversationHistory = [], selectedNoncore = []) {
+  console.log('sendChatMessage - selectedNoncore:', selectedNoncore);
   const data = {
     message,
     conversation_history: conversationHistory.map((msg) => ({
       role: msg.role,
       content: msg.content,
     })),
+    selected_noncore: selectedNoncore,
   };
 
   // Support multi-dog context (dog_ids takes precedence)

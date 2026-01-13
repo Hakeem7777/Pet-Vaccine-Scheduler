@@ -360,6 +360,7 @@ class AIChatView(APIView):
         dog_id = serializer.validated_data.get('dog_id')
         dog_ids = serializer.validated_data.get('dog_ids')
         history = serializer.validated_data.get('conversation_history', [])
+        selected_noncore = serializer.validated_data.get('selected_noncore', [])
 
         if not rag_service.is_available():
             return Response({
@@ -380,7 +381,7 @@ class AIChatView(APIView):
 
             if dogs.exists():
                 dog_context = self._build_multi_dog_context(dogs)
-                context_parts.append(self._format_multi_dog_context(dogs))
+                context_parts.append(self._format_multi_dog_context(dogs, selected_noncore))
 
         # Fall back to single dog_id for backward compatibility
         elif dog_id:
@@ -389,7 +390,7 @@ class AIChatView(APIView):
                     'vaccination_records__vaccine'
                 ).get(pk=dog_id)
                 dog_context = self._build_dog_context(dog)
-                context_parts.append(self._format_dog_context(dog))
+                context_parts.append(self._format_dog_context(dog, selected_noncore))
             except Dog.DoesNotExist:
                 pass
 
@@ -438,7 +439,7 @@ class AIChatView(APIView):
             }
         }
 
-    def _format_dog_context(self, dog):
+    def _format_dog_context(self, dog, selected_noncore=None):
         """Format dog information as a context string for the AI."""
         age_classification = scheduler_service.get_age_classification(dog)
 
@@ -477,7 +478,7 @@ class AIChatView(APIView):
         try:
             schedule = scheduler_service.calculate_schedule_for_dog(
                 dog=dog,
-                selected_noncore=[],
+                selected_noncore=selected_noncore or [],
                 reference_date=datetime.date.today()
             )
 
@@ -513,7 +514,7 @@ class AIChatView(APIView):
             'dogs': [self._build_dog_context(dog) for dog in dogs]
         }
 
-    def _format_multi_dog_context(self, dogs):
+    def _format_multi_dog_context(self, dogs, selected_noncore=None):
         """Format multiple dogs' information as context string for AI."""
         parts = [
             f"User's Dogs Summary ({len(dogs)} dogs total):",
@@ -554,7 +555,7 @@ class AIChatView(APIView):
             try:
                 schedule = scheduler_service.calculate_schedule_for_dog(
                     dog=dog,
-                    selected_noncore=[],
+                    selected_noncore=selected_noncore or [],
                     reference_date=datetime.date.today()
                 )
 

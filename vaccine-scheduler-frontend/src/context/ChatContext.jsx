@@ -9,6 +9,7 @@ export function ChatProvider({ children }) {
   const [currentDog, setCurrentDog] = useState(null);
   const [allDogsContext, setAllDogsContextState] = useState(null); // { dogIds: [], dogs: [] }
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedNoncore, setSelectedNoncore] = useState([]);
 
   // Track previous context to detect changes
   const prevContextRef = useRef({ dogId: null, allDogs: null });
@@ -22,7 +23,7 @@ export function ChatProvider({ children }) {
   }, []);
 
   // Set single dog context (clears multi-dog context)
-  const setDogContext = useCallback((dogId, dogData) => {
+  const setDogContext = useCallback((dogId, dogData, noncore = []) => {
     const prevDogId = prevContextRef.current.dogId;
     const prevAllDogs = prevContextRef.current.allDogs;
 
@@ -34,6 +35,7 @@ export function ChatProvider({ children }) {
     setCurrentDogId(dogId);
     setCurrentDog(dogData);
     setAllDogsContextState(null);
+    setSelectedNoncore(noncore);
 
     prevContextRef.current = { dogId, allDogs: null };
   }, []);
@@ -86,6 +88,7 @@ export function ChatProvider({ children }) {
     allDogsContext,
     contextMode,
     isLoading,
+    selectedNoncore,
     setIsLoading,
     openChat,
     closeChat,

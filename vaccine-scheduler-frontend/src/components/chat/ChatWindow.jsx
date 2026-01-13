@@ -14,6 +14,7 @@ function ChatWindow() {
     allDogsContext,
     contextMode,
     isLoading,
+    selectedNoncore,
     setIsLoading,
     closeChat,
     addMessage,
@@ -42,7 +43,7 @@ function ChatWindow() {
       const dogIds = allDogsContext?.dogIds || null;
       const dogId = !dogIds ? currentDogId : null;
 
-      const response = await sendChatMessage(userMessage.content, dogId, dogIds, messages);
+      const response = await sendChatMessage(userMessage.content, dogId, dogIds, messages, selectedNoncore);
 
       addMessage({
         role: 'assistant',

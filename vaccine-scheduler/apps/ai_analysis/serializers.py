@@ -86,6 +86,12 @@ class ChatRequestSerializer(serializers.Serializer):
         default=list,
         help_text="Previous messages in the conversation"
     )
+    selected_noncore = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+        help_text="Selected non-core vaccine IDs to include in schedule context"
+    )
 
 
 class ChatResponseSerializer(serializers.Serializer):

@@ -111,3 +111,6 @@ vaccine-scheduler/staticfiles/
 .claude/
 **/.claude/
 settings.local.json
+tmpclaude-*
+
+tmpclaude-*-cwd
