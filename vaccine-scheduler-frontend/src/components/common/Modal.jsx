@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-function Modal({ isOpen, onClose, title, children, hideHeader = false }) {
+function Modal({ isOpen, onClose, title, children, hideHeader = false, headerAction = null }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -19,10 +19,17 @@ function Modal({ isOpen, onClose, title, children, hideHeader = false }) {
       <div className={`modal-content ${hideHeader ? 'modal-content--no-header' : ''}`} onClick={(e) => e.stopPropagation()}>
         {!hideHeader && (
           <div className="modal-header">
-            <h3>{title}</h3>
-            <button className="modal-close" onClick={onClose}>
-              &times;
-            </button>
+            <div className="modal-header-top">
+              <h3>{title}</h3>
+              <button className="modal-close" onClick={onClose}>
+                &times;
+              </button>
+            </div>
+            {headerAction && (
+              <div className="modal-header-action">
+                {headerAction}
+              </div>
+            )}
           </div>
         )}
         {hideHeader && (

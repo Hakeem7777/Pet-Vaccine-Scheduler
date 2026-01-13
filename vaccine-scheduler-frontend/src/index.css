@@ -785,16 +785,40 @@ a:hover {
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
   background: var(--color-neutral-light);
+  position: relative;
+}
+
+.modal-header-top {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-right: 2rem;
 }
 
 .modal-header h3 {
   margin: 0;
   color: var(--color-primary);
+}
+
+.modal-header-top .modal-close {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-lg);
+}
+
+.modal-header-action {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.modal-header-action .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .modal-close {
@@ -1791,7 +1815,9 @@ a:hover {
   display: flex;
   gap: var(--spacing-sm);
 }
-
+.modal-header-top h3{
+  margin-bottom: 0px !important;
+}
 .schedule-view h3 {
   margin-bottom: var(--spacing-md);
   color: var(--color-primary);

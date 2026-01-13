@@ -27,7 +27,10 @@
       "Bash(copy:*)",
       "Bash(wc:*)",
       "Bash(rename:*)",
-      "Bash(ren:*)"
+      "Bash(ren:*)",
+      "Bash(xargs -I {} bash -c 'echo \"\"=== {} ===\"\" && head -40 {}')",
+      "Bash(python test_db_connection.py:*)",
+      "Bash(nslookup:*)"
     ],
     "deny": [],
     "ask": []

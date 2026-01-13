@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+import dj_database_url
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -76,15 +77,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db' / 'vaccine_scheduler.db',
-    }
-}
+# Use DATABASE_URL if available (Supabase PostgreSQL), otherwise fallback to SQLite
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-# Ensure db directory exists
-(BASE_DIR / 'db').mkdir(exist_ok=True)
+if DATABASE_URL and DATABASE_URL != 'your-supabase-database-url-here':
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    # Fallback to SQLite for local development without Supabase
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db' / 'vaccine_scheduler.db',
+        }
+    }
+    # Ensure db directory exists for SQLite
+    (BASE_DIR / 'db').mkdir(exist_ok=True)
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'

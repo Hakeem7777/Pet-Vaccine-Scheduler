@@ -32,6 +32,22 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
     }, 100);
   }
 
+  function handleMainExport() {
+    switch (activeTab) {
+      case 'apple':
+        handleExportICS();
+        break;
+      case 'google':
+        handleExportGoogle();
+        break;
+      case 'pdf':
+        handleExportPDF();
+        break;
+      default:
+        break;
+    }
+  }
+
   // Email handling
   function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -140,21 +156,11 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
           <div className="export-tab-content">
             <h4>Import to Apple Calendar</h4>
             <ol className="export-steps">
-              <li>Click the "Download .ics File" button below</li>
+              <li>Click the "Download" button above</li>
               <li>Open the downloaded file</li>
               <li>Apple Calendar will prompt you to add the events</li>
               <li>Click "Add" to confirm</li>
             </ol>
-            <div className="export-action">
-              <button className="btn btn-primary" onClick={handleExportICS}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download .ics File
-              </button>
-            </div>
           </div>
         );
 
@@ -166,7 +172,7 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
               <div className="export-step-item">
                 <div className="export-step-number">1</div>
                 <div className="export-step-content">
-                  <p>Click the "Download & Open Google Calendar" button below</p>
+                  <p>Click the "Download" button above. The .ics file will download automatically and Google Calendar will open.</p>
                   <div className="export-screenshot">
                     <img src="/exportSteps/Google/step 1.png" alt="Step 1: Click the download button" />
                   </div>
@@ -176,9 +182,9 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
               <div className="export-step-item">
                 <div className="export-step-number">2</div>
                 <div className="export-step-content">
-                  <p>The .ics file will download automatically</p>
+                  <p>Click "Select file from your computer" and select the downloaded .ics file</p>
                   <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 2.png" alt="Step 2: ICS file downloads" />
+                    <img src="/exportSteps/Google/step 2.png" alt="Step 2: Select file from computer" />
                   </div>
                 </div>
               </div>
@@ -186,9 +192,9 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
               <div className="export-step-item">
                 <div className="export-step-number">3</div>
                 <div className="export-step-content">
-                  <p>The downloaded file will be in your Downloads folder, or whatever location you have set as your default download folder.</p>
+                  <p>Choose which calendar to add events to</p>
                   <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 3.png" alt="Step 3: Google Calendar import dialog" />
+                    <img src="/exportSteps/Google/step 3.png" alt="Step 3: Choose calendar" />
                   </div>
                 </div>
               </div>
@@ -196,53 +202,12 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
               <div className="export-step-item">
                 <div className="export-step-number">4</div>
                 <div className="export-step-content">
-                  <p>Click "Select file from your computer"</p>
-                  <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 4.png" alt="Step 4: Select file from computer" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="export-step-item">
-                <div className="export-step-number">5</div>
-                <div className="export-step-content">
-                  <p>Select the downloaded .ics file</p>
-                  <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 5.png" alt="Step 5: Select the ICS file" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="export-step-item">
-                <div className="export-step-number">6</div>
-                <div className="export-step-content">
-                  <p>Choose which calendar to add events to</p>
-                  <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 6.png" alt="Step 6: Choose calendar" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="export-step-item">
-                <div className="export-step-number">7</div>
-                <div className="export-step-content">
                   <p>Click "Import"</p>
                   <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 7.png" alt="Step 7: Click Import" />
+                    <img src="/exportSteps/Google/step 4.png" alt="Step 4: Click Import" />
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="export-action">
-              <button className="btn btn-primary" onClick={handleExportGoogle}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download & Open Google Calendar
-              </button>
             </div>
           </div>
         );
@@ -252,19 +217,11 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
           <div className="export-tab-content">
             <h4>Save as PDF</h4>
             <ol className="export-steps">
-              <li>Click the "Open Print Dialog" button below</li>
+              <li>Click the "Download" button above</li>
               <li>Select "Save as PDF" as your printer/destination</li>
               <li>Choose your save location</li>
               <li>Click "Save" or "Print"</li>
             </ol>
-            <div className="export-action">
-              <button className="btn btn-primary" onClick={handleExportPDF}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
-                </svg>
-                Open Print Dialog
-              </button>
-            </div>
           </div>
         );
 
@@ -356,8 +313,19 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
     }
   }
 
+  const headerActionButton = activeTab !== 'email' ? (
+    <button className="btn btn-primary" onClick={handleMainExport}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download
+    </button>
+  ) : null;
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Export Vaccination Schedule">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Export Vaccination Schedule" headerAction={headerActionButton}>
       <div className="export-modal">
         <nav className="export-tabs">
           {TABS.map((tab) => (
