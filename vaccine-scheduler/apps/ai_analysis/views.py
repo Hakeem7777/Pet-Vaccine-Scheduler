@@ -463,6 +463,8 @@ class AIChatView(APIView):
             env_factors.append("attends daycare/boarding")
         if dog.env_travel_shows:
             env_factors.append("travels or participates in shows")
+        if dog.env_tick_exposure:
+            env_factors.append("frequents tick-prone areas")
 
         if env_factors:
             parts.append(f"- Environment: {', '.join(env_factors)}")
