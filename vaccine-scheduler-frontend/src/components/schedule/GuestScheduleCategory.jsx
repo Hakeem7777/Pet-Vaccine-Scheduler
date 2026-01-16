@@ -1,6 +1,6 @@
 import GuestScheduleItem from './GuestScheduleItem';
 
-function GuestScheduleCategory({ title, items, type, dogName, onVaccinationAdded }) {
+function GuestScheduleCategory({ title, items, type, dogName, dogInfo, onVaccinationAdded }) {
   if (!items || items.length === 0) {
     return null;
   }
@@ -17,6 +17,7 @@ function GuestScheduleCategory({ title, items, type, dogName, onVaccinationAdded
             item={item}
             type={type}
             dogName={dogName}
+            dogInfo={dogInfo}
             onVaccinationAdded={onVaccinationAdded}
           />
         ))}

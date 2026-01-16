@@ -12,6 +12,10 @@ from .pdf_generator import generate_schedule_pdf
 from .ics_generator import generate_ics_content, generate_google_calendar_url
 
 
+# Important notice text (matches FAQ page)
+IMPORTANT_NOTICE = """Vaccine schedules are generated based on AAHA (American Animal Hospital Association) and WSAVA (World Small Animal Veterinary Association) guidelines. This information is provided for educational purposes only and does not constitute veterinary advice. Always consult with a licensed veterinarian for decisions about your dog's health and vaccination schedule."""
+
+
 class EmailService:
     """Service for sending vaccination schedule emails via Resend."""
 
@@ -172,18 +176,15 @@ class EmailService:
         <!-- History Analysis -->
         {self._generate_history_analysis_html(history_analysis) if history_analysis else ''}
 
-        <!-- Calendar Links -->
+        <!-- Important Notice -->
         <tr>
             <td style="padding: 0 40px 30px;">
-                <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 8px;">
+                <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #FFF8E6; border-radius: 8px; border: 1px solid #F0E6D2;">
                     <tr>
-                        <td style="padding: 20px; text-align: center;">
-                            <p style="margin: 0 0 15px; color: #5f6b76; font-size: 14px;">
-                                Add vaccines to your calendar:
-                            </p>
-                            {f'<a href="{google_cal_url}" style="display: inline-block; padding: 12px 24px; background-color: #4285F4; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">Add to Google Calendar</a>' if google_cal_url else ''}
-                            <p style="margin: 15px 0 0; color: #5f6b76; font-size: 12px;">
-                                ICS file attached for Apple Calendar and other calendar apps
+                        <td style="padding: 20px;">
+                            <h3 style="margin: 0 0 10px; color: #8B6914; font-size: 14px; font-weight: 700;">Important Notice</h3>
+                            <p style="margin: 0; color: #5f6b76; font-size: 13px; line-height: 1.6;">
+                                {IMPORTANT_NOTICE}
                             </p>
                         </td>
                     </tr>
@@ -315,6 +316,12 @@ class EmailService:
             lines.append("-" * 20)
             lines.append(history_analysis)
             lines.append("")
+
+        # Important notice
+        lines.append("IMPORTANT NOTICE")
+        lines.append("-" * 20)
+        lines.append(IMPORTANT_NOTICE)
+        lines.append("")
 
         lines.extend([
             "=" * 50,

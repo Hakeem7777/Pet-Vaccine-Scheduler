@@ -1,31 +1,61 @@
 import { useState } from 'react';
 import Modal from '../common/Modal';
-import { exportAllToICS, exportToGoogleCalendar } from '../../utils/calendarExport';
+import { exportAllToICS, exportToGoogleCalendar, exportSingleToICS, generateGoogleCalendarUrl } from '../../utils/calendarExport';
 import { sendScheduleEmail } from '../../api/email';
 import './ExportModal.css';
 
-const TABS = [
+const ALL_TABS = [
   { id: 'apple', label: 'Apple Calendar', icon: 'apple' },
   { id: 'google', label: 'Google Calendar', icon: 'google' },
   { id: 'pdf', label: 'Save as PDF', icon: 'pdf' },
   { id: 'email', label: 'Email', icon: 'email' },
 ];
 
-function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
+// Single item mode excludes PDF (no single-item PDF export)
+const SINGLE_TABS = [
+  { id: 'apple', label: 'Apple Calendar', icon: 'apple' },
+  { id: 'google', label: 'Google Calendar', icon: 'google' },
+  { id: 'email', label: 'Email', icon: 'email' },
+];
+
+/**
+ * ExportModal - Export vaccination schedule to various formats
+ *
+ * @param {boolean} isOpen - Whether modal is open
+ * @param {function} onClose - Close handler
+ * @param {object} schedule - Full schedule with overdue/upcoming/future arrays (for all export)
+ * @param {string} dogName - Dog's name
+ * @param {object} dogInfo - Dog info for email
+ * @param {object} singleItem - Optional: single vaccine item to export (excludes PDF tab)
+ */
+function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem = null }) {
+  const isSingleMode = singleItem !== null;
+  const TABS = isSingleMode ? SINGLE_TABS : ALL_TABS;
   const [activeTab, setActiveTab] = useState('apple');
   const [emails, setEmails] = useState(['']);
   const [emailError, setEmailError] = useState('');
   const [isEmailSending, setIsEmailSending] = useState(false);
 
   function handleExportICS() {
-    exportAllToICS(schedule, dogName || 'Dog');
+    if (isSingleMode) {
+      exportSingleToICS(singleItem, dogName || 'Dog');
+    } else {
+      exportAllToICS(schedule, dogName || 'Dog');
+    }
   }
 
   function handleExportGoogle() {
-    exportToGoogleCalendar(schedule, dogName || 'Dog');
+    if (isSingleMode) {
+      const url = generateGoogleCalendarUrl(singleItem, dogName || 'Dog');
+      window.open(url, '_blank');
+    } else {
+      exportToGoogleCalendar(schedule, dogName || 'Dog');
+    }
   }
 
   function handleExportPDF() {
+    // PDF export only available for full schedule
+    if (isSingleMode) return;
     onClose();
     setTimeout(() => {
       window.print();
@@ -91,11 +121,16 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
 
     setIsEmailSending(true);
     try {
+      // For single item mode, create a schedule with just that item in 'upcoming'
+      const emailSchedule = isSingleMode
+        ? { overdue: [], upcoming: [singleItem], future: [] }
+        : schedule;
+
       await sendScheduleEmail({
         emails: validEmails,
         dogName: dogName || 'Dog',
         dogInfo,
-        schedule,
+        schedule: emailSchedule,
       });
       alert('Email sent successfully!');
       setEmails(['']);
@@ -228,11 +263,17 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
       case 'email':
         return (
           <div className="export-tab-content">
-            <h4>Send Schedule via Email</h4>
+            <h4>Send {isSingleMode ? 'Vaccine Reminder' : 'Schedule'} via Email</h4>
             <p className="export-email-description">
-              Send {dogName}'s vaccination schedule to one or more email addresses.
-              Recipients will receive the schedule details along with a PDF attachment,
-              calendar invite (ICS file), and a Google Calendar link.
+              {isSingleMode ? (
+                <>Send a reminder for {dogName}'s {singleItem?.vaccine} vaccination to one or more email addresses.
+                Recipients will receive the vaccine details along with a PDF attachment,
+                calendar invite (ICS file), and a Google Calendar link.</>
+              ) : (
+                <>Send {dogName}'s vaccination schedule to one or more email addresses.
+                Recipients will receive the schedule details along with a PDF attachment,
+                calendar invite (ICS file), and a Google Calendar link.</>
+              )}
             </p>
 
             <form onSubmit={handleSendEmail}>
@@ -324,8 +365,12 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo }) {
     </button>
   ) : null;
 
+  const modalTitle = isSingleMode
+    ? `Export ${singleItem?.vaccine || 'Vaccine'}`
+    : 'Export Vaccination Schedule';
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Export Vaccination Schedule" headerAction={headerActionButton}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle} headerAction={headerActionButton}>
       <div className="export-modal">
         <nav className="export-tabs">
           {TABS.map((tab) => (

@@ -1,6 +1,6 @@
 import ScheduleItem from './ScheduleItem';
 
-function ScheduleCategory({ title, items, type, dogId, dogName, onVaccinationAdded }) {
+function ScheduleCategory({ title, items, type, dogId, dogName, dogInfo, onVaccinationAdded }) {
   if (!items || items.length === 0) {
     return null;
   }
@@ -18,6 +18,7 @@ function ScheduleCategory({ title, items, type, dogId, dogName, onVaccinationAdd
             type={type}
             dogId={dogId}
             dogName={dogName}
+            dogInfo={dogInfo}
             onVaccinationAdded={onVaccinationAdded}
           />
         ))}

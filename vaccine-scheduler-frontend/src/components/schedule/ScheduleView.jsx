@@ -129,6 +129,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
             type="overdue"
             dogId={dogId}
             dogName={dogName}
+            dogInfo={dogInfo}
             onVaccinationAdded={handleVaccinationAdded}
           />
           <ScheduleCategory
@@ -137,6 +138,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
             type="upcoming"
             dogId={dogId}
             dogName={dogName}
+            dogInfo={dogInfo}
             onVaccinationAdded={handleVaccinationAdded}
           />
           <ScheduleCategory
@@ -145,6 +147,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
             type="future"
             dogId={dogId}
             dogName={dogName}
+            dogInfo={dogInfo}
             onVaccinationAdded={handleVaccinationAdded}
           />
         </motion.div>

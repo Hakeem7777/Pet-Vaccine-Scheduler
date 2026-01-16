@@ -4,6 +4,14 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import { formatDate, getToday } from '../../utils/dateUtils';
 import { SEX_CHOICES } from '../../utils/constants';
 
+const ENVIRONMENT_OPTIONS = [
+  { key: 'env_indoor_only', label: 'Indoor Only', icon: '\u{1F3E0}', description: 'Stays inside most of the time' },
+  { key: 'env_dog_parks', label: 'Dog Parks', icon: '\u{1F333}', description: 'Visits parks & public areas' },
+  { key: 'env_daycare_boarding', label: 'Daycare', icon: '\u{1F3E8}', description: 'Attends daycare or boarding' },
+  { key: 'env_travel_shows', label: 'Travel/Shows', icon: '\u{2708}\u{FE0F}', description: 'Travels or attends shows' },
+  { key: 'env_tick_exposure', label: 'Tick Areas', icon: '\u{1F99F}', description: 'Woods, tall grass, or tick-prone areas' },
+];
+
 const UPLOAD_STATES = {
   IDLE: 'idle',
   UPLOADING: 'uploading',
@@ -24,6 +32,7 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
   const [selectedFields, setSelectedFields] = useState({});
   const [applyResult, setApplyResult] = useState(null);
   const [requiredFields, setRequiredFields] = useState({ name: '', birth_date: '' });
+  const [editableLifestyle, setEditableLifestyle] = useState({});
   const fileInputRef = useRef(null);
 
   async function handleFileSelect(e) {
@@ -82,6 +91,14 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
         });
       }
 
+      // Initialize editable lifestyle from extracted data
+      const initialLifestyle = {};
+      ENVIRONMENT_OPTIONS.forEach(({ key }) => {
+        // Use extracted value if available, otherwise default to false
+        initialLifestyle[key] = result.lifestyle?.[key] ?? false;
+      });
+      setEditableLifestyle(initialLifestyle);
+
       setState(UPLOAD_STATES.REVIEWING);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to process document');
@@ -131,8 +148,6 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
 
       if (category === 'dog_info' && extractedData.dog_info?.[field] !== null) {
         payload.dog_info[field] = extractedData.dog_info[field];
-      } else if (category === 'lifestyle' && extractedData.lifestyle?.[field] !== null) {
-        payload.lifestyle[field] = extractedData.lifestyle[field];
       } else if (category === 'vaccination') {
         const idx = parseInt(field, 10);
         if (extractedData.vaccinations?.[idx]) {
@@ -140,6 +155,9 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
         }
       }
     });
+
+    // Always include editable lifestyle values (user can modify these)
+    payload.lifestyle = { ...editableLifestyle };
 
     try {
       if (isCreateMode) {
@@ -487,71 +505,25 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
             </fieldset>
           )}
 
-        {/* Lifestyle Section */}
-        {extractedData?.lifestyle &&
-          Object.values(extractedData.lifestyle).some((v) => v !== null) && (
-            <fieldset className="extraction-section">
-              <legend>Lifestyle</legend>
-              <div className="extraction-fields">
-                {extractedData.lifestyle.env_indoor_only !== null && (
-                  <label className="extraction-field">
-                    <input
-                      type="checkbox"
-                      checked={selectedFields['lifestyle.env_indoor_only'] || false}
-                      onChange={() => toggleField('lifestyle.env_indoor_only')}
-                    />
-                    <span className="field-label">Indoor Only:</span>
-                    <span className="field-value">
-                      {extractedData.lifestyle.env_indoor_only ? 'Yes' : 'No'}
-                    </span>
-                    <span className="field-current" />
-                  </label>
-                )}
-                {extractedData.lifestyle.env_dog_parks !== null && (
-                  <label className="extraction-field">
-                    <input
-                      type="checkbox"
-                      checked={selectedFields['lifestyle.env_dog_parks'] || false}
-                      onChange={() => toggleField('lifestyle.env_dog_parks')}
-                    />
-                    <span className="field-label">Dog Parks:</span>
-                    <span className="field-value">
-                      {extractedData.lifestyle.env_dog_parks ? 'Yes' : 'No'}
-                    </span>
-                    <span className="field-current" />
-                  </label>
-                )}
-                {extractedData.lifestyle.env_daycare_boarding !== null && (
-                  <label className="extraction-field">
-                    <input
-                      type="checkbox"
-                      checked={selectedFields['lifestyle.env_daycare_boarding'] || false}
-                      onChange={() => toggleField('lifestyle.env_daycare_boarding')}
-                    />
-                    <span className="field-label">Daycare/Boarding:</span>
-                    <span className="field-value">
-                      {extractedData.lifestyle.env_daycare_boarding ? 'Yes' : 'No'}
-                    </span>
-                    <span className="field-current" />
-                  </label>
-                )}
-                {extractedData.lifestyle.env_travel_shows !== null && (
-                  <label className="extraction-field">
-                    <input
-                      type="checkbox"
-                      checked={selectedFields['lifestyle.env_travel_shows'] || false}
-                      onChange={() => toggleField('lifestyle.env_travel_shows')}
-                    />
-                    <span className="field-label">Travel/Shows:</span>
-                    <span className="field-value">
-                      {extractedData.lifestyle.env_travel_shows ? 'Yes' : 'No'}
-                    </span>
-                    <span className="field-current" />
-                  </label>
-                )}
-              </div>
-            </fieldset>
-          )}
+        {/* Lifestyle/Environment Section - Always shown and editable */}
+        <fieldset className="extraction-section">
+          <legend>Environment</legend>
+          <p className="environment-hint">Select all that apply to your dog's lifestyle:</p>
+          <div className="environment-options">
+            {ENVIRONMENT_OPTIONS.map(({ key, label, icon, description }) => (
+              <button
+                key={key}
+                type="button"
+                className={`environment-option ${editableLifestyle[key] ? 'selected' : ''}`}
+                onClick={() => setEditableLifestyle(prev => ({ ...prev, [key]: !prev[key] }))}
+                title={description}
+              >
+                <span className="env-icon">{icon}</span>
+                <span className="env-label">{label}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
 
         {/* Vaccinations Section */}
         {extractedData?.vaccinations?.length > 0 && (
@@ -606,6 +578,7 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
               setState(UPLOAD_STATES.IDLE);
               setExtractedData(null);
               setSelectedFields({});
+              setEditableLifestyle({});
               setError(null);
             }}
           >

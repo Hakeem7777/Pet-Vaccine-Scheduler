@@ -1,18 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { formatDate, getToday } from '../../utils/dateUtils';
 import useGuestStore from '../../store/useGuestStore';
-import { exportSingleToICS, generateGoogleCalendarUrl } from '../../utils/calendarExport';
 import FlipCard from './FlipCard';
+import ExportModal from '../export/ExportModal';
 
 // Maximum characters to show before truncating
 const MAX_DESCRIPTION_LENGTH = 80;
 
-function GuestScheduleItem({ item, type, dogName, onVaccinationAdded }) {
+function GuestScheduleItem({ item, type, dogName, dogInfo, onVaccinationAdded }) {
   const { addVaccination } = useGuestStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
-  const exportMenuRef = useRef(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const getDaysText = () => {
     if (type === 'overdue') {
@@ -28,30 +27,6 @@ function GuestScheduleItem({ item, type, dogName, onVaccinationAdded }) {
 
   // Check if we have safety info to show on the back
   const hasSafetyInfo = item.side_effects_common?.length > 0 || item.side_effects_seek_vet?.length > 0;
-
-  // Close export menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
-        setShowExportMenu(false);
-      }
-    }
-    if (showExportMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showExportMenu]);
-
-  function handleExportICS() {
-    exportSingleToICS(item, dogName);
-    setShowExportMenu(false);
-  }
-
-  function handleExportGoogle() {
-    const url = generateGoogleCalendarUrl(item, dogName);
-    window.open(url, '_blank');
-    setShowExportMenu(false);
-  }
 
   function handleMarkAsDone() {
     if (isSubmitting) return;
@@ -131,25 +106,16 @@ function GuestScheduleItem({ item, type, dogName, onVaccinationAdded }) {
         </>
       )}
       <div className="schedule-item-actions">
-        <div className="schedule-item-export" ref={exportMenuRef}>
-          <button
-            className="btn btn-sm btn-outline schedule-item-export-btn"
-            onClick={() => setShowExportMenu(!showExportMenu)}
-            type="button"
-          >
-            Export
-          </button>
-          {showExportMenu && (
-            <div className="schedule-item-export-menu">
-              <button onClick={handleExportICS} type="button">
-                Apple Calendar (.ics)
-              </button>
-              <button onClick={handleExportGoogle} type="button">
-                Google Calendar
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          className="btn btn-sm btn-outline schedule-item-export-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExportModalOpen(true);
+          }}
+          type="button"
+        >
+          Export
+        </button>
         <button
           className="btn btn-sm btn-primary schedule-item-done-btn"
           onClick={handleMarkAsDone}
@@ -202,15 +168,35 @@ function GuestScheduleItem({ item, type, dogName, onVaccinationAdded }) {
   // If we have safety info, render as a flip card
   if (hasSafetyInfo) {
     return (
-      <FlipCard
-        front={frontContent}
-        back={backContent}
-      />
+      <>
+        <FlipCard
+          front={frontContent}
+          back={backContent}
+        />
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          dogName={dogName}
+          dogInfo={dogInfo}
+          singleItem={item}
+        />
+      </>
     );
   }
 
   // Otherwise, render just the front content without flip functionality
-  return frontContent;
+  return (
+    <>
+      {frontContent}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        dogName={dogName}
+        dogInfo={dogInfo}
+        singleItem={item}
+      />
+    </>
+  );
 }
 
 export default GuestScheduleItem;

@@ -24,6 +24,12 @@ DANGER_COLOR = colors.HexColor("#E53E3E")
 NEUTRAL_DARK = colors.HexColor("#333F48")
 NEUTRAL_LIGHT = colors.HexColor("#F7FAFC")
 BORDER_COLOR = colors.HexColor("#E2E8F0")
+NOTICE_BG = colors.HexColor("#FFF8E6")
+NOTICE_BORDER = colors.HexColor("#F0E6D2")
+NOTICE_HEADER = colors.HexColor("#8B6914")
+
+# Important notice text (matches FAQ page)
+IMPORTANT_NOTICE = """Vaccine schedules are generated based on AAHA (American Animal Hospital Association) and WSAVA (World Small Animal Veterinary Association) guidelines. This information is provided for educational purposes only and does not constitute veterinary advice. Always consult with a licensed veterinarian for decisions about your dog's health and vaccination schedule."""
 
 
 def generate_schedule_pdf(
@@ -258,6 +264,31 @@ def generate_schedule_pdf(
             rightIndent=10,
         )
         elements.append(Paragraph(history_analysis, analysis_style))
+
+    # Important Notice Section
+    elements.append(Spacer(1, 20))
+    elements.append(HRFlowable(width="100%", thickness=1, color=BORDER_COLOR))
+    elements.append(Spacer(1, 10))
+
+    notice_header_style = ParagraphStyle(
+        'NoticeHeader',
+        parent=section_header_style,
+        textColor=NOTICE_HEADER,
+        fontSize=12,
+    )
+    elements.append(Paragraph("Important Notice", notice_header_style))
+
+    notice_style = ParagraphStyle(
+        'Notice',
+        parent=normal_style,
+        backColor=NOTICE_BG,
+        borderPadding=10,
+        leftIndent=10,
+        rightIndent=10,
+        fontSize=9,
+        leading=12,
+    )
+    elements.append(Paragraph(IMPORTANT_NOTICE, notice_style))
 
     # Footer
     elements.append(Spacer(1, 30))

@@ -93,6 +93,7 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
             items={schedule.overdue}
             type="overdue"
             dogName={dog.name}
+            dogInfo={dog}
             onVaccinationAdded={onVaccinationAdded}
           />
           <GuestScheduleCategory
@@ -100,6 +101,7 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
             items={schedule.upcoming}
             type="upcoming"
             dogName={dog.name}
+            dogInfo={dog}
             onVaccinationAdded={onVaccinationAdded}
           />
           <GuestScheduleCategory
@@ -107,6 +109,7 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
             items={schedule.future}
             type="future"
             dogName={dog.name}
+            dogInfo={dog}
             onVaccinationAdded={onVaccinationAdded}
           />
         </motion.div>

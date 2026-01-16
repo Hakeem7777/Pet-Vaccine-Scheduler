@@ -20,8 +20,22 @@ CSRF_COOKIE_SECURE = True
 
 # Allowed hosts from environment (use default if env var is empty or not set)
 _allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '').strip()
-ALLOWED_HOSTS = _allowed_hosts_env.split(',') if _allowed_hosts_env else ['pet-vaccine-scheduler.onrender.com', '.onrender.com']
+ALLOWED_HOSTS = _allowed_hosts_env.split(',') if _allowed_hosts_env else [
+    'pet-vaccine-scheduler.onrender.com',
+    '.onrender.com',
+    'petvaxcalendar.com',
+    'www.petvaxcalendar.com',
+]
 ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS if h.strip()]
+
+# CSRF trusted origins (required for POST requests from these domains)
+_csrf_origins_env = os.getenv('CSRF_TRUSTED_ORIGINS', '').strip()
+CSRF_TRUSTED_ORIGINS = _csrf_origins_env.split(',') if _csrf_origins_env else [
+    'https://petvaxcalendar.com',
+    'https://www.petvaxcalendar.com',
+    'https://pet-vaccine-scheduler.onrender.com',
+]
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS if o.strip()]
 
 # WhiteNoise for static file serving
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')

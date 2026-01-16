@@ -2658,6 +2658,57 @@ a:hover {
   font-weight: 600;
 }
 
+/* Environment options in document upload */
+.environment-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.environment-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.environment-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.environment-option:hover {
+  border-color: var(--color-primary);
+  background: rgba(0, 109, 156, 0.04);
+}
+
+.environment-option.selected {
+  border-color: var(--color-primary);
+  background: rgba(0, 109, 156, 0.1);
+  box-shadow: 0 0 0 2px rgba(0, 109, 156, 0.15);
+}
+
+.environment-option .env-icon {
+  font-size: 1.1rem;
+}
+
+.environment-option .env-label {
+  font-weight: 500;
+  color: var(--color-neutral-dark);
+}
+
+.environment-option.selected .env-label {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
 /* Responsive adjustments for document upload */
 @media (max-width: 640px) {
   .extraction-field {
@@ -2667,6 +2718,15 @@ a:hover {
 
   .field-current {
     grid-column: 2;
+  }
+
+  .environment-options {
+    flex-direction: column;
+  }
+
+  .environment-option {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
