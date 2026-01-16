@@ -4,7 +4,7 @@ import { getToday } from '../../utils/dateUtils';
 
 // Environment options with icons and descriptions
 const ENVIRONMENT_OPTIONS = [
-  { key: 'env_indoor_only', label: 'Indoor Only', icon: '🏠', description: 'Stays inside most of the time' },
+  { key: 'env_indoor_only', label: 'Indoor', icon: '🏠', description: 'Stays inside most of the time' },
   { key: 'env_dog_parks', label: 'Dog Parks', icon: '🌳', description: 'Visits parks & public areas' },
   { key: 'env_daycare_boarding', label: 'Daycare', icon: '🏨', description: 'Attends daycare or boarding' },
   { key: 'env_travel_shows', label: 'Travel/Shows', icon: '✈️', description: 'Travels or attends shows' },

@@ -220,7 +220,7 @@ function DogDetailPage() {
             <div className="dog-environment">
               <label>Environment</label>
               <div className="env-tags">
-                {dog.env_indoor_only && <span className="env-tag">Indoor only</span>}
+                {dog.env_indoor_only && <span className="env-tag">Indoor</span>}
                 {dog.env_dog_parks && <span className="env-tag">Dog parks</span>}
                 {dog.env_daycare_boarding && <span className="env-tag">Daycare/Boarding</span>}
                 {dog.env_travel_shows && <span className="env-tag">Travel/Shows</span>}
