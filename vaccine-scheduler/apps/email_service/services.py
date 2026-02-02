@@ -336,5 +336,229 @@ class EmailService:
         return "\n".join(lines)
 
 
+    def send_contact_confirmation(self, to_email: str, name: str, subject: str) -> dict:
+        """
+        Send confirmation email to the user who submitted the contact form.
+
+        Args:
+            to_email: Recipient email address
+            name: Name of the sender
+            subject: Subject of their message
+
+        Returns:
+            dict with success status and message
+        """
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We've Received Your Message</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td style="background-color: #006D9C; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Thank You for Contacting Us
+                </h1>
+            </td>
+        </tr>
+
+        <!-- Content -->
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {name},
+                </p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    We have received your message regarding "<strong>{subject}</strong>" and will respond as soon as possible.
+                </p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Our team typically responds within 1-2 business days.
+                </p>
+                <p style="margin: 0; font-size: 16px; line-height: 1.6;">
+                    Thank you for reaching out to us!
+                </p>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""Thank You for Contacting Us
+
+Hi {name},
+
+We have received your message regarding "{subject}" and will respond as soon as possible.
+
+Our team typically responds within 1-2 business days.
+
+Thank you for reaching out to us!
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": "We've Received Your Message - PetVaxCalendar",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Confirmation email sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
+    def send_contact_notification(
+        self,
+        name: str,
+        email: str,
+        subject: str,
+        message: str
+    ) -> dict:
+        """
+        Send notification email to admin about new contact form submission.
+
+        Args:
+            name: Name of the sender
+            email: Email address of the sender
+            subject: Subject of the message
+            message: Message content
+
+        Returns:
+            dict with success status and message
+        """
+        admin_email = os.environ.get('CONTACT_ADMIN_EMAIL')
+        if not admin_email:
+            return {
+                'success': False,
+                'message': "CONTACT_ADMIN_EMAIL not configured"
+            }
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Contact Form Submission</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td style="background-color: #FF9C3B; padding: 20px 40px;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 700;">
+                    New Contact Form Submission
+                </h1>
+            </td>
+        </tr>
+
+        <!-- Details -->
+        <tr>
+            <td style="padding: 30px 40px;">
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">From:</strong>
+                            <span style="margin-left: 10px;">{name}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">Email:</strong>
+                            <a href="mailto:{email}" style="margin-left: 10px; color: #006D9C;">{email}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">Subject:</strong>
+                            <span style="margin-left: 10px;">{subject}</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <h3 style="margin: 20px 0 10px; color: #333f48; font-size: 16px;">Message:</h3>
+                <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; line-height: 1.6;">
+{message}
+                </div>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="background-color: #333f48; padding: 20px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    Sent from PetVaxCalendar Contact Form<br>
+                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""NEW CONTACT FORM SUBMISSION
+{'=' * 40}
+
+From: {name}
+Email: {email}
+Subject: {subject}
+
+MESSAGE:
+{'-' * 20}
+{message}
+
+{'=' * 40}
+Sent from PetVaxCalendar Contact Form
+{datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [admin_email],
+                "reply_to": email,
+                "subject": f"[Contact Form] {subject}",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Admin notification sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
+
 # Create singleton instance
 email_service = EmailService() if os.environ.get('RESEND_API_KEY') else None

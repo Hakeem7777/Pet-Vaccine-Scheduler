@@ -43,3 +43,23 @@ class SendScheduleEmailSerializer(serializers.Serializer):
             'schedule': data.get('schedule', {}),
             'history_analysis': data.get('historyAnalysis'),
         }
+
+
+class ContactFormSerializer(serializers.Serializer):
+    """Serializer for contact form submission."""
+
+    name = serializers.CharField(
+        max_length=100,
+        help_text="Full name of the sender"
+    )
+    email = serializers.EmailField(
+        help_text="Email address of the sender"
+    )
+    subject = serializers.CharField(
+        max_length=200,
+        help_text="Subject of the message"
+    )
+    message = serializers.CharField(
+        max_length=5000,
+        help_text="Message content"
+    )

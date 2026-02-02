@@ -11,6 +11,7 @@ import DogDetailPage from './pages/DogDetailPage';
 import FAQPage from './pages/FAQPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
+import ContactPage from './pages/ContactPage';
 
 function App() {
   const location = useLocation();
@@ -29,6 +30,9 @@ function App() {
           {/* Legal pages - public, standalone */}
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+
+          {/* Contact page - public, standalone */}
+          <Route path="/contact" element={<ContactPage />} />
 
           {/* Main app routes - Dashboard is public, detail page is protected */}
           <Route

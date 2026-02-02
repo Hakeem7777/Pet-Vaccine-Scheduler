@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import SendScheduleEmailSerializer
+from .serializers import SendScheduleEmailSerializer, ContactFormSerializer
 from .services import EmailService
 
 
@@ -85,5 +85,75 @@ class SendScheduleEmailView(APIView):
         except Exception as e:
             return Response(
                 {'error': f'Failed to send email: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ContactFormView(APIView):
+    """
+    Handle contact form submissions.
+
+    POST /api/email/contact/
+    """
+    permission_classes = []  # Public endpoint - no authentication required
+
+    def post(self, request):
+        """
+        Process contact form submission.
+        - Validates input
+        - Sends confirmation email to user
+        - Sends notification email to admin
+        """
+        # Check if Resend is configured
+        if not os.environ.get('RESEND_API_KEY'):
+            return Response(
+                {'error': 'Email service is not configured. Please set RESEND_API_KEY.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
+        serializer = ContactFormSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        data = serializer.validated_data
+
+        try:
+            email_service = EmailService()
+
+            # Send confirmation email to user
+            confirmation_result = email_service.send_contact_confirmation(
+                to_email=data['email'],
+                name=data['name'],
+                subject=data['subject']
+            )
+
+            # Send notification email to admin
+            notification_result = email_service.send_contact_notification(
+                name=data['name'],
+                email=data['email'],
+                subject=data['subject'],
+                message=data['message']
+            )
+
+            if confirmation_result['success']:
+                return Response({
+                    'message': 'Your message has been sent successfully. We will respond as soon as possible.'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Failed to send confirmation email. Please try again.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to process contact form: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

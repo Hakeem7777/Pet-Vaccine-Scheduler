@@ -22,6 +22,10 @@ function Footer() {
             <Link to="/privacy" className="footer-link">
               Privacy Policy
             </Link>
+            <span className="footer-separator">|</span>
+            <Link to="/contact" className="footer-link">
+              Contact Us
+            </Link>
           </nav>
           <div className="footer-resources">
             <a
