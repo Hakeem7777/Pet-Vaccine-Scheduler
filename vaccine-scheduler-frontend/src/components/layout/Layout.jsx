@@ -3,6 +3,7 @@ import Header from './Header';
 import Footer from './Footer';
 import ChatBubble from '../chat/ChatBubble';
 import ChatWindow from '../chat/ChatWindow';
+import GuidedTour from '../tour/GuidedTour';
 
 function Layout() {
   return (
@@ -14,6 +15,7 @@ function Layout() {
       <Footer />
       <ChatBubble />
       <ChatWindow />
+      <GuidedTour />
     </div>
   );
 }

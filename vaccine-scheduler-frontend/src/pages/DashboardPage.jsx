@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import useDogStore from '../store/useDogStore';
 import useGuestStore from '../store/useGuestStore';
+import useTourStore from '../store/useTourStore';
 import DogList from '../components/dogs/DogList';
 import DogForm from '../components/dogs/DogForm';
 import DocumentUploadModal from '../components/dogs/DocumentUploadModal';
@@ -17,6 +18,7 @@ function DashboardPage() {
   const { setAllDogsContext } = useChat();
   const { dogs, isLoading, error, fetchDogs, addDog, clearError } = useDogStore();
   const { guestDog, addGuestDog } = useGuestStore();
+  const { isRunning, currentStep, pauseTour, resumeTour, pausedAtStep } = useTourStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -65,6 +67,10 @@ function DashboardPage() {
       try {
         await addDog(formData);
         setShowAddModal(false);
+        // Resume tour if it was paused
+        if (pausedAtStep !== null) {
+          resumeTour();
+        }
       } catch (err) {
         // Error is handled by the store
       } finally {
@@ -102,7 +108,19 @@ function DashboardPage() {
       setShowSignupPrompt(true);
       return;
     }
+    // Pause tour if on Add Dog step (step 0)
+    if (isRunning && currentStep === 0) {
+      pauseTour();
+    }
     setShowAddModal(true);
+  }
+
+  function handleAddModalClose() {
+    setShowAddModal(false);
+    // Resume tour if it was paused
+    if (pausedAtStep !== null) {
+      resumeTour();
+    }
   }
 
   function handleUploadClick() {
@@ -130,12 +148,12 @@ function DashboardPage() {
   // Show inline form when no dogs exist
   if (displayDogs.length === 0) {
     return (
-      <PageTransition className="dashboard-page">
+      <PageTransition className="dashboard-page" data-tour="welcome">
         <div className="page-header">
           <h2>Add Your First Dog</h2>
           {isAuthenticated && (
             <div className="page-header-actions">
-              <button className="btn btn-secondary" onClick={handleUploadClick}>
+              <button className="btn btn-secondary" onClick={handleUploadClick} data-tour="upload-doc-btn">
                 Upload Document
               </button>
             </div>
@@ -157,7 +175,7 @@ function DashboardPage() {
           </div>
         )}
 
-        <div className="first-dog-form-container">
+        <div className="first-dog-form-container" data-tour="first-dog-form">
           <DogForm onSubmit={handleAddDog} isLoading={isSubmitting} />
         </div>
 
@@ -179,16 +197,16 @@ function DashboardPage() {
   }
 
   return (
-    <PageTransition className="dashboard-page">
+    <PageTransition className="dashboard-page" data-tour="welcome">
       <div className="page-header">
         <h2>{isAuthenticated ? 'My Dogs' : 'Your Dog'}</h2>
         <div className="page-header-actions">
           {isAuthenticated && (
-            <button className="btn btn-secondary" onClick={handleUploadClick}>
+            <button className="btn btn-secondary" onClick={handleUploadClick} data-tour="upload-doc-btn">
               Upload Document
             </button>
           )}
-          <button className="btn btn-primary" onClick={handleAddDogClick}>
+          <button className="btn btn-primary" onClick={handleAddDogClick} data-tour="add-dog-btn">
             Add Dog
           </button>
         </div>
@@ -214,17 +232,19 @@ function DashboardPage() {
         </div>
       )}
 
-      <DogList dogs={displayDogs} isGuestMode={!isAuthenticated} />
+      <div data-tour="dog-list">
+        <DogList dogs={displayDogs} isGuestMode={!isAuthenticated} />
+      </div>
 
       <Modal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={handleAddModalClose}
         title="Add New Dog"
         hideHeader
       >
         <DogForm
           onSubmit={handleAddDog}
-          onCancel={() => setShowAddModal(false)}
+          onCancel={handleAddModalClose}
           isLoading={isSubmitting}
         />
       </Modal>

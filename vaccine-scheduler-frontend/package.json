@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@reactour/tour": "^3.8.0",
     "axios": "^1.13.2",
     "framer-motion": "^12.23.26",
     "ics": "^3.8.1",

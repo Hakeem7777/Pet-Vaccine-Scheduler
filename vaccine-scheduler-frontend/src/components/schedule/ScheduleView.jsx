@@ -81,6 +81,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
           <button
             className="btn btn-outline btn-sm"
             onClick={() => setIsExportModalOpen(true)}
+            data-tour="export-btn"
           >
             Export All
           </button>
@@ -122,6 +123,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
+          data-tour="schedule-categories"
         >
           <ScheduleCategory
             title="Overdue"

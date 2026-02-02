@@ -1,0 +1,273 @@
+/* Reactour Mask Overlay */
+.reactour__mask {
+  color: rgba(51, 63, 72, 0.75) !important; /* --color-neutral-dark with opacity */
+}
+
+/* Spotlight */
+.reactour__helper--isOpen {
+  border-radius: var(--radius) !important;
+}
+
+/* Reactour Popover - ensure it's visible above mask and properly positioned */
+[data-tour-elem="popover"] {
+  z-index: 100000 !important;
+  max-width: 380px !important;
+}
+
+/* Tooltip Container */
+.tour-tooltip {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-lg);
+  max-width: 360px;
+  font-family: var(--font-body);
+}
+
+.tour-tooltip__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.tour-tooltip__icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.tour-tooltip__title {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-neutral-dark);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tour-tooltip__content {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin-bottom: var(--spacing-lg);
+}
+
+.tour-tooltip__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.tour-tooltip__progress {
+  display: flex;
+  gap: 6px;
+}
+
+.tour-tooltip__progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-color);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.tour-tooltip__progress-dot--active {
+  background: var(--color-primary);
+  transform: scale(1.25);
+}
+
+.tour-tooltip__progress-dot--completed {
+  background: var(--color-secondary);
+}
+
+.tour-tooltip__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.tour-tooltip__btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tour-tooltip__btn--skip {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--color-text-muted);
+}
+
+.tour-tooltip__btn--skip:hover {
+  background: var(--color-neutral-light);
+  border-color: var(--color-text-muted);
+}
+
+.tour-tooltip__btn--back {
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.tour-tooltip__btn--back:hover {
+  background: rgba(0, 109, 156, 0.1);
+}
+
+.tour-tooltip__btn--next {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: white;
+}
+
+.tour-tooltip__btn--next:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.tour-tooltip__btn--finish {
+  background: var(--color-secondary);
+  border: 1px solid var(--color-secondary);
+  color: white;
+}
+
+.tour-tooltip__btn--finish:hover {
+  background: #239966;
+  border-color: #239966;
+}
+
+/* Tour trigger button in header */
+.tour-trigger-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.tour-trigger-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.tour-trigger-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tour-trigger-btn__icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Welcome overlay (center position) */
+.tour-welcome-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  pointer-events: none;
+}
+
+.tour-welcome-overlay .tour-tooltip {
+  pointer-events: auto;
+  max-width: 420px;
+  text-align: center;
+}
+
+.tour-welcome-overlay .tour-tooltip__header {
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.tour-welcome-overlay .tour-tooltip__icon {
+  width: 56px;
+  height: 56px;
+}
+
+.tour-welcome-overlay .tour-tooltip__icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.tour-welcome-overlay .tour-tooltip__footer {
+  justify-content: center;
+}
+
+.tour-welcome-overlay .tour-tooltip__progress {
+  display: none;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .tour-tooltip {
+    max-width: calc(100vw - 32px);
+    padding: var(--spacing-md);
+  }
+
+  .tour-tooltip__header {
+    flex-wrap: wrap;
+  }
+
+  .tour-tooltip__title {
+    font-size: 1rem;
+  }
+
+  .tour-tooltip__content {
+    font-size: 0.875rem;
+  }
+
+  .tour-tooltip__footer {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .tour-tooltip__progress {
+    order: 2;
+  }
+
+  .tour-tooltip__actions {
+    width: 100%;
+    justify-content: space-between;
+    order: 1;
+  }
+
+  .tour-tooltip__btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .tour-trigger-btn span {
+    display: none;
+  }
+
+  .tour-trigger-btn {
+    padding: var(--spacing-xs);
+  }
+}

@@ -50,7 +50,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
 
   // Front of the card - current schedule item display
   const frontContent = (
-    <div className={`schedule-item schedule-item--${type}`}>
+    <div className={`schedule-item schedule-item--${type}`} data-tour="schedule-item">
       <div className="schedule-item-header">
         <span className="schedule-vaccine">{item.vaccine}</span>
         <span className="schedule-dose">{item.dose}</span>
@@ -123,6 +123,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
           className="btn btn-sm btn-primary schedule-item-done-btn"
           onClick={handleMarkAsDone}
           disabled={isSubmitting}
+          data-tour="mark-done-btn"
         >
           {isSubmitting ? 'Saving...' : 'Mark as Done'}
         </button>

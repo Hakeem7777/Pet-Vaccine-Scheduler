@@ -7,7 +7,7 @@ const LIFESTYLE_VACCINES = ['noncore_bord_in', 'noncore_bord_inj', 'noncore_flu'
 
 function NoncoreSelector({ selected, onChange, recommendedIds = [] }) {
   return (
-    <div className="noncore-selector">
+    <div className="noncore-selector" data-tour="noncore-selector">
       <h4>Optional Vaccines</h4>
       <p className="selector-hint">Select non-core vaccines to include in schedule</p>
       <div className="noncore-options">

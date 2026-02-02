@@ -2,11 +2,13 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useGuestStore from '../../store/useGuestStore';
+import useTourStore from '../../store/useTourStore';
 
 function Header() {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated, isGuestMode, exitGuestMode } = useAuth();
   const { guestDog, clearGuestData } = useGuestStore();
+  const { startTour, isRunning } = useTourStore();
 
   function handleGuestLogout() {
     if (window.confirm('This will clear your guest data. Are you sure?')) {
@@ -33,7 +35,22 @@ function Header() {
         </Link>
       </div>
       <nav className="header-nav">
-        <Link to="/faq" className="header-nav-link">
+        {isAuthenticated && (
+          <button
+            className="tour-trigger-btn"
+            onClick={() => startTour('dashboard')}
+            disabled={isRunning}
+            title="Take a guided tour"
+          >
+            <svg className="tour-trigger-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>Tour</span>
+          </button>
+        )}
+        <Link to="/faq" className="header-nav-link" data-tour="faq-link">
           FAQ
         </Link>
       </nav>
