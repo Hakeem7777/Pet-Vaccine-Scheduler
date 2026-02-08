@@ -559,6 +559,89 @@ Sent from PetVaxCalendar Contact Form
                 'message': str(e)
             }
 
+    def send_contact_reply(self, to_email: str, name: str, original_subject: str, reply_message: str) -> dict:
+        """
+        Send a reply to a contact form submission.
+        """
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Re: {original_subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="background-color: #006D9C; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Reply to Your Message
+                </h1>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {name},
+                </p>
+                <p style="margin: 0 0 10px; font-size: 14px; color: #718096;">
+                    Regarding your message about "<strong>{original_subject}</strong>":
+                </p>
+                <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #006D9C; margin: 20px 0; white-space: pre-wrap; line-height: 1.6; font-size: 15px;">
+{reply_message}
+                </div>
+                <p style="margin: 20px 0 0; font-size: 14px; color: #718096; line-height: 1.6;">
+                    If you have further questions, feel free to reply to this email or submit another message through our contact form.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""Reply to Your Message
+
+Hi {name},
+
+Regarding your message about "{original_subject}":
+
+{reply_message}
+
+If you have further questions, feel free to reply to this email or submit another message through our contact form.
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": f"Re: {original_subject} - PetVaxCalendar",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Reply sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
     def send_otp_email(self, to_email: str, otp: str, username: str = '') -> dict:
         """
         Send OTP verification email for account registration.

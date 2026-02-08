@@ -6,8 +6,8 @@ import Footer from '../components/layout/Footer';
 function LoginPage() {
   const navigate = useNavigate();
 
-  function handleSuccess() {
-    navigate('/');
+  function handleSuccess(userData) {
+    navigate(userData?.is_staff ? '/admin-panel' : '/');
   }
 
   return (

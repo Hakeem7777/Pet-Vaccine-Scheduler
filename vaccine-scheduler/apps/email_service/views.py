@@ -120,6 +120,15 @@ class ContactFormView(APIView):
 
         data = serializer.validated_data
 
+        # Save contact submission to database
+        from apps.dashboard.models import ContactSubmission
+        ContactSubmission.objects.create(
+            name=data['name'],
+            email=data['email'],
+            subject=data['subject'],
+            message=data['message'],
+        )
+
         try:
             email_service = EmailService()
 

@@ -61,6 +61,15 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+  async function refreshUser() {
+    try {
+      const userData = await authApi.getProfile();
+      setUser(userData);
+    } catch (error) {
+      // Ignore refresh errors
+    }
+  }
+
   async function logout() {
     const refreshToken = localStorage.getItem('refresh_token');
     try {
@@ -94,11 +103,13 @@ export function AuthProvider({ children }) {
     isGuestMode,
     guestDog,
     hasUsedGuestMode,
+    isAdmin: user?.is_staff ?? false,
     login,
     register,
     verifyOTP,
     resendOTP,
     logout,
+    refreshUser,
     enterGuestMode,
     exitGuestMode,
   };

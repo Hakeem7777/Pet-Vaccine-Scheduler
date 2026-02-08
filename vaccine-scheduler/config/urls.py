@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/', include('apps.vaccinations.urls')),
     path('api/', include('apps.ai_analysis.urls')),
     path('api/email/', include('apps.email_service.urls')),
+    path('api/', include('apps.dashboard.urls')),
 ]
 
 # Serve React SPA for all other routes (only in production with frontend build)

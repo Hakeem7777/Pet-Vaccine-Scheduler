@@ -1566,10 +1566,12 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-xl);
+  margin-bottom: 20px;
 }
 
 .page-header-actions {
   display: flex;
+  margin-bottom: 20px;
   gap: var(--spacing-md);
 }
 

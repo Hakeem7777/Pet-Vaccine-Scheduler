@@ -8,7 +8,7 @@ import useTourStore from '../../store/useTourStore';
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, isAuthenticated, isGuestMode, exitGuestMode } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin, isGuestMode, exitGuestMode } = useAuth();
   const { guestDog, clearGuestData } = useGuestStore();
   const dogs = useDogStore((state) => state.dogs);
   const { startTour, isRunning } = useTourStore();
@@ -40,7 +40,7 @@ function Header() {
       transition={{ duration: 0.5 }}
     >
       <div className="header-brand">
-        <Link to="/" className="header-brand-link">
+        <Link to={isAdmin ? '/admin-panel' : '/'} className="header-brand-link">
           <img
             src="/logoBanner.png"
             alt="Pet Vaccine Planner"
@@ -49,7 +49,7 @@ function Header() {
         </Link>
       </div>
       <nav className="header-nav">
-        {isAuthenticated && canShowTour && (
+        {isAuthenticated && !isAdmin && canShowTour && (
           <button
             className="tour-trigger-btn"
             onClick={() => startTour(getTourName())}
@@ -63,6 +63,16 @@ function Header() {
             </svg>
             <span>Tour</span>
           </button>
+        )}
+        {isAuthenticated && !isAdmin && (
+          <Link to="/dashboard" className="header-nav-link">
+            Dashboard
+          </Link>
+        )}
+        {isAuthenticated && isAdmin && (
+          <Link to="/admin-panel" className="header-nav-link">
+            Admin Panel
+          </Link>
         )}
         <Link to="/faq" className="header-nav-link" data-tour="faq-link">
           FAQ
