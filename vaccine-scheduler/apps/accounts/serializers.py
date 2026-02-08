@@ -100,3 +100,54 @@ class PasswordChangeSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect.")
         return value
+
+
+class PendingRegistrationSerializer(serializers.Serializer):
+    """
+    Serializer for pending registration (before OTP verification).
+    Validates the same fields as UserRegistrationSerializer but does not create a User.
+    """
+    username = serializers.CharField(max_length=150, required=True)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'}
+    )
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
+    clinic_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True, default='')
+
+    def validate(self, attrs: dict) -> dict:
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({
+                'password_confirm': "Passwords do not match."
+            })
+        return attrs
+
+    def validate_email(self, value: str) -> str:
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+
+class OTPVerificationSerializer(serializers.Serializer):
+    """
+    Serializer for OTP verification request.
+    """
+    email = serializers.EmailField(required=True)
+    otp = serializers.CharField(max_length=6, min_length=6, required=True)
+
+
+class ResendOTPSerializer(serializers.Serializer):
+    """
+    Serializer for resend OTP request.
+    """
+    email = serializers.EmailField(required=True)

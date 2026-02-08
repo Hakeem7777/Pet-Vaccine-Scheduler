@@ -559,6 +559,104 @@ Sent from PetVaxCalendar Contact Form
                 'message': str(e)
             }
 
+    def send_otp_email(self, to_email: str, otp: str, username: str = '') -> dict:
+        """
+        Send OTP verification email for account registration.
+
+        Args:
+            to_email: Recipient email address
+            otp: 6-digit OTP code
+            username: Username for personalization
+
+        Returns:
+            dict with success status and message
+        """
+        display_name = username or to_email
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td style="background-color: #006D9C; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Verify Your Email
+                </h1>
+            </td>
+        </tr>
+
+        <!-- Content -->
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {display_name},
+                </p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Your verification code is:
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <span style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #006D9C; background-color: #f7fafc; padding: 15px 30px; border-radius: 8px; border: 2px solid #006D9C;">
+                        {otp}
+                    </span>
+                </div>
+                <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #5f6b76;">
+                    This code expires in 1 hour. If you did not request this, please ignore this email.
+                </p>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""Verify Your Email
+
+Hi {display_name},
+
+Your verification code is: {otp}
+
+This code expires in 1 hour. If you did not request this, please ignore this email.
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": "Verify Your Email - PetVaxCalendar",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "OTP email sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
 
 # Create singleton instance
 email_service = EmailService() if os.environ.get('RESEND_API_KEY') else None

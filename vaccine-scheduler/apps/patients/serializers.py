@@ -42,6 +42,11 @@ class DogCreateSerializer(serializers.ModelSerializer):
             'env_indoor_only', 'env_dog_parks', 'env_daycare_boarding',
             'env_travel_shows', 'env_tick_exposure'
         ]
+        extra_kwargs = {
+            'breed': {'required': False, 'allow_blank': True},
+            'sex': {'required': False},
+            'weight_kg': {'required': False},
+        }
 
     def validate_birth_date(self, value):
         """Ensure birth date is not in the future."""

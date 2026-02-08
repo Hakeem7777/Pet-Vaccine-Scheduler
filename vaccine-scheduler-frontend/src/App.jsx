@@ -6,6 +6,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import VerifyOTPPage from './pages/VerifyOTPPage';
 import DashboardPage from './pages/DashboardPage';
 import DogDetailPage from './pages/DogDetailPage';
 import FAQPage from './pages/FAQPage';
@@ -23,6 +24,7 @@ function App() {
           {/* Auth routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-otp" element={<VerifyOTPPage />} />
 
           {/* FAQ page - public, standalone */}
           <Route path="/faq" element={<FAQPage />} />

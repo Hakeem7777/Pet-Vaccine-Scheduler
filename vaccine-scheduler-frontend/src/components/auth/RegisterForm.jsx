@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 function RegisterForm({ onSuccess }) {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -32,7 +33,7 @@ function RegisterForm({ onSuccess }) {
 
     try {
       await register(formData);
-      onSuccess?.();
+      navigate('/verify-otp', { state: { email: formData.email } });
     } catch (err) {
       if (err.response?.data) {
         setErrors(err.response.data);

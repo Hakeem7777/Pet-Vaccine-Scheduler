@@ -94,6 +94,10 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
       weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
     };
 
+    // Remove empty optional fields so the backend uses model defaults
+    if (!submitData.sex) delete submitData.sex;
+    if (!submitData.breed) delete submitData.breed;
+
     try {
       await onSubmit(submitData);
     } catch (err) {

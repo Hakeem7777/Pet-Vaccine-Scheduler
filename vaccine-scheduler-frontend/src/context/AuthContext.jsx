@@ -41,12 +41,23 @@ export function AuthProvider({ children }) {
 
   async function register(formData) {
     const data = await authApi.register(formData);
+    // Registration now sends OTP — no tokens returned yet
+    return data;
+  }
+
+  async function verifyOTP(email, otp) {
+    const data = await authApi.verifyOTP(email, otp);
     if (data.tokens) {
       localStorage.setItem('access_token', data.tokens.access);
       localStorage.setItem('refresh_token', data.tokens.refresh);
       setUser(data.user);
       setIsGuestMode(false);
     }
+    return data;
+  }
+
+  async function resendOTP(email) {
+    const data = await authApi.resendOTP(email);
     return data;
   }
 
@@ -85,6 +96,8 @@ export function AuthProvider({ children }) {
     hasUsedGuestMode,
     login,
     register,
+    verifyOTP,
+    resendOTP,
     logout,
     enterGuestMode,
     exitGuestMode,

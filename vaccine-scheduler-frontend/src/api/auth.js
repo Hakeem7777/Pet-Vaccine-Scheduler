@@ -10,6 +10,16 @@ export async function register(data) {
   return response.data;
 }
 
+export async function verifyOTP(email, otp) {
+  const response = await client.post('/auth/verify-otp/', { email, otp });
+  return response.data;
+}
+
+export async function resendOTP(email) {
+  const response = await client.post('/auth/resend-otp/', { email });
+  return response.data;
+}
+
 export async function refreshToken(refresh) {
   const response = await client.post('/auth/refresh/', { refresh });
   return response.data;
