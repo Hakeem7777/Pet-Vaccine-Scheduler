@@ -50,7 +50,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
 
   // Front of the card - current schedule item display
   const frontContent = (
-    <div className={`schedule-item schedule-item--${type}`} data-tour="schedule-item">
+    <div className={`schedule-item schedule-item--${type}`}>
       <div className="schedule-item-header">
         <span className="schedule-vaccine">{item.vaccine}</span>
         <span className="schedule-dose">{item.dose}</span>
@@ -176,6 +176,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
         <FlipCard
           front={frontContent}
           back={backContent}
+          dataTour="schedule-item"
         />
         <ExportModal
           isOpen={isExportModalOpen}
@@ -190,7 +191,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
 
   // Otherwise, render just the front content without flip functionality
   return (
-    <>
+    <div data-tour="schedule-item">
       {frontContent}
       <ExportModal
         isOpen={isExportModalOpen}
@@ -199,7 +200,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
         dogInfo={dogInfo}
         singleItem={item}
       />
-    </>
+    </div>
   );
 }
 

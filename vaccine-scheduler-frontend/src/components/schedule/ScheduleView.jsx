@@ -123,7 +123,6 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          data-tour="schedule-categories"
         >
           <ScheduleCategory
             title="Overdue"

@@ -21,7 +21,7 @@ export const DASHBOARD_TOUR_STEPS = [
     selector: '[data-tour="dog-list"]',
     content: {
       title: 'Your Dogs',
-      description: 'All your registered dogs appear here. Click on any dog card to view their detailed vaccination schedule and history.',
+      description: 'All your registered pets will appear here. Click on any pet card to view their detailed vaccination schedule and history.',
     },
     position: 'top',
   },
@@ -62,12 +62,12 @@ export const DOG_DETAIL_TOUR_STEPS = [
     position: 'bottom',
   },
   {
-    selector: '[data-tour="schedule-categories"]',
+    selector: '[data-tour="schedule-section"]',
     content: {
       title: 'Vaccination Schedule',
       description: 'Vaccines are organized by urgency: Overdue (red), Upcoming within 30 days (orange), and Future (green). Stay on top of the red and orange items!',
     },
-    position: 'top',
+    position: 'right',
   },
   {
     selector: '[data-tour="schedule-item"]',

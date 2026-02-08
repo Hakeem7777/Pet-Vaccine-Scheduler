@@ -2,7 +2,7 @@ import { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './FlipCard.css';
 
-function FlipCard({ front, back, className = '' }) {
+function FlipCard({ front, back, className = '', dataTour }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const frontRef = useRef(null);
   const backRef = useRef(null);
@@ -55,7 +55,7 @@ function FlipCard({ front, back, className = '' }) {
   const currentHeight = isFlipped ? backHeight : frontHeight;
 
   return (
-    <div className={`flip-card-container ${className}`} onClick={handleFlip}>
+    <div className={`flip-card-container ${className}`} onClick={handleFlip} data-tour={dataTour}>
       {/* Hidden measurement divs */}
       <div className="flip-card-measure" ref={frontRef} aria-hidden="true">
         {front}

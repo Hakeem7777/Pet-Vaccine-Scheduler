@@ -1,14 +1,23 @@
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useGuestStore from '../../store/useGuestStore';
 import useTourStore from '../../store/useTourStore';
 
 function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, isAuthenticated, isGuestMode, exitGuestMode } = useAuth();
   const { guestDog, clearGuestData } = useGuestStore();
   const { startTour, isRunning } = useTourStore();
+
+  // Determine which tour to start based on current page
+  const getTourName = () => {
+    if (location.pathname.startsWith('/dogs/')) {
+      return 'dogDetail';
+    }
+    return 'dashboard';
+  };
 
   function handleGuestLogout() {
     if (window.confirm('This will clear your guest data. Are you sure?')) {
@@ -38,7 +47,7 @@ function Header() {
         {isAuthenticated && (
           <button
             className="tour-trigger-btn"
-            onClick={() => startTour('dashboard')}
+            onClick={() => startTour(getTourName())}
             disabled={isRunning}
             title="Take a guided tour"
           >

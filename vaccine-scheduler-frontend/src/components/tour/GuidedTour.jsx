@@ -87,18 +87,17 @@ function GuidedTour() {
   const { currentTour } = useTourStore();
 
   // Determine which steps to use based on current route
+  // Prioritize actual page location over stored currentTour value
   const getSteps = useCallback(() => {
-    const isDashboard = location.pathname === '/';
     const isDogDetail = location.pathname.startsWith('/dogs/');
 
-    if (isDashboard || currentTour === 'dashboard') {
-      return DASHBOARD_TOUR_STEPS;
-    }
-    if (isDogDetail || currentTour === 'dogDetail') {
+    // Always use dog detail steps when on a dog detail page
+    if (isDogDetail) {
       return DOG_DETAIL_TOUR_STEPS;
     }
+    // Use dashboard steps for dashboard or any other page
     return DASHBOARD_TOUR_STEPS;
-  }, [location.pathname, currentTour]);
+  }, [location.pathname]);
 
   const steps = getSteps();
 
@@ -111,13 +110,41 @@ function GuidedTour() {
     <TourProvider
       steps={steps}
       styles={{
-        popover: (base) => ({
-          ...base,
-          padding: 0,
-          background: 'transparent',
-          boxShadow: 'none',
-          borderRadius: '16px',
-        }),
+        popover: (base, state) => {
+          // Get viewport dimensions
+          const viewportHeight = window.innerHeight;
+          const viewportWidth = window.innerWidth;
+
+          // Parse the current transform to get x, y
+          let x = 0, y = 0;
+          if (base.transform) {
+            const match = base.transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+            if (match) {
+              x = parseFloat(match[1]);
+              y = parseFloat(match[2]);
+            }
+          }
+
+          // Constrain y to keep popover in viewport (with padding)
+          const popoverHeight = 200; // approximate height
+          const maxY = viewportHeight - popoverHeight - 20;
+          const minY = 80; // below header
+          const constrainedY = Math.max(minY, Math.min(y, maxY));
+
+          // Constrain x as well
+          const popoverWidth = 360;
+          const maxX = viewportWidth - popoverWidth - 20;
+          const constrainedX = Math.max(20, Math.min(x, maxX));
+
+          return {
+            ...base,
+            padding: 0,
+            background: 'transparent',
+            boxShadow: 'none',
+            borderRadius: '16px',
+            transform: `translate(${constrainedX}px, ${constrainedY}px)`,
+          };
+        },
         maskArea: (base) => ({
           ...base,
           rx: 8,
