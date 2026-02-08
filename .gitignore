@@ -114,3 +114,5 @@ settings.local.json
 tmpclaude-*
 
 tmpclaude-*-cwd
+tmpclaude*
+*claude*
