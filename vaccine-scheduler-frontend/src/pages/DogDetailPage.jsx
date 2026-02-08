@@ -163,7 +163,7 @@ function DogDetailPage() {
         </div>
       )}
 
-      <div className="dog-info-card">
+      <div className="dog-info-card" data-tour="dog-info-card">
         <div className="dog-info-header">
           <div className="dog-info-title">
             <h2>{dog.name}</h2>
@@ -232,7 +232,7 @@ function DogDetailPage() {
       </div>
 
       <div className="dog-detail-content">
-        <div className="schedule-section">
+        <div className="schedule-section" data-tour="schedule-section">
           {isGuestDog ? (
             <GuestScheduleView
               key={refreshKey}

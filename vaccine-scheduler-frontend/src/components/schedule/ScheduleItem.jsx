@@ -123,6 +123,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
           className="btn btn-sm btn-primary schedule-item-done-btn"
           onClick={handleMarkAsDone}
           disabled={isSubmitting}
+          data-tour="mark-done-btn"
         >
           {isSubmitting ? 'Saving...' : 'Mark as Done'}
         </button>
@@ -175,6 +176,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
         <FlipCard
           front={frontContent}
           back={backContent}
+          dataTour="schedule-item"
         />
         <ExportModal
           isOpen={isExportModalOpen}
@@ -189,7 +191,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
 
   // Otherwise, render just the front content without flip functionality
   return (
-    <>
+    <div data-tour="schedule-item">
       {frontContent}
       <ExportModal
         isOpen={isExportModalOpen}
@@ -198,7 +200,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
         dogInfo={dogInfo}
         singleItem={item}
       />
-    </>
+    </div>
   );
 }
 

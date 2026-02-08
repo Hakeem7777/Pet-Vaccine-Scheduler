@@ -9,6 +9,7 @@ function ChatBubble() {
       className={`chat-bubble ${isOpen ? 'chat-bubble--active' : ''}`}
       onClick={toggleChat}
       aria-label={isOpen ? 'Close chat' : 'Open chat'}
+      data-tour="chat-bubble"
     >
       {isOpen ? (
         <svg

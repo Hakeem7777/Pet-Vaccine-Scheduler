@@ -81,6 +81,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
           <button
             className="btn btn-outline btn-sm"
             onClick={() => setIsExportModalOpen(true)}
+            data-tour="export-btn"
           >
             Export All
           </button>
