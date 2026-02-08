@@ -102,6 +102,11 @@ else:
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.backends.EmailBackend',
+]
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {

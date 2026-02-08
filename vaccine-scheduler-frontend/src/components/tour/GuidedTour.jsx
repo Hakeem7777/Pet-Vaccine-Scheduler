@@ -3,6 +3,7 @@ import { TourProvider, useTour } from '@reactour/tour';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useTourStore from '../../store/useTourStore';
+import useDogStore from '../../store/useDogStore';
 import TourTooltip from './TourTooltip';
 import { DASHBOARD_TOUR_STEPS, DOG_DETAIL_TOUR_STEPS } from './TourSteps';
 import './GuidedTour.css';
@@ -12,28 +13,38 @@ function TourController() {
   const { setIsOpen, setCurrentStep } = useTour();
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const dogs = useDogStore((state) => state.dogs);
   const {
     isRunning,
     startTour,
+    stopTour,
     hasUserSeenTour,
   } = useTourStore();
 
   // When our store says to start, open reactour
+  // For dashboard, only open if user has at least one dog
   useEffect(() => {
     if (isRunning) {
+      const isDashboard = location.pathname === '/';
+      if (isDashboard && (!dogs || dogs.length === 0)) {
+        stopTour();
+        return;
+      }
       setCurrentStep(0);
       setIsOpen(true);
     } else {
       setIsOpen(false);
     }
-  }, [isRunning, setIsOpen, setCurrentStep]);
+  }, [isRunning, setIsOpen, setCurrentStep, location.pathname, dogs, stopTour]);
 
-  // Auto-start tour for new authenticated users on first login
+  // Auto-start tour for authenticated users who haven't seen it yet
+  // Wait until user has added at least one dog before starting
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
     if (hasUserSeenTour(user.id)) return;
     if (isRunning) return;
     if (location.pathname !== '/') return;
+    if (!dogs || dogs.length === 0) return; // Wait for first dog
 
     // Delay start to let page render
     const timer = setTimeout(() => {
@@ -41,7 +52,7 @@ function TourController() {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, user?.id, hasUserSeenTour, isRunning, location.pathname, startTour]);
+  }, [isAuthenticated, user?.id, hasUserSeenTour, isRunning, location.pathname, startTour, dogs]);
 
   return null;
 }

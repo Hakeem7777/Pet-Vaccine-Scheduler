@@ -108,8 +108,8 @@ function DashboardPage() {
       setShowSignupPrompt(true);
       return;
     }
-    // Pause tour if on Add Dog step (step 0)
-    if (isRunning && currentStep === 0) {
+    // Pause tour if running while opening modal
+    if (isRunning) {
       pauseTour();
     }
     setShowAddModal(true);

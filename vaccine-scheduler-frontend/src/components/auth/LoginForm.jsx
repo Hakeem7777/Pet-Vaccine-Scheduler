@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 function LoginForm({ onSuccess }) {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -22,7 +22,7 @@ function LoginForm({ onSuccess }) {
     setIsLoading(true);
 
     try {
-      await login(formData.username, formData.password);
+      await login(formData.email, formData.password);
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
@@ -38,15 +38,15 @@ function LoginForm({ onSuccess }) {
       {error && <div className="error-message">{error}</div>}
 
       <div className="form-group">
-        <label htmlFor="username">Username</label>
+        <label htmlFor="email">Email</label>
         <input
-          type="text"
-          id="username"
-          name="username"
-          value={formData.username}
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
           onChange={handleChange}
           required
-          autoComplete="username"
+          autoComplete="email"
         />
       </div>
 

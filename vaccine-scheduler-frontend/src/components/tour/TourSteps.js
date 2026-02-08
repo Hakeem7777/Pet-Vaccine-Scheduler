@@ -1,13 +1,12 @@
-// Dashboard Tour Steps - shown to authenticated users on first login
+// Dashboard Tour Steps - shown after the user adds their first dog
 export const DASHBOARD_TOUR_STEPS = [
   {
-    // Targets both inline form (no dogs) and Add Dog button (has dogs) using CSS selector
-    selector: '[data-tour="first-dog-form"], [data-tour="add-dog-btn"]',
+    selector: '[data-tour="dog-list"]',
     content: {
-      title: 'Add Your Dog',
-      description: "Start by adding your dog's information. Enter their name, birth date, and living environment to get personalized vaccine recommendations.",
+      title: 'Your Dogs',
+      description: 'Great job adding your first dog! All your registered pets will appear here. Click on any pet card to view their detailed vaccination schedule and history.',
     },
-    position: 'left',
+    position: 'top',
   },
   {
     selector: '[data-tour="upload-doc-btn"]',
@@ -18,12 +17,12 @@ export const DASHBOARD_TOUR_STEPS = [
     position: 'bottom',
   },
   {
-    selector: '[data-tour="dog-list"]',
+    selector: '[data-tour="add-dog-btn"]',
     content: {
-      title: 'Your Dogs',
-      description: 'All your registered pets will appear here. Click on any pet card to view their detailed vaccination schedule and history.',
+      title: 'Add More Dogs',
+      description: 'You can add more dogs at any time. Each dog gets their own personalized vaccination schedule.',
     },
-    position: 'top',
+    position: 'left',
   },
   {
     selector: '[data-tour="chat-bubble"]',

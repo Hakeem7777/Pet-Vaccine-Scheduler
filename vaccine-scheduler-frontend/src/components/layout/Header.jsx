@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useGuestStore from '../../store/useGuestStore';
+import useDogStore from '../../store/useDogStore';
 import useTourStore from '../../store/useTourStore';
 
 function Header() {
@@ -9,6 +10,7 @@ function Header() {
   const location = useLocation();
   const { user, logout, isAuthenticated, isGuestMode, exitGuestMode } = useAuth();
   const { guestDog, clearGuestData } = useGuestStore();
+  const dogs = useDogStore((state) => state.dogs);
   const { startTour, isRunning } = useTourStore();
 
   // Determine which tour to start based on current page
@@ -18,6 +20,9 @@ function Header() {
     }
     return 'dashboard';
   };
+
+  // Only show tour button if user has dogs (on dashboard) or is on a dog detail page
+  const canShowTour = location.pathname.startsWith('/dogs/') || (dogs && dogs.length > 0);
 
   function handleGuestLogout() {
     if (window.confirm('This will clear your guest data. Are you sure?')) {
@@ -44,7 +49,7 @@ function Header() {
         </Link>
       </div>
       <nav className="header-nav">
-        {isAuthenticated && (
+        {isAuthenticated && canShowTour && (
           <button
             className="tour-trigger-btn"
             onClick={() => startTour(getTourName())}

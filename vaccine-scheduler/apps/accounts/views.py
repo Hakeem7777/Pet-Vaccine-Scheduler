@@ -1,7 +1,7 @@
 """
 Views for user authentication and profile management.
 """
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -42,6 +42,38 @@ class RegisterView(generics.CreateAPIView):
                 'refresh': str(refresh),
             }
         }, status=status.HTTP_201_CREATED)
+
+
+class LoginView(APIView):
+    """
+    Email-based login endpoint.
+
+    POST /api/auth/login/
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response(
+                {'detail': 'Email and password are required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+            })
+
+        return Response(
+            {'detail': 'Invalid email or password.'},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
