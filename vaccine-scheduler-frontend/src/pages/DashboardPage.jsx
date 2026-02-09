@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import useDogStore from '../store/useDogStore';
@@ -14,7 +14,7 @@ import PageTransition from '../components/common/PageTransition';
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, enterGuestMode } = useAuth();
+  const { isAuthenticated, isAdmin, enterGuestMode } = useAuth();
   const { setAllDogsContext } = useChat();
   const { dogs, isLoading, error, fetchDogs, addDog, clearError } = useDogStore();
   const { guestDog, addGuestDog } = useGuestStore();
@@ -135,6 +135,11 @@ function DashboardPage() {
       return;
     }
     setShowUploadModal(true);
+  }
+
+  // Admin users should only see the admin dashboard
+  if (isAdmin) {
+    return <Navigate to="/admin-panel" replace />;
   }
 
   if (showLoading) {

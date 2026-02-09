@@ -65,9 +65,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'clinic_name', 'phone', 'date_joined', 'created_at', 'updated_at'
+            'clinic_name', 'phone', 'is_staff', 'date_joined', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'username', 'date_joined', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'date_joined', 'created_at', 'updated_at', 'is_staff']
+
+    def validate_email(self, value):
+        user = self.instance
+        if user and User.objects.filter(email=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
 
 class PasswordChangeSerializer(serializers.Serializer):

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { getDog, updateDog, deleteDog } from '../api/dogs';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
@@ -19,7 +19,7 @@ import { AGE_CLASSIFICATIONS, SEX_CHOICES } from '../utils/constants';
 function DogDetailPage() {
   const { dogId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const { setDogContext } = useChat();
   const { guestDog, updateGuestDog, deleteGuestDog } = useGuestStore();
 
@@ -123,6 +123,10 @@ function DogDetailPage() {
       fetchDog();
     }
     setRefreshKey((prev) => prev + 1);
+  }
+
+  if (isAdmin) {
+    return <Navigate to="/admin-panel" replace />;
   }
 
   if (isLoading) {

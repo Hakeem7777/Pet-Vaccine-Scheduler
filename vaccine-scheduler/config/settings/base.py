@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'apps.vaccinations',
     'apps.ai_analysis',
     'apps.email_service',
+    'apps.dashboard',
 ]
 
 MIDDLEWARE = [

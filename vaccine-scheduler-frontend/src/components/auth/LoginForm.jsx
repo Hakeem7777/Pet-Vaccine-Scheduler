@@ -22,8 +22,8 @@ function LoginForm({ onSuccess }) {
     setIsLoading(true);
 
     try {
-      await login(formData.email, formData.password);
-      onSuccess?.();
+      const userData = await login(formData.email, formData.password);
+      onSuccess?.(userData);
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.');
     } finally {
