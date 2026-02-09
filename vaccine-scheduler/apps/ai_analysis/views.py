@@ -25,6 +25,7 @@ from .serializers import (
 from .services import rag_service
 from .document_extraction import document_extraction_service
 from core.llm_providers import get_llm
+from apps.dashboard.token_tracking import log_token_usage
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class VaccineMatcherAI:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def match_vaccine(self, extracted_name: str) -> Optional[Vaccine]:
+    def match_vaccine(self, extracted_name: str, user=None) -> Optional[Vaccine]:
         """
         Use AI to match an extracted vaccine name to a database vaccine.
         Returns the matched Vaccine object or None if no match.
@@ -91,6 +92,8 @@ Do not include any explanation, just the vaccine_id or NONE."""
         try:
             llm = get_llm(temperature=0)
             response = llm.invoke(prompt)
+            if user:
+                log_token_usage(user, 'vaccine_match', response)
             matched_id = response.content.strip().upper()
 
             if matched_id == "NONE":
@@ -184,7 +187,12 @@ class AIQueryView(APIView):
 
         try:
             result = rag_service.query(serializer.validated_data['query'])
-            return Response(result, status=status.HTTP_200_OK)
+            if result.get('token_usage'):
+                log_token_usage(request.user, 'ai_query', result['token_usage'])
+            return Response({
+                'answer': result['answer'],
+                'sources': result['sources'],
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
                 'error': f'AI query failed: {str(e)}'
@@ -296,6 +304,8 @@ class DogAIAnalysisView(APIView):
 
         try:
             result = rag_service.query(query)
+            if result.get('token_usage'):
+                log_token_usage(request.user, 'dog_ai_analysis', result['token_usage'])
 
             response_data = {
                 'dog': {
@@ -407,6 +417,8 @@ class AIChatView(APIView):
 
         try:
             result = rag_service.query(full_query)
+            if result.get('token_usage'):
+                log_token_usage(request.user, 'ai_chat', result['token_usage'])
 
             return Response({
                 'response': result['answer'],
@@ -470,7 +482,7 @@ class AIChatView(APIView):
             parts.append(f"- Environment: {', '.join(env_factors)}")
 
         # Vaccination history
-        records = dog.vaccination_records.select_related('vaccine').order_by('-date_administered')[:10]
+        records = dog.vaccination_records.select_related('vaccine').order_by('-date_administered')[:5]
         if records:
             parts.append("- Recent vaccinations:")
             for record in records:
@@ -502,7 +514,7 @@ class AIChatView(APIView):
             return ""
 
         parts = ["Previous conversation:"]
-        for msg in history[-6:]:  # Keep last 6 messages to avoid token limits
+        for msg in history[-4:]:  # Keep last 4 messages to reduce token usage
             role = "User" if msg['role'] == 'user' else "Assistant"
             parts.append(f"{role}: {msg['content']}")
 
@@ -647,6 +659,11 @@ class DocumentExtractView(APIView):
                 file_data,
                 uploaded_file.name
             )
+
+            # Log token usage
+            token_usage = extraction_result.pop('_token_usage', None)
+            if token_usage:
+                log_token_usage(request.user, 'document_extract', token_usage)
 
             # Validate extracted data against current dog info
             warnings = self._validate_extraction(extraction_result, dog)
@@ -835,6 +852,11 @@ class DocumentExtractNewDogView(APIView):
                 uploaded_file.name
             )
 
+            # Log token usage
+            token_usage = extraction_result.pop('_token_usage', None)
+            if token_usage:
+                log_token_usage(request.user, 'document_extract_new', token_usage)
+
             # Validate and serialize response
             response_serializer = DocumentExtractionResponseSerializer(
                 data=extraction_result
@@ -925,7 +947,7 @@ class ApplyExtractionView(APIView):
         vaccinations = data.get('vaccinations', [])
         for vax in vaccinations:
             # Try to match vaccine by name
-            vaccine = self._find_vaccine(vax.get('vaccine_name', ''))
+            vaccine = self._find_vaccine(vax.get('vaccine_name', ''), user=request.user)
 
             if not vaccine:
                 vaccinations_skipped += 1
@@ -976,8 +998,8 @@ class ApplyExtractionView(APIView):
             'skipped_reasons': skipped_reasons,
         }, status=status.HTTP_200_OK)
 
-    def _find_vaccine(self, vaccine_name: str) -> Optional[Vaccine]:
+    def _find_vaccine(self, vaccine_name: str, user=None) -> Optional[Vaccine]:
         """
         Find a vaccine by name using AI-powered matching.
         """
-        return vaccine_matcher_ai.match_vaccine(vaccine_name)
+        return vaccine_matcher_ai.match_vaccine(vaccine_name, user=user)

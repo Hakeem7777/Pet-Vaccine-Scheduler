@@ -11,6 +11,9 @@ from .views import (
     AdminVaccinationListView,
     AdminContactListView,
     AdminContactReplyView,
+    AdminGraphDataView,
+    AdminTokenUsageListView,
+    AdminTokenUsageStatsView,
 )
 
 app_name = 'dashboard'
@@ -29,4 +32,7 @@ urlpatterns = [
     path('admin-panel/vaccinations/', AdminVaccinationListView.as_view(), name='admin-vaccinations'),
     path('admin-panel/contacts/', AdminContactListView.as_view(), name='admin-contacts'),
     path('admin-panel/contacts/<int:pk>/reply/', AdminContactReplyView.as_view(), name='admin-contact-reply'),
+    path('admin-panel/graphs/', AdminGraphDataView.as_view(), name='admin-graphs'),
+    path('admin-panel/token-usage/', AdminTokenUsageListView.as_view(), name='admin-token-usage'),
+    path('admin-panel/token-usage/stats/', AdminTokenUsageStatsView.as_view(), name='admin-token-usage-stats'),
 ]

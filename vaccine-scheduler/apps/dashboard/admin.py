@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ContactSubmission, ReminderPreference, ReminderLog
+from .models import ContactSubmission, ReminderPreference, ReminderLog, TokenUsage
 
 
 @admin.register(ContactSubmission)
@@ -24,3 +24,11 @@ class ReminderLogAdmin(admin.ModelAdmin):
     list_filter = ['sent_at']
     search_fields = ['user__email', 'dog__name', 'vaccine_id']
     readonly_fields = ['user', 'dog', 'vaccine_id', 'dose_number', 'scheduled_date', 'sent_at']
+
+
+@admin.register(TokenUsage)
+class TokenUsageAdmin(admin.ModelAdmin):
+    list_display = ['user', 'endpoint', 'model_name', 'input_tokens', 'output_tokens', 'total_tokens', 'created_at']
+    list_filter = ['endpoint', 'model_name', 'created_at']
+    search_fields = ['user__email', 'endpoint']
+    readonly_fields = ['user', 'endpoint', 'model_name', 'input_tokens', 'output_tokens', 'total_tokens', 'created_at']

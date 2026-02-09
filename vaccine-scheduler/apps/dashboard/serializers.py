@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from apps.patients.models import Dog
 from apps.vaccinations.models import VaccinationRecord
-from .models import ContactSubmission, ReminderPreference
+from .models import ContactSubmission, ReminderPreference, TokenUsage
 
 User = get_user_model()
 
@@ -85,6 +85,17 @@ class DashboardRecentVaccinationSerializer(serializers.ModelSerializer):
     class Meta:
         model = VaccinationRecord
         fields = ['id', 'dog_name', 'vaccine_name', 'date_administered', 'dose_number']
+
+
+class TokenUsageSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source='user.email', read_only=True)
+
+    class Meta:
+        model = TokenUsage
+        fields = [
+            'id', 'user_email', 'endpoint', 'model_name',
+            'input_tokens', 'output_tokens', 'total_tokens', 'created_at',
+        ]
 
 
 class ReminderPreferenceSerializer(serializers.ModelSerializer):

@@ -94,3 +94,33 @@ class ReminderLog(models.Model):
 
     def __str__(self):
         return f"Reminder: {self.dog.name} - {self.vaccine_id} dose {self.dose_number} ({self.sent_at})"
+
+
+class TokenUsage(models.Model):
+    """Tracks LLM token consumption per user per request."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='token_usages',
+    )
+    endpoint = models.CharField(
+        max_length=100,
+        help_text="API endpoint that triggered the LLM call",
+    )
+    model_name = models.CharField(max_length=100, blank=True, default='')
+    input_tokens = models.IntegerField(default=0)
+    output_tokens = models.IntegerField(default=0)
+    total_tokens = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'token_usages'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['endpoint']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.endpoint} ({self.total_tokens} tokens)"

@@ -64,7 +64,7 @@ AGE_ADULT_MAX_YEARS = 7
 
 # Document processing
 SUPPORTED_EXTENSIONS = ('.pdf', '.txt')
-RETRIEVER_K = 5
+RETRIEVER_K = 3
 
 # Embedding Configuration
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")

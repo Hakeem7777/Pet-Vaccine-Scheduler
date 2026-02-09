@@ -24,7 +24,7 @@ export async function sendChatMessage(message, dogId = null, dogIds = null, conv
   console.log('sendChatMessage - selectedNoncore:', selectedNoncore);
   const data = {
     message,
-    conversation_history: conversationHistory.map((msg) => ({
+    conversation_history: conversationHistory.slice(-4).map((msg) => ({
       role: msg.role,
       content: msg.content,
     })),

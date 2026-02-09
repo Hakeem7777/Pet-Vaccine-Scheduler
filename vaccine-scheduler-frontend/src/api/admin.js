@@ -39,3 +39,18 @@ export async function replyToContact(id, replyMessage) {
   });
   return response.data;
 }
+
+export async function getAdminGraphData() {
+  const response = await client.get('/admin-panel/graphs/');
+  return response.data;
+}
+
+export async function getAdminTokenUsage(params = {}) {
+  const response = await client.get('/admin-panel/token-usage/', { params });
+  return response.data;
+}
+
+export async function getAdminTokenUsageStats() {
+  const response = await client.get('/admin-panel/token-usage/stats/');
+  return response.data;
+}

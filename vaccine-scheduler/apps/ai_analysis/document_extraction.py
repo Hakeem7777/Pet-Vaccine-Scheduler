@@ -129,7 +129,11 @@ class DocumentExtractionService:
 
         try:
             response = self.llm.invoke([message])
-            return self._parse_response(response.content)
+            result = self._parse_response(response.content)
+            # Attach token usage metadata for tracking
+            from apps.dashboard.token_tracking import extract_token_usage
+            result['_token_usage'] = extract_token_usage(response)
+            return result
         except Exception as e:
             logger.error(f"Document extraction failed: {e}", exc_info=True)
             raise

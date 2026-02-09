@@ -45,8 +45,8 @@ class VectorDBManager:
         Splits documents and creates a FAISS vector store.
         """
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
+            chunk_size=500,
+            chunk_overlap=50
         )
         splits = text_splitter.split_documents(docs)
         

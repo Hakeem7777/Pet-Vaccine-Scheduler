@@ -90,6 +90,7 @@ class RAGService:
             self._pipeline = RAGPipeline(vectorstore)
 
             self._initialized = True
+            self._initialization_error = None
             logger.info(f"[RAGService.initialize] RAG pipeline initialized successfully with LLM: {type(self._pipeline.llm).__name__}")
             return True
 
@@ -147,6 +148,7 @@ class RAGService:
         return {
             'answer': result['answer'],
             'sources': sources,
+            'token_usage': result.get('token_usage', {}),
         }
 
 

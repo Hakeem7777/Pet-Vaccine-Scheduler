@@ -7,6 +7,7 @@ from langchain_community.vectorstores import FAISS
 
 from core.config import RETRIEVER_K
 from core.llm_providers import get_llm
+from core.token_callback import TokenUsageCallbackHandler
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +61,16 @@ class RAGPipeline:
 
         logger.info("[RAGPipeline.answer_query] Invoking chain...")
         try:
-            response = chain.invoke({"input": query})
+            token_handler = TokenUsageCallbackHandler()
+            response = chain.invoke(
+                {"input": query},
+                config={"callbacks": [token_handler]},
+            )
             logger.info("[RAGPipeline.answer_query] Chain invocation successful")
             return {
                 "answer": response["answer"],
-                "sources": response["context"]
+                "sources": response["context"],
+                "token_usage": token_handler.get_usage(),
             }
         except Exception as e:
             logger.error(f"[RAGPipeline.answer_query] Chain invocation failed: {e}", exc_info=True)
