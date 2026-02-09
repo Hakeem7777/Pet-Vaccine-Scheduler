@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDashboardStats } from '../api/dashboard';
 import ProfileManager from '../components/profile/ProfileManager';
+import ReminderSettings from '../components/dashboard/ReminderSettings';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageTransition from '../components/common/PageTransition';
 import './MyDashboardPage.css';
@@ -92,6 +93,14 @@ function MyDashboardPage() {
               </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Vaccination Reminders */}
+      <div className="my-dashboard__section">
+        <h3 className="my-dashboard__section-title">Vaccination Reminders</h3>
+        <div className="my-dashboard__info-card">
+          <ReminderSettings />
         </div>
       </div>
 

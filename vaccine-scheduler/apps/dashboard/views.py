@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from apps.patients.models import Dog
 from apps.vaccinations.models import VaccinationRecord
-from .models import ContactSubmission
+from .models import ContactSubmission, ReminderPreference
 from .permissions import IsAdminUser
 from .serializers import (
     AdminDogSerializer,
@@ -20,6 +20,7 @@ from .serializers import (
     ContactSubmissionSerializer,
     DashboardDogSummarySerializer,
     DashboardRecentVaccinationSerializer,
+    ReminderPreferenceSerializer,
 )
 
 User = get_user_model()
@@ -46,6 +47,23 @@ class ClientDashboardView(APIView):
             'dogs_summary': DashboardDogSummarySerializer(dogs, many=True).data,
             'recent_vaccinations': DashboardRecentVaccinationSerializer(recent_vaccinations, many=True).data,
         })
+
+
+class ReminderPreferenceView(APIView):
+    """GET/PUT reminder preferences for the authenticated user."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        pref, _created = ReminderPreference.objects.get_or_create(user=request.user)
+        serializer = ReminderPreferenceSerializer(pref)
+        return Response(serializer.data)
+
+    def put(self, request):
+        pref, _created = ReminderPreference.objects.get_or_create(user=request.user)
+        serializer = ReminderPreferenceSerializer(pref, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 # ── Admin Views ───────────────────────────────────────────────────

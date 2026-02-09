@@ -102,6 +102,157 @@ class EmailService:
                 'status_code': 500
             }
 
+    def send_reminder_email(
+        self,
+        to_email: str,
+        user_name: str,
+        dog_name: str,
+        vaccine_name: str,
+        dose_info: str,
+        due_date: str,
+        days_remaining: int,
+    ) -> dict:
+        """
+        Send a simple vaccination reminder email.
+
+        Args:
+            to_email: Recipient email
+            user_name: User's display name
+            dog_name: Dog's name
+            vaccine_name: Vaccine display name
+            dose_info: Dose description (e.g. "Initial Series: Dose 2")
+            due_date: Formatted due date string (e.g. "January 15, 2026")
+            days_remaining: Days until due (negative = overdue)
+
+        Returns:
+            dict with success status and message
+        """
+        if days_remaining < 0:
+            urgency_text = f"<strong>{abs(days_remaining)} day(s) overdue</strong>"
+            urgency_color = "#E53E3E"
+            subject_prefix = "OVERDUE"
+        elif days_remaining == 0:
+            urgency_text = "<strong>Due today</strong>"
+            urgency_color = "#E53E3E"
+            subject_prefix = "TODAY"
+        elif days_remaining <= 3:
+            urgency_text = f"Due in <strong>{days_remaining} day(s)</strong>"
+            urgency_color = "#FF9C3B"
+            subject_prefix = "SOON"
+        else:
+            urgency_text = f"Due in <strong>{days_remaining} day(s)</strong>"
+            urgency_color = "#006D9C"
+            subject_prefix = "REMINDER"
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaccination Reminder for {dog_name}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="background-color: #006D9C; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Vaccination Reminder
+                </h1>
+                <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                    {dog_name}
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {user_name},
+                </p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    This is a reminder about an upcoming vaccination for <strong>{dog_name}</strong>.
+                </p>
+                <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 8px; border-left: 4px solid {urgency_color};">
+                    <tr>
+                        <td style="padding: 20px;">
+                            <table cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="padding: 5px 0; color: #5f6b76; width: 40%;">Vaccine:</td>
+                                    <td style="padding: 5px 0; font-weight: 600;">{vaccine_name}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 0; color: #5f6b76;">Dose:</td>
+                                    <td style="padding: 5px 0; font-weight: 600;">{dose_info}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 0; color: #5f6b76;">Due Date:</td>
+                                    <td style="padding: 5px 0; font-weight: 600;">{due_date}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 0; color: #5f6b76;">Status:</td>
+                                    <td style="padding: 5px 0; color: {urgency_color};">{urgency_text}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                <p style="margin: 20px 0 0; font-size: 14px; color: #718096; line-height: 1.6;">
+                    Please schedule an appointment with your veterinarian.
+                    You can manage your reminder settings in your dashboard.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler<br>
+                    You are receiving this because you enabled vaccination reminders.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""Vaccination Reminder for {dog_name}
+
+Hi {user_name},
+
+This is a reminder about an upcoming vaccination for {dog_name}.
+
+Vaccine: {vaccine_name}
+Dose: {dose_info}
+Due Date: {due_date}
+Status: {'Overdue by ' + str(abs(days_remaining)) + ' day(s)' if days_remaining < 0 else 'Due in ' + str(days_remaining) + ' day(s)'}
+
+Please schedule an appointment with your veterinarian.
+You can manage your reminder settings in your dashboard.
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+You are receiving this because you enabled vaccination reminders.
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": f"[{subject_prefix}] {vaccine_name} for {dog_name} - {due_date}",
+                "html": html_content,
+                "text": plain_content,
+            })
+            return {
+                'success': True,
+                'message': "Reminder email sent successfully",
+                'id': response.get('id'),
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e),
+            }
+
     def _generate_email_html(
         self,
         dog_name: str,

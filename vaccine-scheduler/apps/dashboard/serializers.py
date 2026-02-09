@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from apps.patients.models import Dog
 from apps.vaccinations.models import VaccinationRecord
-from .models import ContactSubmission
+from .models import ContactSubmission, ReminderPreference
 
 User = get_user_model()
 
@@ -85,3 +85,28 @@ class DashboardRecentVaccinationSerializer(serializers.ModelSerializer):
     class Meta:
         model = VaccinationRecord
         fields = ['id', 'dog_name', 'vaccine_name', 'date_administered', 'dose_number']
+
+
+class ReminderPreferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReminderPreference
+        fields = ['reminders_enabled', 'lead_time_days', 'interval_hours', 'updated_at']
+        read_only_fields = ['updated_at']
+
+    def validate_interval_hours(self, value):
+        from core.config import REMINDER_MIN_INTERVAL_HOURS
+        if value < REMINDER_MIN_INTERVAL_HOURS:
+            raise serializers.ValidationError(
+                f'Minimum interval is {REMINDER_MIN_INTERVAL_HOURS} hour(s).'
+            )
+        return value
+
+    def validate_lead_time_days(self, value):
+        from core.config import REMINDER_MAX_LEAD_TIME_DAYS
+        if value < 1:
+            raise serializers.ValidationError('Lead time must be at least 1 day.')
+        if value > REMINDER_MAX_LEAD_TIME_DAYS:
+            raise serializers.ValidationError(
+                f'Maximum lead time is {REMINDER_MAX_LEAD_TIME_DAYS} days.'
+            )
+        return value

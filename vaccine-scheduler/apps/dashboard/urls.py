@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     ClientDashboardView,
+    ReminderPreferenceView,
     AdminStatsView,
     AdminUserListView,
     AdminUserDeleteView,
@@ -17,6 +18,7 @@ app_name = 'dashboard'
 urlpatterns = [
     # Client dashboard
     path('dashboard/', ClientDashboardView.as_view(), name='client-dashboard'),
+    path('dashboard/reminders/', ReminderPreferenceView.as_view(), name='reminder-preferences'),
 
     # Admin endpoints
     path('admin-panel/stats/', AdminStatsView.as_view(), name='admin-stats'),
