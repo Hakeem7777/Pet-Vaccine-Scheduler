@@ -1,14 +1,24 @@
 """
 Views for email service.
 """
+import logging
 import os
+
 from rest_framework import status
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from .serializers import SendScheduleEmailSerializer, ContactFormSerializer
 from .services import EmailService
+
+logger = logging.getLogger(__name__)
+
+
+class ContactFormThrottle(AnonRateThrottle):
+    """Strict rate limit for contact form submissions."""
+    scope = 'contact'
 
 
 class SendScheduleEmailView(APIView):
@@ -82,9 +92,10 @@ class SendScheduleEmailView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
+            logger.exception("Failed to send schedule email")
             return Response(
-                {'error': f'Failed to send email: {str(e)}'},
+                {'error': 'Failed to send email. Please try again.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -96,6 +107,7 @@ class ContactFormView(APIView):
     POST /api/email/contact/
     """
     permission_classes = []  # Public endpoint - no authentication required
+    throttle_classes = [ContactFormThrottle]
 
     def post(self, request):
         """
@@ -161,8 +173,9 @@ class ContactFormView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
+            logger.exception("Failed to process contact form")
             return Response(
-                {'error': f'Failed to process contact form: {str(e)}'},
+                {'error': 'Failed to process contact form. Please try again.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

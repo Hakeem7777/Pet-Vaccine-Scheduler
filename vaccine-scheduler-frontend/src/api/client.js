@@ -21,6 +21,20 @@ client.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Token refresh lock to prevent race conditions
+let isRefreshing = false;
+let pendingRequests = [];
+
+function onTokenRefreshed(token) {
+  pendingRequests.forEach((callback) => callback(token));
+  pendingRequests = [];
+}
+
+function onRefreshFailed() {
+  pendingRequests.forEach((callback) => callback(null));
+  pendingRequests = [];
+}
+
 // Response interceptor to handle 401 and refresh token
 client.interceptors.response.use(
   (response) => response,
@@ -30,8 +44,23 @@ client.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // If already refreshing, queue this request to wait
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          pendingRequests.push((token) => {
+            if (token) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(client(originalRequest));
+            } else {
+              reject(error);
+            }
+          });
+        });
+      }
+
       const refreshToken = localStorage.getItem('refresh_token');
       if (refreshToken) {
+        isRefreshing = true;
         try {
           const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
             refresh: refreshToken,
@@ -40,9 +69,14 @@ client.interceptors.response.use(
           const { access } = response.data;
           localStorage.setItem('access_token', access);
 
+          isRefreshing = false;
+          onTokenRefreshed(access);
+
           originalRequest.headers.Authorization = `Bearer ${access}`;
           return client(originalRequest);
         } catch (refreshError) {
+          isRefreshing = false;
+          onRefreshFailed();
           // Refresh failed, clear tokens and redirect to login
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');

@@ -58,6 +58,8 @@ class PendingRegistration(models.Model):
     phone = models.CharField(max_length=20, blank=True, default='')
     otp = models.CharField(max_length=6)
     otp_expires_at = models.DateTimeField()
+    otp_attempts = models.IntegerField(default=0)
+    otp_locked_until = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -66,12 +68,33 @@ class PendingRegistration(models.Model):
     def __str__(self) -> str:
         return f"Pending: {self.email}"
 
+    def is_otp_locked(self) -> bool:
+        """Check if OTP verification is locked due to too many failed attempts."""
+        if self.otp_locked_until and timezone.now() < self.otp_locked_until:
+            return True
+        return False
+
     def is_otp_valid(self, otp_input: str) -> bool:
         return self.otp == otp_input and timezone.now() < self.otp_expires_at
+
+    def record_failed_otp_attempt(self):
+        """Record a failed OTP attempt and lock if threshold exceeded."""
+        self.otp_attempts += 1
+        if self.otp_attempts >= 5:
+            self.otp_locked_until = timezone.now() + timedelta(minutes=15)
+        self.save(update_fields=['otp_attempts', 'otp_locked_until'])
+
+    def reset_otp_attempts(self):
+        """Reset OTP attempt counter after successful verification."""
+        self.otp_attempts = 0
+        self.otp_locked_until = None
+        self.save(update_fields=['otp_attempts', 'otp_locked_until'])
 
     def generate_otp(self):
         self.otp = ''.join(random.choices(string.digits, k=6))
         self.otp_expires_at = timezone.now() + timedelta(hours=1)
+        self.otp_attempts = 0
+        self.otp_locked_until = None
 
     @staticmethod
     def hash_password(raw_password: str) -> str:

@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 
 import csv
@@ -17,6 +18,8 @@ from rest_framework.generics import DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 from apps.patients.models import Dog
 from apps.vaccinations.models import VaccinationRecord
@@ -255,9 +258,10 @@ class AdminContactReplyView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
+            logger.exception("Failed to send contact reply")
             return Response(
-                {'error': f'Failed to send reply: {str(e)}'},
+                {'error': 'Failed to send reply. Please try again.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -511,9 +515,8 @@ class AdminAIAnalyticsView(APIView):
         from .ai_analytics import run_ai_analytics
         try:
             result = run_ai_analytics(message, conversation_history, model=model)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"AI Analytics error: {e}")
+        except (ValueError, ConnectionError, OSError) as e:
+            logger.exception("AI Analytics error")
             return Response({
                 'summary': 'Sorry, something went wrong while processing your question. Please try again.',
                 'data': None,

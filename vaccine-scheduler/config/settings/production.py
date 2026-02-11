@@ -30,6 +30,17 @@ SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
+# HSTS - force HTTPS for 1 year
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# Referrer policy
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Cross-origin opener policy
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
 # Allowed hosts from environment (use default if env var is empty or not set)
 _allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '').strip()
 ALLOWED_HOSTS = _allowed_hosts_env.split(',') if _allowed_hosts_env else [
@@ -48,6 +59,14 @@ CSRF_TRUSTED_ORIGINS = _csrf_origins_env.split(',') if _csrf_origins_env else [
     'https://pet-vaccine-scheduler.onrender.com',
 ]
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS if o.strip()]
+
+# Content Security Policy (requires django-csp)
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "data:")
+CSP_CONNECT_SRC = ("'self'",)
 
 # WhiteNoise for static file serving
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')

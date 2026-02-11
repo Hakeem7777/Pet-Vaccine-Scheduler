@@ -231,8 +231,11 @@ def run_database_query(query_plan_json: str) -> str:
         if isinstance(result, dict):
             return json.dumps({k: _serialize_value(v) for k, v in result.items()}, default=str)
         return _compact_rows(result)
-    except Exception as e:
+    except (ValueError, KeyError, TypeError) as e:
         return f"ERROR: {type(e).__name__}: {e}"
+    except Exception as e:
+        logger.exception("Unexpected error in database query")
+        return f"ERROR: Query execution failed"
 
 
 @tool
@@ -359,7 +362,7 @@ def _try_simple_query(user_message: str, model: str = None, provider: str = None
             try:
                 result = _execute_query(query_plan)
                 logger.info(f"[Simple path] Matched pattern='{pattern}', result={str(result)[:200]}")
-            except Exception as e:
+            except (ValueError, KeyError, TypeError) as e:
                 logger.warning(f"[Simple path] Query failed: {e}")
                 return None
 
@@ -403,7 +406,7 @@ def _try_simple_query(user_message: str, model: str = None, provider: str = None
                     'error': False,
                     'token_info': token_info,
                 }
-            except Exception as e:
+            except (ValueError, ConnectionError, OSError) as e:
                 logger.warning(f"[Simple path] LLM call failed: {e}, falling back to raw result")
                 # Return raw result without LLM summary
                 if isinstance(result, dict):
@@ -568,7 +571,7 @@ def run_ai_analytics(user_message: str, conversation_history: list = None, model
         logger.warning("[AI Analytics] Agent hit recursion limit, salvaging partial results")
         hit_recursion_limit = True
         agent_messages = messages  # Use what we have
-    except Exception as e:
+    except (ValueError, ConnectionError, OSError) as e:
         logger.error(f"Agent invocation failed: {e}", exc_info=True)
         return {
             'summary': 'Sorry, something went wrong while processing your question. Please try again.',

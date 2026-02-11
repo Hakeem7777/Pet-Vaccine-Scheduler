@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -154,6 +155,8 @@ REST_FRAMEWORK = {
         'anon': '30/minute',
         'user': '60/minute',
         'auth': '5/minute',
+        'otp_verify': '5/minute',
+        'contact': '3/minute',
         'ai': '10/minute',
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',

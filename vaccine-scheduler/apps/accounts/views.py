@@ -11,10 +11,13 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+import logging
+
 from .models import PendingRegistration
-from .throttles import AuthRateThrottle
+from .throttles import AuthRateThrottle, OTPVerifyThrottle
 from .serializers import (
     PendingRegistrationSerializer,
     OTPVerificationSerializer,
@@ -23,6 +26,8 @@ from .serializers import (
     PasswordChangeSerializer,
 )
 from apps.email_service.services import email_service
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -90,7 +95,7 @@ class VerifyOTPView(APIView):
     POST /api/auth/verify-otp/
     """
     permission_classes = [AllowAny]
-    throttle_classes = [AuthRateThrottle]
+    throttle_classes = [AuthRateThrottle, OTPVerifyThrottle]
 
     def post(self, request):
         serializer = OTPVerificationSerializer(data=request.data)
@@ -99,33 +104,40 @@ class VerifyOTPView(APIView):
         email = serializer.validated_data['email']
         otp = serializer.validated_data['otp']
 
+        # Use uniform error to prevent email enumeration
+        generic_error = {'detail': 'Invalid email or verification code.'}
+
         try:
             pending = PendingRegistration.objects.get(email=email)
         except PendingRegistration.DoesNotExist:
+            return Response(generic_error, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check lockout from too many failed attempts
+        if pending.is_otp_locked():
             return Response(
-                {'detail': 'No pending registration found for this email.'},
-                status=status.HTTP_404_NOT_FOUND,
+                {'detail': 'Too many failed attempts. Please try again later.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
         if not pending.is_otp_valid(otp):
-            return Response(
-                {'detail': 'Invalid or expired verification code.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            pending.record_failed_otp_attempt()
+            return Response(generic_error, status=status.HTTP_400_BAD_REQUEST)
+
+        # OTP valid — reset attempts and create user
+        pending.reset_otp_attempts()
 
         # Create the actual user with the pre-hashed password.
-        # NOTE: pending.password_hash is already a valid Django hash from make_password(),
+        # pending.password_hash is already a valid Django hash from make_password(),
         # so assigning directly to `password` is correct — Django stores it as-is.
-        user = User(
+        user = User.objects.create(
             username=pending.username,
-            email=pending.email,
+            email=User.objects.normalize_email(pending.email),
             password=pending.password_hash,
             first_name=pending.first_name,
             last_name=pending.last_name,
             clinic_name=pending.clinic_name,
             phone=pending.phone,
         )
-        user.save()
 
         # Clean up pending registration
         pending.delete()
@@ -156,13 +168,15 @@ class ResendOTPView(APIView):
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
 
+        # Always return success to prevent email enumeration
+        generic_response = {
+            'message': 'If a pending registration exists, a new code has been sent.',
+        }
+
         try:
             pending = PendingRegistration.objects.get(email=email)
         except PendingRegistration.DoesNotExist:
-            return Response(
-                {'detail': 'No pending registration found for this email.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return Response(generic_response, status=status.HTTP_200_OK)
 
         pending.generate_otp()
         pending.save()
@@ -170,9 +184,7 @@ class ResendOTPView(APIView):
         if email_service:
             email_service.send_otp_email(email, pending.otp, pending.username)
 
-        return Response({
-            'message': 'A new verification code has been sent to your email.',
-        }, status=status.HTTP_200_OK)
+        return Response(generic_response, status=status.HTTP_200_OK)
 
 
 class LoginView(APIView):
@@ -264,7 +276,8 @@ class LogoutView(APIView):
             return Response({
                 'message': 'Successfully logged out.'
             }, status=status.HTTP_200_OK)
-        except Exception:
+        except (TokenError, ValueError) as e:
+            logger.warning(f"Logout failed - invalid token: {e}")
             return Response({
                 'error': 'Invalid token.'
             }, status=status.HTTP_400_BAD_REQUEST)

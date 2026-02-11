@@ -129,7 +129,7 @@ Do not include any explanation, just the vaccine_id or NONE."""
                 logger.warning(f"AI returned invalid vaccine_id: {matched_id} for '{extracted_name}'")
                 return None
 
-        except Exception as e:
+        except (ValueError, ConnectionError, KeyError) as e:
             logger.error(f"AI vaccine matching failed for '{extracted_name}': {e}")
             return None
 
@@ -198,9 +198,10 @@ class AIQueryView(APIView):
                 'answer': result['answer'],
                 'sources': result['sources'],
             }, status=status.HTTP_200_OK)
-        except Exception as e:
+        except (ValueError, ConnectionError, OSError) as e:
+            logger.exception("AI query failed")
             return Response({
-                'error': f'AI query failed: {str(e)}'
+                'error': 'AI query failed. Please try again.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -332,9 +333,10 @@ class DogAIAnalysisView(APIView):
 
             return Response(response_data, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except (ValueError, ConnectionError, OSError) as e:
+            logger.exception("AI analysis failed")
             return Response({
-                'error': f'AI analysis failed: {str(e)}'
+                'error': 'AI analysis failed. Please try again.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -435,9 +437,10 @@ class AIChatView(APIView):
                 'dog_context': dog_context
             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except (ValueError, ConnectionError, OSError) as e:
+            logger.exception("AI chat failed")
             return Response({
-                'error': f'Chat failed: {str(e)}'
+                'error': 'Chat failed. Please try again.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _build_dog_context(self, dog):
@@ -512,8 +515,8 @@ class AIChatView(APIView):
             if schedule['upcoming']:
                 upcoming_vaccines = [item['vaccine'] for item in schedule['upcoming']]
                 parts.append(f"- Upcoming vaccines (next 30 days): {', '.join(upcoming_vaccines)}")
-        except Exception:
-            pass
+        except (ValueError, KeyError) as e:
+            logger.debug(f"Could not include schedule in context: {e}")
 
         return "\n".join(parts)
 
@@ -587,8 +590,8 @@ class AIChatView(APIView):
                     upcoming_vaccines = [item['vaccine'] for item in schedule['upcoming']]
                     dog_parts.append(f"   - Upcoming (next 30 days): {', '.join(upcoming_vaccines)}")
 
-            except Exception:
-                pass
+            except (ValueError, KeyError) as e:
+                logger.debug(f"Could not include schedule for dog {dog.id}: {e}")
 
             # Recent vaccinations (limit to 3 per dog in multi-dog mode)
             records = dog.vaccination_records.select_related('vaccine').order_by('-date_administered')[:3]
@@ -684,10 +687,11 @@ class DocumentExtractView(APIView):
                     })
                 }, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except (ValueError, ConnectionError, IOError) as e:
+            logger.exception("Document extraction failed")
             return Response({
-                'error': f'Document extraction failed: {str(e)}',
-                'confidence': {'overall': 'low', 'notes': str(e)}
+                'error': 'Document extraction failed. Please try again.',
+                'confidence': {'overall': 'low', 'notes': 'Processing error occurred'}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _validate_extraction(self, extraction_result: dict, dog: Dog) -> list:
@@ -866,10 +870,11 @@ class DocumentExtractNewDogView(APIView):
                     })
                 }, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except (ValueError, ConnectionError, IOError) as e:
+            logger.exception("Document extraction failed for new dog")
             return Response({
-                'error': f'Document extraction failed: {str(e)}',
-                'confidence': {'overall': 'low', 'notes': str(e)}
+                'error': 'Document extraction failed. Please try again.',
+                'confidence': {'overall': 'low', 'notes': 'Processing error occurred'}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

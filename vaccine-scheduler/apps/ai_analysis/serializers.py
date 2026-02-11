@@ -117,8 +117,18 @@ class DocumentUploadSerializer(serializers.Serializer):
         help_text="Document file (image or PDF)"
     )
 
+    # Magic bytes for validating file content matches claimed extension
+    MAGIC_BYTES = {
+        '.jpg': [b'\xff\xd8\xff'],
+        '.jpeg': [b'\xff\xd8\xff'],
+        '.png': [b'\x89PNG'],
+        '.gif': [b'GIF87a', b'GIF89a'],
+        '.webp': [b'RIFF'],
+        '.pdf': [b'%PDF'],
+    }
+
     def validate_document(self, value):
-        """Validate uploaded file."""
+        """Validate uploaded file type, size, and content."""
         # Check file size (10MB max)
         max_size = 10 * 1024 * 1024
         if value.size > max_size:
@@ -133,6 +143,16 @@ class DocumentUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 f"File type '{ext}' not supported. Allowed: {', '.join(allowed_extensions)}"
             )
+
+        # Validate file content matches extension (magic bytes)
+        expected_magic = self.MAGIC_BYTES.get(ext, [])
+        if expected_magic:
+            header = value.read(8)
+            value.seek(0)  # Reset file pointer for downstream consumers
+            if not any(header.startswith(magic) for magic in expected_magic):
+                raise serializers.ValidationError(
+                    "File content does not match the file extension."
+                )
 
         return value
 

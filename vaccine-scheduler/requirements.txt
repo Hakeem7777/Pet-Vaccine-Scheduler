@@ -24,6 +24,9 @@ langchain-text-splitters==0.3.2
 # Vector DB
 faiss-cpu==1.7.4
 
+# Security
+django-csp>=3.8
+
 # Utilities
 python-dotenv==1.0.1
 pypdf==4.0.1
