@@ -456,6 +456,19 @@ class AdminTokenUsageStatsView(APIView):
             .order_by('month')
         )
 
+        # Per-model over time (by month)
+        per_model_over_time = list(
+            TokenUsage.objects
+            .exclude(model_name='')
+            .annotate(month=TruncMonth('created_at'))
+            .values('month', 'model_name')
+            .annotate(
+                input_tokens=Sum('input_tokens'),
+                output_tokens=Sum('output_tokens'),
+            )
+            .order_by('month', 'model_name')
+        )
+
         # Grand totals
         totals = TokenUsage.objects.aggregate(
             total_input=Sum('input_tokens'),
@@ -469,4 +482,77 @@ class AdminTokenUsageStatsView(APIView):
             'per_user': per_user,
             'per_endpoint': per_endpoint,
             'over_time': over_time,
+            'per_model_over_time': per_model_over_time,
+        })
+
+
+# ── AI Analytics ──────────────────────────────────────────────────
+
+class AdminAIAnalyticsView(APIView):
+    """Natural language database query interface for admins."""
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        message = (request.data.get('message') or '').strip()
+        if not message:
+            return Response(
+                {'detail': 'Message is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(message) > 1000:
+            message = message[:1000]
+
+        conversation_history = request.data.get('conversation_history', [])
+        if not isinstance(conversation_history, list):
+            conversation_history = []
+
+        model = (request.data.get('model') or '').strip() or None
+
+        from .ai_analytics import run_ai_analytics
+        try:
+            result = run_ai_analytics(message, conversation_history, model=model)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"AI Analytics error: {e}")
+            return Response({
+                'summary': 'Sorry, something went wrong while processing your question. Please try again.',
+                'data': None,
+                'visualization': 'number',
+                'chart_config': {},
+                'error': True,
+            })
+
+        # Log token usage
+        token_info = result.get('token_info', {})
+        if token_info.get('input_tokens') or token_info.get('output_tokens'):
+            from .token_tracking import log_token_usage
+            log_token_usage(
+                user=request.user,
+                endpoint='ai_analytics',
+                usage_data={
+                    'input_tokens': token_info.get('input_tokens', 0),
+                    'output_tokens': token_info.get('output_tokens', 0),
+                    'total_tokens': token_info.get('input_tokens', 0) + token_info.get('output_tokens', 0),
+                    'model_name': token_info.get('model_name', ''),
+                },
+            )
+
+        return Response({
+            'summary': result.get('summary', ''),
+            'data': result.get('data'),
+            'visualization': result.get('visualization', 'table'),
+            'chart_config': result.get('chart_config', {}),
+            'error': result.get('error', False),
+        })
+
+
+class AdminAIModelsView(APIView):
+    """Return available AI models for the analytics selector."""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        from .ai_analytics import AVAILABLE_MODELS, ANALYTICS_MODEL
+        return Response({
+            'models': AVAILABLE_MODELS,
+            'default': ANALYTICS_MODEL,
         })

@@ -16,6 +16,8 @@ from .views import (
     AdminGraphDataView,
     AdminTokenUsageListView,
     AdminTokenUsageStatsView,
+    AdminAIAnalyticsView,
+    AdminAIModelsView,
 )
 
 app_name = 'dashboard'
@@ -39,4 +41,6 @@ urlpatterns = [
     path('admin-panel/graphs/', AdminGraphDataView.as_view(), name='admin-graphs'),
     path('admin-panel/token-usage/', AdminTokenUsageListView.as_view(), name='admin-token-usage'),
     path('admin-panel/token-usage/stats/', AdminTokenUsageStatsView.as_view(), name='admin-token-usage-stats'),
+    path('admin-panel/ai-analytics/', AdminAIAnalyticsView.as_view(), name='admin-ai-analytics'),
+    path('admin-panel/ai-models/', AdminAIModelsView.as_view(), name='admin-ai-models'),
 ]

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import * as adminApi from '../api/admin';
 import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -11,7 +11,16 @@ import {
   TopBreedsChart,
   TokenUsageOverTimeChart,
   TokenUsageByUserChart,
+  TokensByModelChart,
 } from '../components/admin/AdminCharts';
+import {
+  ResponsiveContainer,
+  PieChart, Pie, Cell,
+  BarChart, Bar,
+  LineChart, Line,
+  AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+} from 'recharts';
 import './AdminDashboardPage.css';
 
 const TABS = [
@@ -21,6 +30,19 @@ const TABS = [
   { key: 'vaccinations', label: 'Vaccinations' },
   { key: 'contacts', label: 'Contacts' },
   { key: 'tokens', label: 'Token Usage' },
+  { key: 'model-tokens', label: 'Model Tokens' },
+  { key: 'ai-analytics', label: 'AI Analytics' },
+];
+
+const AI_CHART_COLORS = ['#006D9C', '#2AB57F', '#FF9C3B', '#E53E3E', '#805AD5', '#DD6B20', '#319795', '#D53F8C'];
+
+const AI_SUGGESTIONS = [
+  'How many users are registered?',
+  'Show me the top 10 dog breeds',
+  'List users with more than 5 dogs',
+  'Show monthly vaccination trends for the last year',
+  'What is the distribution of vaccine types?',
+  'Which users have used the most AI tokens?',
 ];
 
 function SortableHeader({ label, field, currentOrdering, onSort }) {
@@ -54,6 +76,7 @@ function AdminDashboardPage() {
   const [vaccinations, setVaccinations] = useState(null);
   const [contacts, setContacts] = useState(null);
   const [tokenUsage, setTokenUsage] = useState(null);
+  const [modelTokenData, setModelTokenData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -69,6 +92,22 @@ function AdminDashboardPage() {
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
   const [replyStatus, setReplyStatus] = useState(null);
+
+  // AI Analytics state
+  const [aiMessages, setAiMessages] = useState([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiModels, setAiModels] = useState([]);
+  const [aiSelectedModel, setAiSelectedModel] = useState('');
+  const aiMessagesEndRef = useRef(null);
+
+  // Fetch available AI models on mount
+  useEffect(() => {
+    adminApi.getAdminAIModels().then((data) => {
+      setAiModels(data.models || []);
+      setAiSelectedModel(data.default || '');
+    }).catch(() => {});
+  }, []);
 
   const fetchTabData = useCallback(async (tab, searchQuery = '', pageNum = 1, filterParams = {}, orderingParam = '') => {
     setLoading(true);
@@ -113,6 +152,11 @@ function AdminDashboardPage() {
         case 'tokens': {
           const tokenData = await adminApi.getAdminTokenUsage(params);
           setTokenUsage(tokenData);
+          break;
+        }
+        case 'model-tokens': {
+          const modelStats = await adminApi.getAdminTokenUsageStats();
+          setModelTokenData(modelStats.per_model_over_time || []);
           break;
         }
       }
@@ -734,6 +778,344 @@ function AdminDashboardPage() {
     );
   }
 
+  // ── Model Tokens ─────────────────────────────────────────────────
+  function renderModelTokens() {
+    return (
+      <div>
+        {loading ? (
+          <LoadingSpinner />
+        ) : modelTokenData && modelTokenData.length > 0 ? (
+          <div className="admin-charts-grid">
+            <TokensByModelChart data={modelTokenData} />
+          </div>
+        ) : (
+          <p style={{ textAlign: 'center', color: 'var(--color-neutral-dark)', padding: '2rem' }}>No token usage data by model yet.</p>
+        )}
+      </div>
+    );
+  }
+
+  // ── AI Analytics ──────────────────────────────────────────────────
+
+  useEffect(() => {
+    aiMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [aiMessages]);
+
+  async function handleAIAnalyticsSend(message) {
+    const text = (message || aiInput).trim();
+    if (!text || aiLoading) return;
+
+    const userMsg = { role: 'user', content: text };
+    setAiMessages((prev) => [...prev, userMsg]);
+    setAiInput('');
+    setAiLoading(true);
+
+    try {
+      // Build conversation history — only send the last 4 text-only pairs
+      const history = [...aiMessages, userMsg]
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-8)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const result = await adminApi.sendAdminAIQuery(text, history, aiSelectedModel);
+
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: result.summary,
+          data: result.data,
+          visualization: result.visualization,
+          chartConfig: result.chart_config,
+          error: result.error,
+        },
+      ]);
+    } catch (err) {
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Sorry, something went wrong. Please try again.',
+          error: true,
+        },
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function renderAIVisualization(msg) {
+    if (!msg.data || msg.error) return null;
+
+    const { visualization, data, chartConfig = {} } = msg;
+    const { x_key, y_key, title } = chartConfig;
+
+    // Number visualization — single aggregate value
+    if (visualization === 'number') {
+      const value = typeof data === 'object' && !Array.isArray(data)
+        ? Object.values(data)[0]
+        : data;
+      const label = typeof data === 'object' && !Array.isArray(data)
+        ? Object.keys(data)[0]?.replace(/_/g, ' ')
+        : '';
+      return (
+        <div className="ai-analytics__viz-card">
+          {title && <div className="ai-analytics__viz-title">{title}</div>}
+          <div className="ai-analytics__number-viz">
+            <div className="ai-analytics__number-value">
+              {typeof value === 'number' ? value.toLocaleString() : value}
+            </div>
+            {label && <div className="ai-analytics__number-label">{label}</div>}
+          </div>
+        </div>
+      );
+    }
+
+    // Table visualization
+    if (visualization === 'table') {
+      if (!Array.isArray(data) || data.length === 0) return null;
+      const columns = Object.keys(data[0]);
+      return (
+        <div className="ai-analytics__viz-card">
+          {title && <div className="ai-analytics__viz-title">{title}</div>}
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  {columns.map((col) => (
+                    <th key={col}>{col.replace(/_/g, ' ')}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row, idx) => (
+                  <tr key={idx}>
+                    {columns.map((col) => (
+                      <td key={col}>
+                        {row[col] != null
+                          ? typeof row[col] === 'number'
+                            ? row[col].toLocaleString()
+                            : String(row[col])
+                          : '-'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // Chart visualizations require array data
+    if (!Array.isArray(data) || data.length === 0) return null;
+
+    if (visualization === 'pie') {
+      const nameKey = x_key || Object.keys(data[0])[0];
+      const valueKey = y_key || Object.keys(data[0])[1];
+      return (
+        <div className="ai-analytics__viz-card">
+          {title && <div className="ai-analytics__viz-title">{title}</div>}
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey={valueKey}
+                nameKey={nameKey}
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+              >
+                {data.map((_, idx) => (
+                  <Cell key={idx} fill={AI_CHART_COLORS[idx % AI_CHART_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (visualization === 'bar') {
+      const xKey = x_key || Object.keys(data[0])[0];
+      const yKey = y_key || Object.keys(data[0])[1];
+      return (
+        <div className="ai-analytics__viz-card">
+          {title && <div className="ai-analytics__viz-title">{title}</div>}
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey={yKey} fill="#006D9C" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (visualization === 'line') {
+      const xKey = x_key || Object.keys(data[0])[0];
+      const yKey = y_key || Object.keys(data[0])[1];
+      return (
+        <div className="ai-analytics__viz-card">
+          {title && <div className="ai-analytics__viz-title">{title}</div>}
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey={yKey} stroke="#006D9C" strokeWidth={2} dot={{ r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (visualization === 'area') {
+      const xKey = x_key || Object.keys(data[0])[0];
+      const yKey = y_key || Object.keys(data[0])[1];
+      return (
+        <div className="ai-analytics__viz-card">
+          {title && <div className="ai-analytics__viz-title">{title}</div>}
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey={yKey} stroke="#006D9C" fill="#006D9C" fillOpacity={0.15} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    return null;
+  }
+
+  function renderAIAnalytics() {
+    return (
+      <div className="ai-analytics">
+        <div className="ai-analytics__header">
+          <div className="ai-analytics__header-text">
+            <h3>AI Database Analytics</h3>
+            <p>Ask questions about your data in natural language</p>
+          </div>
+          <div className="ai-analytics__header-actions">
+            {aiModels.length > 0 && (
+              <select
+                className="ai-analytics__model-select"
+                value={aiSelectedModel}
+                onChange={(e) => setAiSelectedModel(e.target.value)}
+                disabled={aiLoading}
+              >
+                {aiModels.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}{m.thinking ? ' (thinking)' : ''}
+                  </option>
+                ))}
+              </select>
+            )}
+            {aiMessages.length > 0 && (
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => setAiMessages([])}
+              >
+                Clear Chat
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="ai-analytics__messages">
+          {aiMessages.length === 0 && (
+            <div className="ai-analytics__welcome">
+              <div className="ai-analytics__welcome-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#006D9C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  <path d="M8 10h.01" />
+                  <path d="M12 10h.01" />
+                  <path d="M16 10h.01" />
+                </svg>
+              </div>
+              <h4>Ask anything about your database</h4>
+              <p>I can query users, dogs, vaccinations, contacts, and token usage to generate insights, charts, and tables.</p>
+              <div className="ai-analytics__suggestions">
+                {AI_SUGGESTIONS.map((s, idx) => (
+                  <button
+                    key={idx}
+                    className="ai-analytics__chip"
+                    onClick={() => handleAIAnalyticsSend(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {aiMessages.map((msg, idx) => (
+            <div key={idx} className={`ai-analytics__message ai-analytics__message--${msg.role}`}>
+              {msg.role === 'assistant' && (
+                <div className="ai-analytics__avatar">AI</div>
+              )}
+              <div className="ai-analytics__bubble-wrap">
+                <div className={`ai-analytics__bubble ai-analytics__bubble--${msg.role} ${msg.error ? 'ai-analytics__bubble--error' : ''}`}>
+                  {msg.content}
+                </div>
+                {msg.role === 'assistant' && renderAIVisualization(msg)}
+              </div>
+            </div>
+          ))}
+
+          {aiLoading && (
+            <div className="ai-analytics__message ai-analytics__message--assistant">
+              <div className="ai-analytics__avatar">AI</div>
+              <div className="ai-analytics__bubble-wrap">
+                <div className="ai-analytics__bubble ai-analytics__bubble--assistant">
+                  <div className="ai-analytics__typing">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={aiMessagesEndRef} />
+        </div>
+
+        <form
+          className="ai-analytics__input-bar"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAIAnalyticsSend();
+          }}
+        >
+          <input
+            type="text"
+            value={aiInput}
+            onChange={(e) => setAiInput(e.target.value)}
+            placeholder="Ask about your data..."
+            disabled={aiLoading}
+          />
+          <button type="submit" disabled={aiLoading || !aiInput.trim()}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   const tabRenderers = {
     overview: renderOverview,
     users: renderUsers,
@@ -741,6 +1123,8 @@ function AdminDashboardPage() {
     vaccinations: renderVaccinations,
     contacts: renderContacts,
     tokens: renderTokenUsage,
+    'model-tokens': renderModelTokens,
+    'ai-analytics': renderAIAnalytics,
   };
 
   return (

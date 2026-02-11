@@ -74,3 +74,18 @@ export async function getAdminTokenUsageStats() {
   const response = await client.get('/admin-panel/token-usage/stats/');
   return response.data;
 }
+
+export async function sendAdminAIQuery(message, conversationHistory = [], model = null) {
+  const body = {
+    message,
+    conversation_history: conversationHistory,
+  };
+  if (model) body.model = model;
+  const response = await client.post('/admin-panel/ai-analytics/', body);
+  return response.data;
+}
+
+export async function getAdminAIModels() {
+  const response = await client.get('/admin-panel/ai-models/');
+  return response.data;
+}

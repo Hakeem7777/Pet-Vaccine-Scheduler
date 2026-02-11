@@ -134,14 +134,18 @@ class LLMProviderFactory:
         model = model or DEFAULT_CHAT_MODELS["openai"]
         api_key = os.getenv("OPENAI_API_KEY")
 
-        logger.info(f"[_create_openai_llm] Creating OpenAI LLM: model={model}, temp={temperature}")
+        # o1/o3 reasoning models don't support the temperature parameter
+        model_lower = (model or "").lower()
+        supports_temperature = not any(model_lower.startswith(p) for p in ["o1-", "o1", "o3-", "o3"])
+
+        logger.info(f"[_create_openai_llm] Creating OpenAI LLM: model={model}, temp={temperature if supports_temperature else 'N/A (reasoning model)'}")
         logger.info(f"[_create_openai_llm] API key present: {bool(api_key)}, key prefix: {api_key[:10] if api_key else 'None'}...")
 
-        return ChatOpenAI(
-            model=model,
-            temperature=temperature,
-            **kwargs
-        )
+        params = {"model": model, **kwargs}
+        if supports_temperature:
+            params["temperature"] = temperature
+
+        return ChatOpenAI(**params)
 
 
 def get_llm(**kwargs) -> BaseChatModel:

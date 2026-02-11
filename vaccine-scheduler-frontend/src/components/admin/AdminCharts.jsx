@@ -160,6 +160,53 @@ export function TokenUsageOverTimeChart({ data }) {
   );
 }
 
+export function TokensByModelChart({ data }) {
+  if (!data || data.length === 0) return null;
+
+  // Group data by model, each model gets its own time-series chart
+  const modelMap = {};
+  data.forEach((d) => {
+    if (!modelMap[d.model_name]) modelMap[d.model_name] = [];
+    modelMap[d.model_name].push({
+      label: formatMonth(d.month),
+      input_tokens: d.input_tokens,
+      output_tokens: d.output_tokens,
+    });
+  });
+  const models = Object.keys(modelMap);
+
+  return models.map((model, i) => (
+    <div className="admin-chart-card" key={model}>
+      <h4 className="admin-chart-card__title">{model}</h4>
+      <ResponsiveContainer width="100%" height={280}>
+        <LineChart data={modelMap[model]}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="label" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="input_tokens"
+            stroke={COLORS.primary}
+            strokeWidth={2}
+            dot={{ r: 3 }}
+            name="Input Tokens"
+          />
+          <Line
+            type="monotone"
+            dataKey="output_tokens"
+            stroke={COLORS.secondary}
+            strokeWidth={2}
+            dot={{ r: 3 }}
+            name="Output Tokens"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  ));
+}
+
 export function TokenUsageByUserChart({ data }) {
   if (!data || data.length === 0) return null;
   const formatted = data.map((d) => ({
