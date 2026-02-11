@@ -3,7 +3,19 @@ Django production settings.
 """
 import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *  # noqa: F401, F403
+
+# Validate SECRET_KEY is set and not the insecure default
+_secret_key = os.getenv('SECRET_KEY', '')
+if not _secret_key or 'django-insecure' in _secret_key:
+    raise ImproperlyConfigured(
+        'SECRET_KEY must be set to a secure value in production. '
+        'Generate one with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"'
+    )
+SECRET_KEY = _secret_key
 
 DEBUG = False
 

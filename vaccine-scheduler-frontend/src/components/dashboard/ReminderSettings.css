@@ -46,6 +46,10 @@
   font-size: 0.875rem;
 }
 
+.reminder-settings__select--wide {
+  min-width: 220px;
+}
+
 /* Toggle Switch */
 .reminder-toggle {
   position: relative;

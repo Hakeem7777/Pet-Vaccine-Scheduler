@@ -24,7 +24,9 @@ from .serializers import (
 )
 from .services import rag_service
 from .document_extraction import document_extraction_service
+from .throttles import AIRateThrottle
 from core.llm_providers import get_llm
+from core.prompt_sanitizer import sanitize_prompt_input
 from apps.dashboard.token_tracking import log_token_usage
 
 logger = logging.getLogger(__name__)
@@ -48,6 +50,7 @@ class VaccineMatcherAI:
         Use AI to match an extracted vaccine name to a database vaccine.
         Returns the matched Vaccine object or None if no match.
         """
+        extracted_name = sanitize_prompt_input(extracted_name, max_length=200)
         if not extracted_name:
             return None
 
@@ -155,6 +158,7 @@ class AIQueryView(APIView):
     POST /api/ai/query/
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIRateThrottle]
 
     def post(self, request):
         """
@@ -186,7 +190,8 @@ class AIQueryView(APIView):
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         try:
-            result = rag_service.query(serializer.validated_data['query'])
+            query = sanitize_prompt_input(serializer.validated_data['query'], max_length=500)
+            result = rag_service.query(query)
             if result.get('token_usage'):
                 log_token_usage(request.user, 'ai_query', result['token_usage'])
             return Response({
@@ -206,6 +211,7 @@ class DogAIAnalysisView(APIView):
     POST /api/dogs/{dog_id}/ai-analysis/
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIRateThrottle]
 
     def post(self, request, dog_id: int):
         """
@@ -244,7 +250,9 @@ class DogAIAnalysisView(APIView):
         # Build context about the dog
         include_schedule = serializer.validated_data.get('include_schedule', True)
         selected_noncore = serializer.validated_data.get('selected_noncore', [])
-        custom_query = serializer.validated_data.get('custom_query', '')
+        custom_query = sanitize_prompt_input(
+            serializer.validated_data.get('custom_query', ''), max_length=500
+        )
 
         # Get dog info
         age_classification = scheduler_service.get_age_classification(dog)
@@ -337,6 +345,7 @@ class AIChatView(APIView):
     POST /api/ai/chat/
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIRateThrottle]
 
     # Maximum dogs to include in context to avoid token limits
     MAX_DOGS_IN_CONTEXT = 10
@@ -366,7 +375,7 @@ class AIChatView(APIView):
         serializer = ChatRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        message = serializer.validated_data['message']
+        message = sanitize_prompt_input(serializer.validated_data['message'], max_length=1000)
         dog_id = serializer.validated_data.get('dog_id')
         dog_ids = serializer.validated_data.get('dog_ids')
         history = serializer.validated_data.get('conversation_history', [])
@@ -535,9 +544,6 @@ class AIChatView(APIView):
             "=" * 40
         ]
 
-        all_overdue = []
-        all_upcoming = []
-
         for i, dog in enumerate(dogs, 1):
             age_classification = scheduler_service.get_age_classification(dog)
             dog_parts = [
@@ -576,12 +582,10 @@ class AIChatView(APIView):
                 if schedule['overdue']:
                     overdue_vaccines = [item['vaccine'] for item in schedule['overdue']]
                     dog_parts.append(f"   - OVERDUE vaccines: {', '.join(overdue_vaccines)}")
-                    all_overdue.append({'dog': dog.name, 'vaccines': overdue_vaccines})
 
                 if schedule['upcoming']:
                     upcoming_vaccines = [item['vaccine'] for item in schedule['upcoming']]
                     dog_parts.append(f"   - Upcoming (next 30 days): {', '.join(upcoming_vaccines)}")
-                    all_upcoming.append({'dog': dog.name, 'vaccines': upcoming_vaccines})
 
             except Exception:
                 pass
@@ -595,22 +599,6 @@ class AIChatView(APIView):
 
             parts.extend(dog_parts)
 
-        # Add cross-dog summary
-        parts.append("\n" + "=" * 40)
-        parts.append("Cross-Dog Summary:")
-
-        if all_overdue:
-            parts.append("Dogs with OVERDUE vaccines:")
-            for item in all_overdue:
-                parts.append(f"  - {item['dog']}: {', '.join(item['vaccines'])}")
-        else:
-            parts.append("No dogs have overdue vaccines.")
-
-        if all_upcoming:
-            parts.append("Dogs with upcoming vaccines (next 30 days):")
-            for item in all_upcoming:
-                parts.append(f"  - {item['dog']}: {', '.join(item['vaccines'])}")
-
         return "\n".join(parts)
 
 
@@ -621,6 +609,7 @@ class DocumentExtractView(APIView):
     POST /api/dogs/{dog_id}/extract-document/
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIRateThrottle]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, dog_id: int):
@@ -820,6 +809,7 @@ class DocumentExtractNewDogView(APIView):
     POST /api/ai/extract-document-new/
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIRateThrottle]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
@@ -890,6 +880,7 @@ class ApplyExtractionView(APIView):
     POST /api/dogs/{dog_id}/apply-extraction/
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIRateThrottle]
 
     def post(self, request, dog_id: int):
         """

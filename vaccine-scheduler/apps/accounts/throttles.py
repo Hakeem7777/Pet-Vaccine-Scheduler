@@ -1,0 +1,9 @@
+"""
+Rate limiting for authentication endpoints.
+"""
+from rest_framework.throttling import AnonRateThrottle
+
+
+class AuthRateThrottle(AnonRateThrottle):
+    """Strict rate limit for auth endpoints (login, register, OTP)."""
+    scope = 'auth'

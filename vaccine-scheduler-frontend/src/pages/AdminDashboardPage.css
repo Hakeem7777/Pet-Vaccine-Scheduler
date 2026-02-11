@@ -148,6 +148,13 @@
   text-overflow: ellipsis;
 }
 
+/* Actions cell */
+.admin-actions-cell {
+  display: flex;
+  gap: 0.375rem;
+  white-space: nowrap;
+}
+
 /* Delete button */
 .admin-delete-btn {
   background: none;
@@ -160,9 +167,64 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.admin-delete-btn:hover {
+.admin-delete-btn:hover:not(:disabled) {
   background: var(--color-danger);
   color: white;
+}
+
+.admin-delete-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Block / Unblock buttons */
+.admin-block-btn {
+  background: none;
+  color: #c05621;
+  border: 1px solid #c05621;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-block-btn:hover {
+  background: #c05621;
+  color: white;
+}
+
+.admin-unblock-btn {
+  background: none;
+  color: #276749;
+  border: 1px solid #276749;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-unblock-btn:hover {
+  background: #276749;
+  color: white;
+}
+
+/* Users toolbar (search + export) */
+.admin-users-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-users-toolbar .admin-search-form {
+  margin-bottom: 0;
+}
+
+.admin-export-btn {
+  white-space: nowrap;
 }
 
 /* Pagination */
@@ -202,6 +264,16 @@
 .admin-badge--read {
   background: #f0fff4;
   color: #276749;
+}
+
+.admin-badge--active {
+  background: #f0fff4;
+  color: #276749;
+}
+
+.admin-badge--blocked {
+  background: #fff5f5;
+  color: #c53030;
 }
 
 /* Contact Detail Modal */

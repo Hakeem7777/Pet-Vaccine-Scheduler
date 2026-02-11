@@ -167,6 +167,18 @@ function AdminDashboardPage() {
     fetchTabData(activeTab, search, 1, {}, ordering);
   }
 
+  async function handleToggleUserActive(id, email, isActive) {
+    const action = isActive ? 'block' : 'unblock';
+    if (!window.confirm(`Are you sure you want to ${action} user "${email}"?`)) return;
+    try {
+      await adminApi.toggleAdminUserActive(id);
+      fetchTabData('users', search, page, filters.users, ordering);
+    } catch (err) {
+      const msg = err.response?.data?.detail || `Failed to ${action} user.`;
+      alert(msg);
+    }
+  }
+
   async function handleDeleteUser(id, email) {
     if (!window.confirm(`Are you sure you want to delete user "${email}"? This will also delete all their dogs and vaccination records.`)) return;
     try {
@@ -176,6 +188,17 @@ function AdminDashboardPage() {
     } catch (err) {
       const msg = err.response?.data?.detail || 'Failed to delete user.';
       alert(msg);
+    }
+  }
+
+  async function handleExportCSV() {
+    try {
+      const params = { ...filters.users };
+      if (search) params.search = search;
+      if (ordering) params.ordering = ordering;
+      await adminApi.exportAdminUsersCSV(params);
+    } catch {
+      alert('Failed to export CSV.');
     }
   }
 
@@ -442,7 +465,10 @@ function AdminDashboardPage() {
     const results = users?.results || [];
     return (
       <div>
-        {renderSearchBar()}
+        <div className="admin-users-toolbar">
+          {renderSearchBar()}
+          <button className="btn btn-outline btn-sm admin-export-btn" onClick={handleExportCSV}>Export CSV</button>
+        </div>
         {renderUserFilters()}
         {loading ? (
           <LoadingSpinner />
@@ -457,14 +483,16 @@ function AdminDashboardPage() {
                     <th>Clinic</th>
                     <th>Dogs</th>
                     <th>Vaccinations</th>
+                    <SortableHeader label="Tokens Used" field="total_tokens_used" currentOrdering={ordering} onSort={handleSort} />
                     <th>Staff</th>
+                    <th>Status</th>
                     <SortableHeader label="Joined" field="date_joined" currentOrdering={ordering} onSort={handleSort} />
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {results.length === 0 ? (
-                    <tr><td colSpan="8" className="admin-table__empty">No users found.</td></tr>
+                    <tr><td colSpan="10" className="admin-table__empty">No users found.</td></tr>
                   ) : (
                     results.map((user) => (
                       <tr key={user.id}>
@@ -473,10 +501,29 @@ function AdminDashboardPage() {
                         <td>{user.clinic_name || '-'}</td>
                         <td>{user.dog_count}</td>
                         <td>{user.vaccination_count}</td>
+                        <td>{(user.total_tokens_used || 0).toLocaleString()} / {user.ai_call_count || 0} calls</td>
                         <td>{user.is_staff ? 'Yes' : 'No'}</td>
-                        <td>{new Date(user.date_joined).toLocaleDateString()}</td>
                         <td>
-                          <button className="btn btn-sm admin-delete-btn" onClick={() => handleDeleteUser(user.id, user.email)}>Delete</button>
+                          <span className={`admin-badge ${user.is_active ? 'admin-badge--active' : 'admin-badge--blocked'}`}>
+                            {user.is_active ? 'Active' : 'Blocked'}
+                          </span>
+                        </td>
+                        <td>{new Date(user.date_joined).toLocaleDateString()}</td>
+                        <td className="admin-actions-cell">
+                          <button
+                            className={`btn btn-sm ${user.is_active ? 'admin-block-btn' : 'admin-unblock-btn'}`}
+                            onClick={() => handleToggleUserActive(user.id, user.email, user.is_active)}
+                          >
+                            {user.is_active ? 'Block' : 'Unblock'}
+                          </button>
+                          <button
+                            className="btn btn-sm admin-delete-btn"
+                            onClick={() => handleDeleteUser(user.id, user.email)}
+                            disabled={user.is_active}
+                            title={user.is_active ? 'Block user before deleting' : 'Delete user'}
+                          >
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))

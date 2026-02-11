@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import PendingRegistration
+from .throttles import AuthRateThrottle
 from .serializers import (
     PendingRegistrationSerializer,
     OTPVerificationSerializer,
@@ -34,6 +35,7 @@ class RegisterView(APIView):
     POST /api/auth/register/
     """
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = PendingRegistrationSerializer(data=request.data)
@@ -88,6 +90,7 @@ class VerifyOTPView(APIView):
     POST /api/auth/verify-otp/
     """
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = OTPVerificationSerializer(data=request.data)
@@ -110,7 +113,9 @@ class VerifyOTPView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Create the actual user with the pre-hashed password
+        # Create the actual user with the pre-hashed password.
+        # NOTE: pending.password_hash is already a valid Django hash from make_password(),
+        # so assigning directly to `password` is correct — Django stores it as-is.
         user = User(
             username=pending.username,
             email=pending.email,
@@ -144,6 +149,7 @@ class ResendOTPView(APIView):
     POST /api/auth/resend-otp/
     """
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = ResendOTPSerializer(data=request.data)
@@ -176,6 +182,7 @@ class LoginView(APIView):
     POST /api/auth/login/
     """
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         email = request.data.get('email')

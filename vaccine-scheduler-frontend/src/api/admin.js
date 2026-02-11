@@ -14,6 +14,26 @@ export async function deleteAdminUser(id) {
   await client.delete(`/admin-panel/users/${id}/`);
 }
 
+export async function toggleAdminUserActive(id) {
+  const response = await client.patch(`/admin-panel/users/${id}/toggle-active/`);
+  return response.data;
+}
+
+export async function exportAdminUsersCSV(params = {}) {
+  const response = await client.get('/admin-panel/users/export/', {
+    params,
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'users_export.csv');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export async function getAdminDogs(params = {}) {
   const response = await client.get('/admin-panel/dogs/', { params });
   return response.data;

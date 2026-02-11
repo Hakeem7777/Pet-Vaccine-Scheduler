@@ -19,6 +19,61 @@ const INTERVAL_OPTIONS = [
   { value: 72, label: 'Every 3 days' },
 ];
 
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
+  value: i,
+  label: `${String(i).padStart(2, '0')}:00`,
+}));
+
+const COMMON_TIMEZONES = [
+  'UTC',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Anchorage',
+  'Pacific/Honolulu',
+  'America/Toronto',
+  'America/Vancouver',
+  'America/Sao_Paulo',
+  'America/Argentina/Buenos_Aires',
+  'America/Mexico_City',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Madrid',
+  'Europe/Rome',
+  'Europe/Amsterdam',
+  'Europe/Moscow',
+  'Europe/Istanbul',
+  'Asia/Dubai',
+  'Asia/Karachi',
+  'Asia/Kolkata',
+  'Asia/Dhaka',
+  'Asia/Bangkok',
+  'Asia/Shanghai',
+  'Asia/Tokyo',
+  'Asia/Seoul',
+  'Asia/Singapore',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Pacific/Auckland',
+  'Africa/Cairo',
+  'Africa/Lagos',
+  'Africa/Johannesburg',
+];
+
+function getTimezoneOptions(savedTz) {
+  const set = new Set(COMMON_TIMEZONES);
+  // Include browser timezone
+  try {
+    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (browserTz) set.add(browserTz);
+  } catch { /* ignore */ }
+  // Include saved timezone
+  if (savedTz) set.add(savedTz);
+  return Array.from(set).sort();
+}
+
 function ReminderSettings() {
   const [prefs, setPrefs] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +110,21 @@ function ReminderSettings() {
     setMsg(null);
     try {
       const updated = await updateReminderPreferences({ [field]: parseInt(value, 10) });
+      setPrefs(updated);
+      setMsg({ type: 'success', text: 'Setting saved.' });
+    } catch (err) {
+      const detail = err.response?.data?.[field]?.[0] || 'Failed to update setting.';
+      setMsg({ type: 'error', text: detail });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleStringChange(field, value) {
+    setSaving(true);
+    setMsg(null);
+    try {
+      const updated = await updateReminderPreferences({ [field]: value });
       setPrefs(updated);
       setMsg({ type: 'success', text: 'Setting saved.' });
     } catch (err) {
@@ -127,6 +197,44 @@ function ReminderSettings() {
               {INTERVAL_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="reminder-settings__row">
+            <label className="reminder-settings__label" htmlFor="preferred-hour">
+              Send at
+            </label>
+            <select
+              id="preferred-hour"
+              className="input reminder-settings__select"
+              value={prefs.preferred_hour}
+              onChange={(e) => handleSelectChange('preferred_hour', e.target.value)}
+              disabled={saving}
+            >
+              {HOUR_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="reminder-settings__row">
+            <label className="reminder-settings__label" htmlFor="preferred-tz">
+              Timezone
+            </label>
+            <select
+              id="preferred-tz"
+              className="input reminder-settings__select reminder-settings__select--wide"
+              value={prefs.preferred_timezone}
+              onChange={(e) => handleStringChange('preferred_timezone', e.target.value)}
+              disabled={saving}
+            >
+              {getTimezoneOptions(prefs.preferred_timezone).map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz.replace(/_/g, ' ')}
                 </option>
               ))}
             </select>

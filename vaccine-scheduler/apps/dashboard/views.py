@@ -1,9 +1,13 @@
 import datetime
 import os
 
+import csv
+import io
+
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
+from django.http import StreamingHttpResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import serializers as drf_serializers, status
@@ -111,11 +115,37 @@ class AdminUserListView(ListAPIView):
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     search_fields = ['email', 'username', 'clinic_name']
     filterset_class = AdminUserFilter
-    ordering_fields = ['date_joined', 'email', 'username']
+    ordering_fields = ['date_joined', 'email', 'username', 'total_tokens_used']
     ordering = ['-date_joined']
 
     def get_queryset(self):
-        return User.objects.all()
+        return User.objects.annotate(
+            _total_tokens_used=Sum('token_usages__total_tokens'),
+            _ai_call_count=Count('token_usages'),
+        )
+
+
+class AdminUserToggleActiveView(APIView):
+    """Toggle a user's is_active status (block/unblock)."""
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'User not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if request.user == user:
+            raise PermissionDenied("Cannot block/unblock yourself.")
+        user.is_active = not user.is_active
+        user.save(update_fields=['is_active'])
+        return Response({
+            'id': user.id,
+            'is_active': user.is_active,
+            'detail': f"User {'unblocked' if user.is_active else 'blocked'} successfully.",
+        })
 
 
 class AdminUserDeleteView(DestroyAPIView):
@@ -125,6 +155,8 @@ class AdminUserDeleteView(DestroyAPIView):
     def perform_destroy(self, instance):
         if self.request.user == instance:
             raise PermissionDenied("Cannot delete yourself.")
+        if instance.is_active:
+            raise PermissionDenied("User must be blocked before deletion.")
         instance.delete()
 
 
@@ -228,6 +260,67 @@ class AdminContactReplyView(APIView):
                 {'error': f'Failed to send reply: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class AdminUserExportCSVView(ListAPIView):
+    """Export filtered user data as CSV."""
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminUserSerializer
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    search_fields = ['email', 'username', 'clinic_name']
+    filterset_class = AdminUserFilter
+    ordering_fields = ['date_joined', 'email', 'username']
+    ordering = ['-date_joined']
+    pagination_class = None  # Return all results for CSV
+
+    def get_queryset(self):
+        return User.objects.annotate(
+            _total_tokens_used=Sum('token_usages__total_tokens'),
+            _ai_call_count=Count('token_usages'),
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        csv_headers = [
+            'ID', 'Username', 'Email', 'First Name', 'Last Name',
+            'Clinic Name', 'Phone', 'Staff', 'Active', 'Date Joined',
+            'Dog Count', 'Vaccination Count', 'Total Tokens Used', 'AI Calls',
+        ]
+
+        def csv_rows():
+            buffer = io.StringIO()
+            writer = csv.writer(buffer)
+            writer.writerow(csv_headers)
+            yield buffer.getvalue()
+            buffer.seek(0)
+            buffer.truncate(0)
+
+            for user in queryset.iterator():
+                from apps.vaccinations.models import VaccinationRecord as VR
+                writer.writerow([
+                    user.id,
+                    user.username,
+                    user.email,
+                    user.first_name,
+                    user.last_name,
+                    user.clinic_name or '',
+                    user.phone or '',
+                    'Yes' if user.is_staff else 'No',
+                    'Yes' if user.is_active else 'No',
+                    user.date_joined.strftime('%Y-%m-%d'),
+                    user.dogs.count(),
+                    VR.objects.filter(dog__owner=user).count(),
+                    getattr(user, '_total_tokens_used', 0) or 0,
+                    getattr(user, '_ai_call_count', 0) or 0,
+                ])
+                yield buffer.getvalue()
+                buffer.seek(0)
+                buffer.truncate(0)
+
+        response = StreamingHttpResponse(csv_rows(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="users_export.csv"'
+        return response
 
 
 # ── Graph Data ────────────────────────────────────────────────────

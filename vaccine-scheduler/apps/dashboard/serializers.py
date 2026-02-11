@@ -11,6 +11,8 @@ User = get_user_model()
 class AdminUserSerializer(serializers.ModelSerializer):
     dog_count = serializers.SerializerMethodField()
     vaccination_count = serializers.SerializerMethodField()
+    total_tokens_used = serializers.SerializerMethodField()
+    ai_call_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -18,6 +20,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'clinic_name', 'phone', 'is_staff', 'is_active',
             'date_joined', 'dog_count', 'vaccination_count',
+            'total_tokens_used', 'ai_call_count',
         ]
 
     def get_dog_count(self, obj):
@@ -25,6 +28,12 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     def get_vaccination_count(self, obj):
         return VaccinationRecord.objects.filter(dog__owner=obj).count()
+
+    def get_total_tokens_used(self, obj):
+        return getattr(obj, '_total_tokens_used', 0) or 0
+
+    def get_ai_call_count(self, obj):
+        return getattr(obj, '_ai_call_count', 0) or 0
 
 
 class AdminDogSerializer(serializers.ModelSerializer):
@@ -101,7 +110,10 @@ class TokenUsageSerializer(serializers.ModelSerializer):
 class ReminderPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReminderPreference
-        fields = ['reminders_enabled', 'lead_time_days', 'interval_hours', 'updated_at']
+        fields = [
+            'reminders_enabled', 'lead_time_days', 'interval_hours',
+            'preferred_hour', 'preferred_timezone', 'updated_at',
+        ]
         read_only_fields = ['updated_at']
 
     def validate_interval_hours(self, value):
@@ -120,4 +132,15 @@ class ReminderPreferenceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 f'Maximum lead time is {REMINDER_MAX_LEAD_TIME_DAYS} days.'
             )
+        return value
+
+    def validate_preferred_hour(self, value):
+        if value < 0 or value > 23:
+            raise serializers.ValidationError('Hour must be between 0 and 23.')
+        return value
+
+    def validate_preferred_timezone(self, value):
+        from zoneinfo import available_timezones
+        if value not in available_timezones():
+            raise serializers.ValidationError(f'Invalid timezone: {value}')
         return value

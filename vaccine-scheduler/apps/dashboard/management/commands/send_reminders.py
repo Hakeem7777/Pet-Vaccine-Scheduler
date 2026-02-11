@@ -1,10 +1,12 @@
 """
 Management command to send vaccination reminder emails.
-Run via cron: python manage.py send_reminders
+Run via cron every hour: python manage.py send_reminders
+Only sends to users whose preferred_hour matches the current hour in their timezone.
 """
 import datetime
 import logging
 import os
+from zoneinfo import ZoneInfo
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -76,6 +78,16 @@ class Command(BaseCommand):
 
         for pref in prefs:
             user = pref.user
+
+            # Check if the current hour in the user's timezone matches their preferred hour
+            try:
+                user_tz = ZoneInfo(pref.preferred_timezone)
+            except (KeyError, Exception):
+                user_tz = ZoneInfo('UTC')
+            user_local_hour = now.astimezone(user_tz).hour
+            if user_local_hour != pref.preferred_hour:
+                continue
+
             dogs = Dog.objects.filter(owner=user)
 
             if not dogs.exists():

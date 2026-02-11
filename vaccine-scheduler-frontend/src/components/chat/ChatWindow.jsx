@@ -43,7 +43,10 @@ function ChatWindow() {
       const dogIds = allDogsContext?.dogIds || null;
       const dogId = !dogIds ? currentDogId : null;
 
-      const response = await sendChatMessage(userMessage.content, dogId, dogIds, messages, selectedNoncore);
+      // Pass messages without the current userMessage to avoid sending it twice
+      // (it's already sent as the 'message' parameter)
+      const history = messages.slice(0, -1);
+      const response = await sendChatMessage(userMessage.content, dogId, dogIds, history, selectedNoncore);
 
       addMessage({
         role: 'assistant',

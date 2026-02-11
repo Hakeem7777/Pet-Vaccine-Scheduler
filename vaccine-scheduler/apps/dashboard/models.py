@@ -43,6 +43,15 @@ class ReminderPreference(models.Model):
         default=REMINDER_DEFAULT_INTERVAL_HOURS,
         help_text="Hours between repeat reminders for the same vaccine",
     )
+    preferred_hour = models.PositiveIntegerField(
+        default=0,
+        help_text="Hour of day (0-23) when the user prefers to receive emails",
+    )
+    preferred_timezone = models.CharField(
+        max_length=50,
+        default='UTC',
+        help_text="User's preferred timezone for email scheduling",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -61,6 +70,10 @@ class ReminderPreference(models.Model):
         if self.lead_time_days > REMINDER_MAX_LEAD_TIME_DAYS:
             raise ValidationError({
                 'lead_time_days': f'Maximum lead time is {REMINDER_MAX_LEAD_TIME_DAYS} days.'
+            })
+        if self.preferred_hour > 23:
+            raise ValidationError({
+                'preferred_hour': 'Hour must be between 0 and 23.'
             })
 
 
