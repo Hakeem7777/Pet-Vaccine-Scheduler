@@ -48,9 +48,10 @@ def sanitize_prompt_input(text: str, max_length: int = 500) -> str:
     # Strip zero-width and format characters (Unicode category 'Cf')
     text = ''.join(c for c in text if unicodedata.category(c) != 'Cf')
 
-    text = text[:max_length]
-
+    # Filter injection patterns BEFORE truncation to prevent padding attacks
     for pattern in INJECTION_PATTERNS:
         text = re.sub(pattern, '[filtered]', text)
+
+    text = text[:max_length]
 
     return text.strip()

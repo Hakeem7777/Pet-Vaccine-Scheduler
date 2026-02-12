@@ -1,7 +1,8 @@
 """
 Custom User model for the vaccine scheduler application.
 """
-import random
+import hmac
+import secrets
 import string
 from datetime import timedelta
 
@@ -75,7 +76,7 @@ class PendingRegistration(models.Model):
         return False
 
     def is_otp_valid(self, otp_input: str) -> bool:
-        return self.otp == otp_input and timezone.now() < self.otp_expires_at
+        return hmac.compare_digest(self.otp, otp_input) and timezone.now() < self.otp_expires_at
 
     def record_failed_otp_attempt(self):
         """Record a failed OTP attempt and lock if threshold exceeded."""
@@ -91,7 +92,7 @@ class PendingRegistration(models.Model):
         self.save(update_fields=['otp_attempts', 'otp_locked_until'])
 
     def generate_otp(self):
-        self.otp = ''.join(random.choices(string.digits, k=6))
+        self.otp = ''.join(secrets.choice(string.digits) for _ in range(6))
         self.otp_expires_at = timezone.now() + timedelta(hours=1)
         self.otp_attempts = 0
         self.otp_locked_until = None
@@ -99,3 +100,7 @@ class PendingRegistration(models.Model):
     @staticmethod
     def hash_password(raw_password: str) -> str:
         return make_password(raw_password)
+
+
+# Import AuditLog so Django discovers it for migrations
+from .audit import AuditLog  # noqa: E402, F401

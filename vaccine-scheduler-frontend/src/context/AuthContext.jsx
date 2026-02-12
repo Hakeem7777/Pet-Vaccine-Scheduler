@@ -15,41 +15,35 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function checkAuth() {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      try {
-        const userData = await authApi.getProfile();
-        setUser(userData);
-        setIsGuestMode(false);
-      } catch (error) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-      }
+    try {
+      // Cookie is sent automatically — if valid, we get the profile
+      const userData = await authApi.getProfile();
+      setUser(userData);
+      setIsGuestMode(false);
+    } catch (error) {
+      // Not authenticated — that's fine
     }
     setIsLoading(false);
   }
 
   async function login(email, password) {
     const data = await authApi.login(email, password);
-    localStorage.setItem('access_token', data.access);
-    localStorage.setItem('refresh_token', data.refresh);
-    const userData = await authApi.getProfile();
-    setUser(userData);
+    // Server sets httpOnly cookies — user data is in the response body
+    setUser(data.user);
     setIsGuestMode(false);
-    return userData;
+    return data.user;
   }
 
   async function register(formData) {
     const data = await authApi.register(formData);
-    // Registration now sends OTP — no tokens returned yet
+    // Registration sends OTP — no tokens/cookies yet
     return data;
   }
 
   async function verifyOTP(email, otp) {
     const data = await authApi.verifyOTP(email, otp);
-    if (data.tokens) {
-      localStorage.setItem('access_token', data.tokens.access);
-      localStorage.setItem('refresh_token', data.tokens.refresh);
+    // Server sets httpOnly cookies — user data is in the response body
+    if (data.user) {
       setUser(data.user);
       setIsGuestMode(false);
     }
@@ -71,16 +65,12 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
-    const refreshToken = localStorage.getItem('refresh_token');
     try {
-      if (refreshToken) {
-        await authApi.logout(refreshToken);
-      }
+      // Server reads refresh token from cookie and clears cookies
+      await authApi.logout();
     } catch (error) {
       // Ignore logout errors
     } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
       setUser(null);
       setIsGuestMode(false);
     }

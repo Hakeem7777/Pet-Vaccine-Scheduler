@@ -4,6 +4,7 @@ AI Analytics engine for admin panel — LangChain ReAct Agent approach.
 Uses GPT-4o-mini with a compact prompt for cost-efficient analytics.
 Simple single-number questions bypass the agent entirely (single LLM call).
 """
+import copy
 import json
 import logging
 import re
@@ -68,8 +69,145 @@ TRUNC_MAP = {
     'TruncDay': TruncDay, 'TruncYear': TruncYear,
 }
 
+# ── Field-level access control ───────────────────────────────────
+
+ALLOWED_FIELDS = {
+    'User': {
+        'id', 'username', 'first_name', 'last_name', 'email', 'clinic_name',
+        'phone', 'is_staff', 'is_active', 'date_joined', 'created_at',
+        'dogs', 'token_usages',  # reverse relations (for Count etc.)
+        # Blocked: password, last_login, is_superuser, groups, user_permissions
+    },
+    'Dog': {
+        'id', 'owner', 'owner_id', 'name', 'breed', 'sex', 'birth_date',
+        'weight_kg', 'env_indoor_only', 'env_dog_parks', 'env_daycare_boarding',
+        'env_travel_shows', 'env_tick_exposure', 'created_at', 'updated_at',
+        'vaccination_records',  # reverse relation
+    },
+    'Vaccine': {
+        'id', 'vaccine_id', 'name', 'vaccine_type', 'min_start_age_weeks',
+        'is_active', 'created_at', 'updated_at',
+        'vaccination_records',  # reverse relation
+    },
+    'VaccinationRecord': {
+        'id', 'dog', 'dog_id', 'vaccine', 'vaccine_id', 'date_administered',
+        'dose_number', 'notes', 'administered_by', 'created_at', 'updated_at',
+    },
+    'ContactSubmission': {
+        'id', 'name', 'email', 'subject', 'message', 'is_read', 'created_at',
+    },
+    'TokenUsage': {
+        'id', 'user', 'user_id', 'endpoint', 'model_name', 'input_tokens',
+        'output_tokens', 'total_tokens', 'created_at',
+    },
+    'ReminderPreference': {
+        'id', 'user', 'user_id', 'reminders_enabled', 'lead_time_days',
+        'interval_hours', 'preferred_hour', 'preferred_timezone',
+        'created_at', 'updated_at',
+    },
+    'ReminderLog': {
+        'id', 'user', 'user_id', 'dog', 'dog_id', 'vaccine_id',
+        'dose_number', 'scheduled_date', 'sent_at',
+    },
+}
+
+# Map relation field names to their target model names for traversal validation
+_RELATION_TARGET = {
+    'owner': 'User', 'user': 'User',
+    'dog': 'Dog', 'dogs': 'Dog',
+    'vaccine': 'Vaccine',
+    'vaccination_records': 'VaccinationRecord',
+    'token_usages': 'TokenUsage',
+    'reminder_preference': 'ReminderPreference',
+}
+
+BLOCKED_LOOKUPS = {'regex', 'iregex'}
+MAX_IN_LIST_SIZE = 100
+
+# Django ORM lookup suffixes (not field names)
+_DJANGO_LOOKUPS = {
+    'exact', 'iexact', 'contains', 'icontains', 'startswith', 'istartswith',
+    'endswith', 'iendswith', 'in', 'gt', 'gte', 'lt', 'lte', 'range',
+    'date', 'year', 'month', 'day', 'week', 'week_day', 'quarter',
+    'hour', 'minute', 'second', 'isnull',
+    'regex', 'iregex',  # listed here for parsing, blocked separately
+}
+
 
 # ── Helpers ───────────────────────────────────────────────────────
+
+def _validate_field_access(field_ref: str, model_name: str, filter_value=None, extra_allowed: set = None):
+    """Validate a field reference against per-model allowlists.
+
+    Handles relation traversal (e.g. 'owner__email'), Django lookups
+    (e.g. 'date_joined__gte'), and blocks dangerous lookups like __regex.
+    extra_allowed: annotation aliases that are valid in the current query context.
+    Raises ValueError if access is denied.
+    """
+    parts = field_ref.split('__')
+    current_model = model_name
+
+    i = 0
+    while i < len(parts):
+        part = parts[i]
+
+        # Check if this part is a Django lookup (only valid as the last segment)
+        if part in _DJANGO_LOOKUPS:
+            if i != len(parts) - 1:
+                raise ValueError(f"Invalid field reference: '{field_ref}'")
+            if part in BLOCKED_LOOKUPS:
+                raise ValueError(f"Lookup '{part}' is not allowed")
+            break
+
+        # Annotation aliases are valid at the first position only
+        if i == 0 and extra_allowed and part in extra_allowed:
+            # Annotation alias — skip model field check, no further traversal
+            if len(parts) > 1 and parts[1] not in _DJANGO_LOOKUPS:
+                raise ValueError(f"Cannot traverse annotation alias '{part}'")
+            i += 1
+            continue
+
+        # Validate field against current model's allowlist
+        allowed = ALLOWED_FIELDS.get(current_model)
+        if allowed is None:
+            raise ValueError(f"No field access rules for model '{current_model}'")
+        if part not in allowed:
+            raise ValueError(f"Field '{part}' is not accessible on {current_model}")
+
+        # Check if this field is a relation and there are more parts to traverse
+        if i < len(parts) - 1 and part in _RELATION_TARGET:
+            current_model = _RELATION_TARGET[part]
+            i += 1
+            continue
+
+        # If there are remaining parts and this isn't a relation, they must be lookups
+        if i < len(parts) - 1 and parts[i + 1] not in _DJANGO_LOOKUPS:
+            # Could be a reverse relation not in _RELATION_TARGET
+            raise ValueError(f"Cannot traverse '{part}' on {current_model}")
+
+        i += 1
+
+    # Enforce __in list size limit
+    if parts[-1] == 'in' and isinstance(filter_value, (list, tuple)):
+        if len(filter_value) > MAX_IN_LIST_SIZE:
+            raise ValueError(
+                f"'in' lookup exceeds max list size ({MAX_IN_LIST_SIZE})"
+            )
+
+
+def _validate_filters(filters: dict, model_name: str, extra_allowed: set = None):
+    """Validate all keys and values in a filter dict."""
+    for key, value in filters.items():
+        _validate_field_access(key, model_name, filter_value=value, extra_allowed=extra_allowed)
+
+
+def _validate_field_list(fields: list, model_name: str, extra_allowed: set = None):
+    """Validate a list of field references (for values/order_by)."""
+    for field in fields:
+        # order_by can have a leading '-' for descending
+        clean = field.lstrip('-') if isinstance(field, str) else field
+        _validate_field_access(clean, model_name, extra_allowed=extra_allowed)
+
 
 def _serialize_value(val):
     """Convert non-JSON-serializable values."""
@@ -103,11 +241,14 @@ def _compact_rows(rows: list, max_rows: int = MAX_TOOL_RESULT_ROWS) -> str:
     return json.dumps(compact, default=str)
 
 
-def _build_expression(spec: dict):
+def _build_expression(spec: dict, model_name: str):
     """Build a Django aggregation/trunc expression from a spec dict."""
     func_name = spec.get('func')
     field = spec.get('field', 'id')
     distinct = spec.get('distinct', False)
+
+    # Validate the target field against the allowlist
+    _validate_field_access(field, model_name)
 
     if func_name in AGGREGATION_MAP:
         agg_class = AGGREGATION_MAP[func_name]
@@ -131,16 +272,22 @@ def _execute_query(plan: dict) -> list | dict:
     model = MODEL_MAP[model_name]
     qs = model.objects.all()
 
-    # 1. Pre-filters
+    # Collect annotation aliases so they're recognized in values/order_by/post_filters
+    annotation_aliases = set()
+    annotation_aliases.update(plan.get('trunc_annotations', {}).keys())
+    annotation_aliases.update(plan.get('annotations', {}).keys())
+
+    # 1. Pre-filters (validated — no annotation aliases available yet)
     filters = plan.get('filters', {})
     if filters:
+        _validate_filters(filters, model_name)
         qs = qs.filter(**filters)
 
-    # 2. Trunc annotations
+    # 2. Trunc annotations (validated)
     trunc_specs = plan.get('trunc_annotations', {})
     if trunc_specs:
         trunc_kwargs = {
-            alias: _build_expression(spec) for alias, spec in trunc_specs.items()
+            alias: _build_expression(spec, model_name) for alias, spec in trunc_specs.items()
         }
         qs = qs.annotate(**trunc_kwargs)
 
@@ -150,28 +297,34 @@ def _execute_query(plan: dict) -> list | dict:
         ann_specs_for_agg = plan.get('annotations', {})
         if ann_specs_for_agg:
             ann_kwargs_for_agg = {
-                alias: _build_expression(spec) for alias, spec in ann_specs_for_agg.items()
+                alias: _build_expression(spec, model_name) for alias, spec in ann_specs_for_agg.items()
             }
             qs = qs.annotate(**ann_kwargs_for_agg)
 
         post_filters_for_agg = plan.get('post_filters', {})
         if post_filters_for_agg:
+            _validate_filters(post_filters_for_agg, model_name, extra_allowed=annotation_aliases)
             qs = qs.filter(**post_filters_for_agg)
 
         agg_kwargs = {
-            alias: _build_expression(spec) for alias, spec in agg_specs.items()
+            alias: _build_expression(spec, model_name) for alias, spec in agg_specs.items()
         }
         result = qs.aggregate(**agg_kwargs)
         return {k: _serialize_value(v) for k, v in result.items()}
 
-    # 4. Annotations + values
+    # 4. Annotations + values (validated)
     ann_specs = plan.get('annotations', {})
     ann_kwargs = {
-        alias: _build_expression(spec) for alias, spec in ann_specs.items()
+        alias: _build_expression(spec, model_name) for alias, spec in ann_specs.items()
     } if ann_specs else {}
 
     values_fields = plan.get('values', [])
+    if values_fields:
+        _validate_field_list(values_fields, model_name, extra_allowed=annotation_aliases)
+
     post_filters = plan.get('post_filters', {})
+    if post_filters:
+        _validate_filters(post_filters, model_name, extra_allowed=annotation_aliases)
 
     if post_filters and ann_kwargs:
         qs = qs.annotate(**ann_kwargs)
@@ -190,6 +343,7 @@ def _execute_query(plan: dict) -> list | dict:
 
     order_by = plan.get('order_by', [])
     if order_by:
+        _validate_field_list(order_by, model_name, extra_allowed=annotation_aliases)
         qs = qs.order_by(*order_by)
 
     limit = min(plan.get('limit', MAX_RESULTS), MAX_RESULTS)
@@ -231,11 +385,15 @@ def run_database_query(query_plan_json: str) -> str:
         if isinstance(result, dict):
             return json.dumps({k: _serialize_value(v) for k, v in result.items()}, default=str)
         return _compact_rows(result)
-    except (ValueError, KeyError, TypeError) as e:
-        return f"ERROR: {type(e).__name__}: {e}"
-    except Exception as e:
+    except ValueError as e:
+        logger.warning(f"Query validation error: {e}")
+        return f"ERROR: {e}"
+    except (KeyError, TypeError) as e:
+        logger.warning(f"Query structure error: {e}")
+        return "ERROR: Invalid query structure. Check field names and query plan format."
+    except Exception:
         logger.exception("Unexpected error in database query")
-        return f"ERROR: Query execution failed"
+        return "ERROR: Query execution failed."
 
 
 @tool
@@ -245,10 +403,13 @@ def get_model_fields(model_name: str) -> str:
         return f"ERROR: Unknown model '{model_name}'. Choose from: {', '.join(MODEL_MAP)}"
 
     model = MODEL_MAP[model_name]
+    allowed = ALLOWED_FIELDS.get(model_name, set())
     fields = []
     for f in model._meta.get_fields():
-        field_type = type(f).__name__
         name = f.name
+        if name not in allowed:
+            continue
+        field_type = type(f).__name__
         related = ''
         if hasattr(f, 'related_model') and f.related_model:
             related = f"→{f.related_model.__name__}"
@@ -357,7 +518,8 @@ def _try_simple_query(user_message: str, model: str = None, provider: str = None
             # Extract limit from message if present (e.g., "top 5 breeds")
             limit_match = re.search(r'\btop (\d+)', msg_lower)
             if limit_match and 'limit' in query_plan:
-                query_plan = {**query_plan, 'limit': int(limit_match.group(1))}
+                query_plan = copy.deepcopy(query_plan)
+                query_plan['limit'] = int(limit_match.group(1))
 
             try:
                 result = _execute_query(query_plan)

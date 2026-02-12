@@ -793,6 +793,105 @@ PetVaxCalendar - Dog Vaccination Scheduler
                 'message': str(e)
             }
 
+    def send_password_reset_email(self, to_email: str, username: str, reset_url: str) -> dict:
+        """
+        Send password reset email with a secure link.
+
+        Args:
+            to_email: Recipient email address
+            username: Username for personalization
+            reset_url: Full URL to the password reset page with token
+
+        Returns:
+            dict with success status and message
+        """
+        display_name = username or to_email
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="background-color: #006D9C; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Reset Your Password
+                </h1>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {display_name},
+                </p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    We received a request to reset your password. Click the button below to set a new password:
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_url}" style="display: inline-block; padding: 14px 32px; background-color: #006D9C; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                        Reset Password
+                    </a>
+                </div>
+                <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #5f6b76;">
+                    This link expires in 1 hour. If you did not request a password reset, please ignore this email.
+                </p>
+                <p style="margin: 0; font-size: 12px; color: #a0aec0; line-height: 1.6;">
+                    If the button doesn't work, copy and paste this URL into your browser:<br>
+                    <span style="word-break: break-all;">{reset_url}</span>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""Reset Your Password
+
+Hi {display_name},
+
+We received a request to reset your password. Visit the link below to set a new password:
+
+{reset_url}
+
+This link expires in 1 hour. If you did not request a password reset, please ignore this email.
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": "Reset Your Password - PetVaxCalendar",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Password reset email sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
     def send_otp_email(self, to_email: str, otp: str, username: str = '') -> dict:
         """
         Send OTP verification email for account registration.

@@ -66,6 +66,9 @@ AGE_ADULT_MAX_YEARS = 7
 SUPPORTED_EXTENSIONS = ('.pdf', '.txt')
 RETRIEVER_K = 3
 
+# LLM Timeout (seconds)
+LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "30"))
+
 # Embedding Configuration
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 

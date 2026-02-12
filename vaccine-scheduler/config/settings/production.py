@@ -63,13 +63,16 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS if o.strip()]
 # Content Security Policy (requires django-csp)
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_SCRIPT_SRC = ("'self'",)
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com")
 CSP_IMG_SRC = ("'self'", "data:", "https:")
-CSP_FONT_SRC = ("'self'", "data:")
+CSP_FONT_SRC = ("'self'", "data:", "https://fonts.gstatic.com")
 CSP_CONNECT_SRC = ("'self'",)
 
 # WhiteNoise for static file serving
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# Permissions-Policy header
+MIDDLEWARE.append('config.middleware.PermissionsPolicyMiddleware')
 
 # Static files configuration
 STATIC_URL = '/static/'
@@ -100,3 +103,6 @@ if not CORS_ALLOWED_ORIGINS:
     CORS_ALLOW_ALL_ORIGINS = False
     # Allow requests from the same host
     CORS_ALLOW_CREDENTIALS = True
+
+# Frontend URL for password reset emails and other links
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://petvaxcalendar.com')

@@ -1,20 +1,30 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const client = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
-// Request interceptor to attach JWT token
+// Helper to read CSRF token from cookie (Django sets csrftoken cookie)
+function getCSRFToken() {
+  const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// Request interceptor to attach CSRF token for unsafe methods
 client.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const method = config.method?.toUpperCase();
+    if (method && !['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
+      const csrfToken = getCSRFToken();
+      if (csrfToken) {
+        config.headers['X-CSRFToken'] = csrfToken;
+      }
     }
     return config;
   },
@@ -25,66 +35,68 @@ client.interceptors.request.use(
 let isRefreshing = false;
 let pendingRequests = [];
 
-function onTokenRefreshed(token) {
-  pendingRequests.forEach((callback) => callback(token));
+function onTokenRefreshed() {
+  pendingRequests.forEach(({ resolve }) => resolve());
   pendingRequests = [];
 }
 
 function onRefreshFailed() {
-  pendingRequests.forEach((callback) => callback(null));
+  pendingRequests.forEach(({ reject }) => reject());
   pendingRequests = [];
 }
 
-// Response interceptor to handle 401 and refresh token
+// URLs that should NOT trigger token refresh on 401
+// (auth probes and auth endpoints — a 401 here is expected, not a stale session)
+const SKIP_REFRESH_URLS = ['/auth/me/', '/auth/login/', '/auth/refresh/', '/auth/register/'];
+
+function shouldSkipRefresh(url) {
+  return SKIP_REFRESH_URLS.some((path) => url?.includes(path));
+}
+
+// Response interceptor to handle 401 and refresh token via cookie
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only attempt refresh for 401s on protected data endpoints
+    // Skip auth-probing endpoints (me/, login/, refresh/) to prevent loops
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !shouldSkipRefresh(originalRequest.url)
+    ) {
       originalRequest._retry = true;
 
       // If already refreshing, queue this request to wait
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          pendingRequests.push((token) => {
-            if (token) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              resolve(client(originalRequest));
-            } else {
-              reject(error);
-            }
+          pendingRequests.push({
+            resolve: () => resolve(client(originalRequest)),
+            reject: () => reject(error),
           });
         });
       }
 
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (refreshToken) {
-        isRefreshing = true;
-        try {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-            refresh: refreshToken,
-          });
+      isRefreshing = true;
+      try {
+        // Cookie is sent automatically — no body needed
+        await axios.post(`${API_BASE_URL}/auth/refresh/`, null, {
+          withCredentials: true,
+        });
 
-          const { access } = response.data;
-          localStorage.setItem('access_token', access);
+        isRefreshing = false;
+        onTokenRefreshed();
 
-          isRefreshing = false;
-          onTokenRefreshed(access);
-
-          originalRequest.headers.Authorization = `Bearer ${access}`;
-          return client(originalRequest);
-        } catch (refreshError) {
-          isRefreshing = false;
-          onRefreshFailed();
-          // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+        return client(originalRequest);
+      } catch (refreshError) {
+        isRefreshing = false;
+        onRefreshFailed();
+        // Refresh failed — redirect to login only if not already there
+        if (window.location.pathname !== '/login') {
           window.location.href = '/login';
-          return Promise.reject(refreshError);
         }
-      } else {
-        window.location.href = '/login';
+        return Promise.reject(refreshError);
       }
     }
 

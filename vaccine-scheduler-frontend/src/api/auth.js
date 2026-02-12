@@ -20,8 +20,9 @@ export async function resendOTP(email) {
   return response.data;
 }
 
-export async function refreshToken(refresh) {
-  const response = await client.post('/auth/refresh/', { refresh });
+export async function refreshToken() {
+  // Cookie is sent automatically — no body needed
+  const response = await client.post('/auth/refresh/');
   return response.data;
 }
 
@@ -40,7 +41,20 @@ export async function changePassword(data) {
   return response.data;
 }
 
-export async function logout(refresh) {
-  const response = await client.post('/auth/logout/', { refresh });
+export async function logout() {
+  // Cookie is sent automatically — no body needed
+  const response = await client.post('/auth/logout/');
+  return response.data;
+}
+
+export async function requestPasswordReset(email) {
+  const response = await client.post('/auth/password/reset/', { email });
+  return response.data;
+}
+
+export async function confirmPasswordReset(uidb64, token, new_password, new_password_confirm) {
+  const response = await client.post('/auth/password/reset/confirm/', {
+    uidb64, token, new_password, new_password_confirm,
+  });
   return response.data;
 }

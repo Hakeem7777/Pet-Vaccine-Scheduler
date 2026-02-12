@@ -139,9 +139,40 @@ class PendingRegistrationSerializer(serializers.Serializer):
         return attrs
 
     def validate_email(self, value: str) -> str:
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
+        # Don't reveal whether the email exists — the view's update_or_create
+        # handles duplicates, and OTP verification uses generic errors.
         return value
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """
+    Serializer for password reset request (sends email with reset link).
+    """
+    email = serializers.EmailField(required=True)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Serializer for password reset confirmation (sets new password).
+    """
+    uidb64 = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(
+        required=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    new_password_confirm = serializers.CharField(
+        required=True,
+        style={'input_type': 'password'}
+    )
+
+    def validate(self, attrs: dict) -> dict:
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({
+                'new_password_confirm': "Passwords do not match."
+            })
+        return attrs
 
 
 class OTPVerificationSerializer(serializers.Serializer):
