@@ -41,12 +41,16 @@ class SchedulerService:
         # Convert VaccinationRecords to scheduler's expected format
         past_history = self._build_history_dict(dog)
 
+        # Extract health screening context from dog model
+        health_context = dog.health_context
+
         # Call the core scheduler
         schedule_items = self._scheduler.calculate_schedule(
             birth_date=dog.birth_date,
             selected_noncore=selected_noncore,
             past_history=past_history,
-            reference_date=reference_date
+            reference_date=reference_date,
+            health_context=health_context,
         )
 
         # Categorize results
@@ -106,6 +110,8 @@ class SchedulerService:
                 'description': item.description,
                 'side_effects_common': item.side_effects_common,
                 'side_effects_seek_vet': item.side_effects_seek_vet,
+                'warning': item.warning,
+                'contraindicated': item.contraindicated,
             }
 
             if days_diff < 0:

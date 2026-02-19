@@ -9,6 +9,7 @@ const VACCINE_RULES = [
     id: 'core_dap',
     name: 'Distemper, Hepatitis, Parvovirus, Parainfluenza (DHPP)',
     type: 'core',
+    vaccine_type: 'mlv',
     description: 'Protects against four deadly viral diseases: Distemper (affects nervous system), Adenovirus/Hepatitis (causes liver and respiratory illness), Parvovirus (severe gastrointestinal disease with high mortality in puppies), and Parainfluenza (respiratory virus contributing to kennel cough).',
     side_effects: {
       common: [
@@ -50,6 +51,7 @@ const VACCINE_RULES = [
     id: 'core_lepto',
     name: 'Leptospirosis',
     type: 'core_conditional',
+    vaccine_type: 'killed',
     description: 'Prevents a bacterial infection spread through contaminated water and wildlife urine. Can cause kidney and liver failure, and is transmissible to humans (zoonotic).',
     side_effects: {
       common: [
@@ -81,6 +83,7 @@ const VACCINE_RULES = [
     id: 'core_rabies',
     name: 'Rabies',
     type: 'core',
+    vaccine_type: 'killed',
     description: 'Legally required vaccine that protects against the fatal rabies virus, which attacks the nervous system. Essential for public health as rabies is transmissible to humans through bites.',
     side_effects: {
       common: [
@@ -113,6 +116,7 @@ const VACCINE_RULES = [
     id: 'noncore_lyme',
     name: 'Lyme (Borrelia)',
     type: 'noncore',
+    vaccine_type: 'killed',
     description: 'Protects against Lyme disease transmitted by ticks. Important for dogs in wooded or grassy areas where deer ticks are common. Prevents joint pain, fever, and kidney problems.',
     side_effects: {
       common: [
@@ -143,6 +147,7 @@ const VACCINE_RULES = [
     id: 'noncore_bord_in',
     name: 'Bordetella (Intranasal/Oral)',
     type: 'noncore',
+    vaccine_type: 'mlv',
     description: 'Prevents kennel cough, a highly contagious respiratory infection. Essential for dogs that visit groomers, boarding facilities, dog parks, or training classes.',
     side_effects: {
       common: [
@@ -172,6 +177,7 @@ const VACCINE_RULES = [
     id: 'noncore_flu',
     name: 'Canine Influenza (H3N8/H3N2)',
     type: 'noncore',
+    vaccine_type: 'killed',
     description: 'Protects against highly contagious dog flu strains that cause coughing, fever, and respiratory illness. Recommended for dogs in social settings or multi-dog households.',
     side_effects: {
       common: [
@@ -198,6 +204,78 @@ const VACCINE_RULES = [
     ],
   },
 ];
+
+/**
+ * Evaluate health screening answers against a vaccine to produce warnings.
+ * Mirrors backend _evaluate_health_warnings logic.
+ */
+function evaluateHealthWarnings(vaccine, healthContext) {
+  if (!healthContext) return { warning: null, contraindicated: false };
+
+  const warnings = [];
+  let contraindicated = false;
+  const isMlv = vaccine.vaccine_type === 'mlv';
+
+  // Q5: Immunosuppressive meds (strongest)
+  if (healthContext.health_immunosuppressive_meds === 'yes') {
+    if (isMlv) {
+      contraindicated = true;
+      warnings.push(
+        'CONTRAINDICATED: Do not administer modified-live vaccines to immunosuppressed patients. Wait 2+ weeks after stopping therapy. (WSAVA 2024 Guidelines)'
+      );
+    } else {
+      warnings.push(
+        'Caution: Patient on immunosuppressive therapy. Consult veterinarian before administering. (WSAVA 2024 Guidelines)'
+      );
+    }
+  }
+
+  // Q6: Pregnant/breeding
+  if (healthContext.health_pregnant_breeding === 'yes') {
+    if (isMlv) {
+      contraindicated = true;
+      warnings.push(
+        'CONTRAINDICATED: Modified-live vaccines are contraindicated during pregnancy \u2014 risk of fetal harm. (WSAVA 2024 Guidelines; Veterinary Information Network)'
+      );
+    } else {
+      warnings.push(
+        'Caution: Patient is pregnant/breeding. Consult veterinarian before administering. (WSAVA 2024 Guidelines)'
+      );
+    }
+  }
+
+  // Q4: Immune-related condition
+  if (healthContext.health_immune_condition === 'yes') {
+    warnings.push(
+      'WARNING: Immune-mediated condition detected. Revaccination not recommended \u2014 use titer testing to assess immunity. (AAHA 2024 Guidelines; WSAVA 2024 Guidelines)'
+    );
+  }
+
+  // Q1: Prior vaccine reaction
+  if (healthContext.health_vaccine_reaction === 'yes') {
+    warnings.push(
+      'History of vaccine reaction \u2014 consult vet before administering. Titer testing recommended for core vaccines. (AAHA 2024 Guidelines)'
+    );
+  }
+
+  // Q2 + Q3: General advisory
+  if (healthContext.health_prescription_meds === 'yes') {
+    warnings.push(
+      'Note: Currently on prescription medications \u2014 consult vet regarding vaccine timing.'
+    );
+  }
+
+  if (healthContext.health_chronic_condition === 'yes') {
+    warnings.push(
+      'Note: Diagnosed with a long-term medical condition \u2014 consult vet regarding vaccine safety.'
+    );
+  }
+
+  return {
+    warning: warnings.length > 0 ? warnings.join(' | ') : null,
+    contraindicated,
+  };
+}
 
 /**
  * Add days to a date
@@ -289,6 +367,16 @@ export function calculateGuestSchedule(dog, selectedNoncore = [], vaccinations =
     pastHistory[key].sort((a, b) => a - b);
   });
 
+  // Build health context from dog fields
+  const healthContext = {
+    health_vaccine_reaction: dog.health_vaccine_reaction || 'no',
+    health_prescription_meds: dog.health_prescription_meds || 'no',
+    health_chronic_condition: dog.health_chronic_condition || 'no',
+    health_immune_condition: dog.health_immune_condition || 'no',
+    health_immunosuppressive_meds: dog.health_immunosuppressive_meds || 'no',
+    health_pregnant_breeding: dog.health_pregnant_breeding || 'no',
+  };
+
   const scheduleItems = [];
 
   for (const vaccine of VACCINE_RULES) {
@@ -296,6 +384,9 @@ export function calculateGuestSchedule(dog, selectedNoncore = [], vaccinations =
     if (vaccine.type === 'noncore' && !selectedNoncore.includes(vaccine.id)) {
       continue;
     }
+
+    // Evaluate health warnings once per vaccine
+    const { warning: warningText, contraindicated: isContraindicated } = evaluateHealthWarnings(vaccine, healthContext);
 
     const vId = vaccine.id;
     const historyDates = pastHistory[vId] || [];
@@ -390,6 +481,8 @@ export function calculateGuestSchedule(dog, selectedNoncore = [], vaccinations =
         description: vaccine.description,
         side_effects_common: sideEffects.common || null,
         side_effects_seek_vet: sideEffects.seek_vet_if || null,
+        warning: warningText,
+        contraindicated: isContraindicated,
       });
 
       currentDate = addDays(currentDate, intervalDays);
@@ -427,6 +520,8 @@ export function calculateGuestSchedule(dog, selectedNoncore = [], vaccinations =
           description: vaccine.description,
           side_effects_common: boosterSideEffects.common || null,
           side_effects_seek_vet: boosterSideEffects.seek_vet_if || null,
+          warning: warningText,
+          contraindicated: isContraindicated,
         });
       } else {
         const dueDate = initialBoosterDue > today ? initialBoosterDue : today;
@@ -442,6 +537,8 @@ export function calculateGuestSchedule(dog, selectedNoncore = [], vaccinations =
           description: vaccine.description,
           side_effects_common: boosterSideEffects.common || null,
           side_effects_seek_vet: boosterSideEffects.seek_vet_if || null,
+          warning: warningText,
+          contraindicated: isContraindicated,
         });
       }
     }

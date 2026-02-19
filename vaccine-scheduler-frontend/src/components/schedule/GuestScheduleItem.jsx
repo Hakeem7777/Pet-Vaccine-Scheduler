@@ -49,11 +49,30 @@ function GuestScheduleItem({ item, type, dogName, dogInfo, onVaccinationAdded })
 
   // Front of the card - current schedule item display
   const frontContent = (
-    <div className={`schedule-item schedule-item--${type}`}>
+    <div className={`schedule-item schedule-item--${type}${item.contraindicated ? ' schedule-item--contraindicated' : ''}${item.warning && !item.contraindicated ? ' schedule-item--has-warning' : ''}`}>
       <div className="schedule-item-header">
         <span className="schedule-vaccine">{item.vaccine}</span>
         <span className="schedule-dose">{item.dose}</span>
       </div>
+      {item.contraindicated && (
+        <div className="schedule-item-badge schedule-item-badge--contraindicated">
+          <span className="badge-icon">&#9888;</span>
+          <span className="badge-text">CONTRAINDICATED</span>
+        </div>
+      )}
+      {item.warning && !item.contraindicated && (
+        <div className="schedule-item-badge schedule-item-badge--warning">
+          <span className="badge-icon">&#9888;</span>
+          <span className="badge-text">VET CONSULT ADVISED</span>
+        </div>
+      )}
+      {item.warning && (
+        <div className={`schedule-item-warning ${item.contraindicated ? 'schedule-item-warning--contraindicated' : 'schedule-item-warning--caution'}`}>
+          {item.warning.split(' | ').map((w, i) => (
+            <p key={i} className="schedule-warning-text">{w}</p>
+          ))}
+        </div>
+      )}
       <div className="schedule-item-body">
         <span className="schedule-date">Due: {formatDate(item.date)}</span>
         <span className={`schedule-days ${type === 'overdue' ? 'schedule-days--overdue' : ''}`}>
@@ -119,9 +138,10 @@ function GuestScheduleItem({ item, type, dogName, dogInfo, onVaccinationAdded })
         <button
           className="btn btn-sm btn-primary schedule-item-done-btn"
           onClick={handleMarkAsDone}
-          disabled={isSubmitting}
+          disabled={isSubmitting || item.contraindicated}
+          title={item.contraindicated ? 'This vaccine is contraindicated based on health screening' : ''}
         >
-          {isSubmitting ? 'Saving...' : 'Mark as Done'}
+          {isSubmitting ? 'Saving...' : item.contraindicated ? 'Contraindicated' : 'Mark as Done'}
         </button>
       </div>
       {hasSafetyInfo && (

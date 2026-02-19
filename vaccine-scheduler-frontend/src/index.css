@@ -139,6 +139,7 @@ a:hover {
 }
 
 .header {
+  /* background: #FFFFFF; */
   background: var(--color-primary);
   color: white;
   padding: var(--spacing-md) var(--spacing-xl);
@@ -173,7 +174,7 @@ a:hover {
 }
 
 .header-logo {
-  height: 40px;
+  height: 60px;
   width: auto;
 }
 
@@ -725,6 +726,289 @@ a:hover {
 
   .dog-form-header-title {
     font-size: 1.25rem;
+  }
+}
+
+/* ==========================================
+   HEALTH SCREENING FORM STYLES
+   ========================================== */
+
+.form-fieldset-health {
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  background: linear-gradient(to bottom, #FFF9F0 0%, white 100%);
+}
+
+.form-fieldset-health legend {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0 var(--spacing-sm);
+  color: var(--color-accent);
+}
+
+.health-screening-intro {
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+}
+
+.health-questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.health-question {
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.health-question:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.health-question-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-neutral-dark);
+  line-height: 1.4;
+}
+
+.health-tooltip-trigger {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-primary);
+  padding: 2px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.health-tooltip-trigger:hover {
+  background: rgba(0, 109, 156, 0.1);
+  color: var(--color-primary-dark, #005577);
+}
+
+.health-tooltip {
+  background: #F0F7FB;
+  border: 1px solid rgba(0, 109, 156, 0.2);
+  border-radius: var(--radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--color-text-main);
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.health-tooltip p {
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.health-tooltip-source {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.health-radio-group {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.health-radio-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.health-radio-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.health-radio-option:hover {
+  border-color: var(--color-primary);
+  background: rgba(0, 109, 156, 0.04);
+}
+
+.health-radio-option--selected {
+  border-color: var(--color-primary);
+  background: rgba(0, 109, 156, 0.08);
+  color: var(--color-primary);
+}
+
+/* Sources Section */
+.health-sources-section {
+  margin-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-md);
+}
+
+.health-sources-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0;
+}
+
+.health-sources-toggle:hover {
+  color: var(--color-primary-dark, #005577);
+}
+
+.health-sources-chevron {
+  font-size: 0.65rem;
+  transition: transform 0.2s ease;
+}
+
+.health-sources-chevron--open {
+  transform: rotate(180deg);
+}
+
+.health-sources-list {
+  margin: var(--spacing-sm) 0 0;
+  padding-left: var(--spacing-lg);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.health-sources-list li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.health-sources-list a {
+  font-weight: 400;
+}
+
+/* ==========================================
+   SCHEDULE CONTRAINDICATION STYLES
+   ========================================== */
+
+.schedule-item--contraindicated {
+  background-color: #FFF5F5 !important;
+  border-left: 5px solid var(--color-danger) !important;
+  opacity: 0.85;
+}
+
+.schedule-item--has-warning {
+  border-left: 5px solid var(--color-accent) !important;
+}
+
+.schedule-item-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--spacing-sm);
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.schedule-item-badge--contraindicated {
+  background: var(--color-danger);
+  color: white;
+}
+
+.schedule-item-badge--warning {
+  background: var(--color-accent);
+  color: white;
+}
+
+.badge-icon {
+  font-size: 0.8rem;
+}
+
+.schedule-item-warning {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius);
+  margin: var(--spacing-xs) 0 var(--spacing-sm) 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.schedule-item-warning--contraindicated {
+  background: #FFF5F5;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.schedule-item-warning--caution {
+  background: #FFFAF0;
+  border: 1px solid var(--color-accent);
+  color: #C05621;
+}
+
+.schedule-warning-text {
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.schedule-warning-text:last-child {
+  margin-bottom: 0;
+}
+
+/* Health Alert Banner */
+.health-alert-banner {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Health Flag Tags on Detail Page */
+.env-tag--warning {
+  background: #FFFAF0;
+  color: #C05621;
+  border: 1px solid var(--color-accent);
+}
+
+.env-tag--danger {
+  background: #FFF5F5;
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .health-radio-group {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .health-radio-option {
+    justify-content: center;
   }
 }
 

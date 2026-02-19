@@ -11,6 +11,94 @@ const ENVIRONMENT_OPTIONS = [
   { key: 'env_tick_exposure', label: 'Tick Areas', icon: '🦟', description: 'Woods, tall grass, or tick-prone areas' },
 ];
 
+// Health screening questions with tooltips and sources
+const HEALTH_SCREENING_QUESTIONS = [
+  {
+    key: 'health_vaccine_reaction',
+    label: 'Has your dog ever had a reaction to a vaccine?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'yes', label: 'Yes' },
+      { value: 'unsure', label: 'Not sure' },
+    ],
+    tooltip: 'Dogs with previous vaccine reactions are at higher risk for future reactions. All vaccines in the schedule will be flagged — including DHPP, Rabies, Leptospirosis, Bordetella, Canine Influenza, and Lyme. Your vet may recommend pre-treatment with antihistamines, titer testing instead of revaccination, or adjusted protocols.',
+    source: 'AAHA Canine Vaccination Guidelines, 2024',
+  },
+  {
+    key: 'health_prescription_meds',
+    label: 'Is your dog currently taking prescription medications?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'yes', label: 'Yes' },
+      { value: 'unsure', label: 'Not sure' },
+    ],
+    tooltip: 'Certain medications can interact with vaccines or affect immune response. All vaccines (DHPP, Rabies, Leptospirosis, Bordetella, Canine Influenza, Lyme) will be flagged for veterinary review to determine safe vaccination timing.',
+    source: 'WSAVA Vaccination Guidelines, 2024',
+  },
+  {
+    key: 'health_chronic_condition',
+    label: 'Has a veterinarian diagnosed your dog with a long-term medical condition?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'yes', label: 'Yes' },
+      { value: 'unsure', label: 'Not sure' },
+    ],
+    tooltip: 'Chronic conditions such as kidney disease, liver disease, or diabetes can affect how your dog responds to vaccines. All vaccines (DHPP, Rabies, Leptospirosis, Bordetella, Canine Influenza, Lyme) will be flagged for veterinary review.',
+    source: 'AAHA Canine Vaccination Guidelines, 2024',
+  },
+  {
+    key: 'health_immune_condition',
+    label: 'Has your dog ever been diagnosed with an immune-related condition?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'yes', label: 'Yes' },
+      { value: 'unsure', label: 'Not sure' },
+    ],
+    tooltip: 'Immune-mediated diseases (e.g., IMHA, ITP, autoimmune skin conditions) can be triggered or worsened by vaccination. All vaccines will be flagged — DHPP and Bordetella (Intranasal) carry extra risk as modified-live vaccines. Titer testing is recommended as an alternative to revaccination, especially for DHPP and Rabies.',
+    source: 'AAHA 2024; WSAVA Vaccination Guidelines, 2024',
+  },
+  {
+    key: 'health_immunosuppressive_meds',
+    label: 'Is your dog currently receiving immunosuppressive medications (steroids, chemo)?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'yes', label: 'Yes' },
+      { value: 'unsure', label: 'Not sure' },
+    ],
+    tooltip: 'Modified-live vaccines can cause disease in immunosuppressed patients. DHPP and Bordetella (Intranasal) will be marked as CONTRAINDICATED. Killed vaccines — Rabies, Leptospirosis, Canine Influenza, Lyme, and Bordetella (Injectable) — may be ineffective and require veterinary consultation. Vaccination should generally be delayed until at least 2 weeks after stopping immunosuppressive therapy.',
+    source: 'WSAVA Vaccination Guidelines, 2024',
+  },
+  {
+    key: 'health_pregnant_breeding',
+    label: 'Is your dog currently pregnant or being used for breeding?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'yes', label: 'Yes' },
+      { value: 'na', label: 'N/A' },
+    ],
+    tooltip: 'Modified-live vaccines can cross the placenta and cause birth defects or fetal death. DHPP and Bordetella (Intranasal) will be marked as CONTRAINDICATED. Killed vaccines — Rabies, Leptospirosis, Canine Influenza, Lyme, and Bordetella (Injectable) — should only be given during pregnancy when absolutely necessary. Ideally, all vaccinations should be completed before breeding.',
+    source: 'WSAVA 2024; Veterinary Information Network (VIN)',
+  },
+];
+
+const HEALTH_SOURCES = [
+  {
+    abbrev: 'AAHA 2024',
+    full: 'American Animal Hospital Association 2024',
+    url: 'https://www.aaha.org/resources/2022-aaha-canine-vaccination-guidelines/',
+  },
+  {
+    abbrev: 'WSAVA 2024',
+    full: 'World Small Animal Veterinary Association 2024',
+    url: 'https://wsava.org/global-guidelines/vaccination-guidelines/',
+  },
+  {
+    abbrev: 'VIN',
+    full: 'Veterinary Information Network',
+    url: 'https://veterinarypartner.vin.com/',
+  },
+];
+
 function DogForm({ dog, onSubmit, onCancel, isLoading }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -23,9 +111,17 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
     env_daycare_boarding: false,
     env_travel_shows: false,
     env_tick_exposure: false,
+    health_vaccine_reaction: 'no',
+    health_prescription_meds: 'no',
+    health_chronic_condition: 'no',
+    health_immune_condition: 'no',
+    health_immunosuppressive_meds: 'no',
+    health_pregnant_breeding: 'no',
   });
   const [errors, setErrors] = useState({});
   const [focusedField, setFocusedField] = useState(null);
+  const [activeTooltip, setActiveTooltip] = useState(null);
+  const [showSources, setShowSources] = useState(false);
 
   // Calculate form completion percentage
   const completionPercentage = useMemo(() => {
@@ -37,6 +133,9 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
       { value: formData.weight_kg, required: false },
     ];
     const envSelected = ENVIRONMENT_OPTIONS.some(opt => formData[opt.key]);
+    const healthAnswered = HEALTH_SCREENING_QUESTIONS.some(
+      q => formData[q.key] !== 'no' && formData[q.key] !== 'na'
+    );
 
     let filled = 0;
     let total = 0;
@@ -54,6 +153,9 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
     total += 1; // Environment section
     if (envSelected) filled += 1;
 
+    total += 1; // Health screening section
+    if (healthAnswered) filled += 1;
+
     return Math.round((filled / total) * 100);
   }, [formData]);
 
@@ -70,6 +172,12 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
         env_daycare_boarding: dog.env_daycare_boarding || false,
         env_travel_shows: dog.env_travel_shows || false,
         env_tick_exposure: dog.env_tick_exposure || false,
+        health_vaccine_reaction: dog.health_vaccine_reaction || 'no',
+        health_prescription_meds: dog.health_prescription_meds || 'no',
+        health_chronic_condition: dog.health_chronic_condition || 'no',
+        health_immune_condition: dog.health_immune_condition || 'no',
+        health_immunosuppressive_meds: dog.health_immunosuppressive_meds || 'no',
+        health_pregnant_breeding: dog.health_pregnant_breeding || 'no',
       });
     }
   }, [dog]);
@@ -242,6 +350,91 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
                 <span className="env-card-description">{option.description}</span>
               </label>
             ))}
+          </div>
+        </fieldset>
+
+        {/* Health Screening */}
+        <fieldset className="form-fieldset form-fieldset-health">
+          <legend>Health Screening</legend>
+          <p className="health-screening-intro">
+            These questions help identify potential vaccine contraindications.
+            Answer to the best of your knowledge.
+          </p>
+
+          <div className="health-questions">
+            {HEALTH_SCREENING_QUESTIONS.map((question) => (
+              <div key={question.key} className="health-question">
+                <div className="health-question-label">
+                  <span>{question.label}</span>
+                  <button
+                    type="button"
+                    className="health-tooltip-trigger"
+                    onClick={() => setActiveTooltip(
+                      activeTooltip === question.key ? null : question.key
+                    )}
+                    aria-label={`Why this matters: ${question.label}`}
+                  >
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+
+                {activeTooltip === question.key && (
+                  <div className="health-tooltip">
+                    <p>{question.tooltip}</p>
+                    <cite className="health-tooltip-source">Source: {question.source}</cite>
+                  </div>
+                )}
+
+                <div className="health-radio-group">
+                  {question.options.map((option) => (
+                    <label
+                      key={option.value}
+                      className={`health-radio-option ${
+                        formData[question.key] === option.value ? 'health-radio-option--selected' : ''
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={question.key}
+                        value={option.value}
+                        checked={formData[question.key] === option.value}
+                        onChange={handleChange}
+                      />
+                      <span className="health-radio-label">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Collapsible Sources Section */}
+          <div className="health-sources-section">
+            <button
+              type="button"
+              className="health-sources-toggle"
+              onClick={() => setShowSources(!showSources)}
+            >
+              {showSources ? 'Hide' : 'View'} Reference Sources
+              <span className={`health-sources-chevron ${showSources ? 'health-sources-chevron--open' : ''}`}>
+                &#9660;
+              </span>
+            </button>
+
+            {showSources && (
+              <ul className="health-sources-list">
+                {HEALTH_SOURCES.map((source, index) => (
+                  <li key={index}>
+                    <strong>{source.abbrev}:</strong>{' '}
+                    <a href={source.url} target="_blank" rel="noopener noreferrer">
+                      {source.full}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </fieldset>
 

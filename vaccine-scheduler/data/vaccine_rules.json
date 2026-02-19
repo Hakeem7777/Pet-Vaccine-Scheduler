@@ -3,6 +3,7 @@
     "id": "core_dap",
     "name": "Distemper, Hepatitis, Parvovirus, Parainfluenza (DHPP)",
     "type": "core",
+    "vaccine_type": "mlv",
     "description": "Protects against four deadly viral diseases: Distemper (affects nervous system), Adenovirus/Hepatitis (causes liver and respiratory illness), Parvovirus (severe gastrointestinal disease with high mortality in puppies), and Parainfluenza (respiratory virus contributing to kennel cough).",
     "side_effects": {
       "common": [
@@ -46,6 +47,7 @@
     "id": "core_lepto",
     "name": "Leptospirosis",
     "type": "core_conditional",
+    "vaccine_type": "killed",
     "description": "Prevents a bacterial infection spread through contaminated water and wildlife urine. Can cause kidney and liver failure, and is transmissible to humans (zoonotic).",
     "side_effects": {
       "common": [
@@ -78,6 +80,7 @@
     "id": "core_rabies",
     "name": "Rabies",
     "type": "core",
+    "vaccine_type": "killed",
     "description": "Legally required vaccine that protects against the fatal rabies virus, which attacks the nervous system. Essential for public health as rabies is transmissible to humans through bites.",
     "side_effects": {
       "common": [
@@ -111,6 +114,7 @@
     "id": "noncore_lyme",
     "name": "Lyme (Borrelia)",
     "type": "noncore",
+    "vaccine_type": "killed",
     "description": "Protects against Lyme disease transmitted by ticks. Important for dogs in wooded or grassy areas where deer ticks are common. Prevents joint pain, fever, and kidney problems.",
     "side_effects": {
       "common": [
@@ -142,6 +146,7 @@
     "id": "noncore_bord_inj",
     "name": "Bordetella (Injection)",
     "type": "noncore",
+    "vaccine_type": "killed",
     "description": "Prevents kennel cough, a highly contagious respiratory infection. Essential for dogs that visit groomers, boarding facilities, dog parks, or training classes.",
     "side_effects": {
       "common": [
@@ -173,6 +178,7 @@
     "id": "noncore_bord_in",
     "name": "Bordetella (Intranasal/Oral)",
     "type": "noncore",
+    "vaccine_type": "mlv",
     "description": "Prevents kennel cough, a highly contagious respiratory infection. Essential for dogs that visit groomers, boarding facilities, dog parks, or training classes.",
     "side_effects": {
       "common": [
@@ -203,6 +209,7 @@
     "id": "noncore_flu",
     "name": "Canine Influenza (H3N8/H3N2)",
     "type": "noncore",
+    "vaccine_type": "killed",
     "description": "Protects against highly contagious dog flu strains that cause coughing, fever, and respiratory illness. Recommended for dogs in social settings or multi-dog households.",
     "side_effects": {
       "common": [

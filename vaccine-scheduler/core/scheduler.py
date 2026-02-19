@@ -19,6 +19,8 @@ class ScheduleItem:
     description: Optional[str] = None
     side_effects_common: Optional[List[str]] = None
     side_effects_seek_vet: Optional[List[str]] = None
+    warning: Optional[str] = None
+    contraindicated: bool = False
 
 
 def classify_dog_age(birth_date: datetime.date, reference_date: datetime.date) -> str:
@@ -64,11 +66,88 @@ class RuleBasedScheduler:
         """
         return classify_dog_age(birth_date, reference_date)
 
+    def _evaluate_health_warnings(self, vaccine: dict, health_context: Optional[Dict[str, str]]) -> tuple:
+        """
+        Evaluate health screening answers against a vaccine to produce warnings.
+
+        Returns:
+            Tuple of (warning_message: str or None, is_contraindicated: bool)
+        """
+        if not health_context:
+            return (None, False)
+
+        warnings = []
+        contraindicated = False
+        is_mlv = vaccine.get('vaccine_type') == 'mlv'
+
+        # Q5: Immunosuppressive meds (strongest — check first)
+        if health_context.get('immunosuppressive_meds') == 'yes':
+            if is_mlv:
+                contraindicated = True
+                warnings.append(
+                    "CONTRAINDICATED: Do not administer modified-live vaccines to "
+                    "immunosuppressed patients. Wait 2+ weeks after stopping therapy. "
+                    "(WSAVA 2024 Guidelines)"
+                )
+            else:
+                warnings.append(
+                    "Caution: Patient on immunosuppressive therapy. Consult "
+                    "veterinarian before administering. (WSAVA 2024 Guidelines)"
+                )
+
+        # Q6: Pregnant/breeding
+        if health_context.get('pregnant_breeding') == 'yes':
+            if is_mlv:
+                contraindicated = True
+                warnings.append(
+                    "CONTRAINDICATED: Modified-live vaccines are contraindicated "
+                    "during pregnancy — risk of fetal harm. "
+                    "(WSAVA 2024 Guidelines; Veterinary Information Network)"
+                )
+            else:
+                warnings.append(
+                    "Caution: Patient is pregnant/breeding. Consult veterinarian "
+                    "before administering. (WSAVA 2024 Guidelines)"
+                )
+
+        # Q4: Immune-related condition
+        if health_context.get('immune_condition') == 'yes':
+            warnings.append(
+                "WARNING: Immune-mediated condition detected. Revaccination not "
+                "recommended — use titer testing to assess immunity. "
+                "(AAHA 2024 Guidelines; WSAVA 2024 Guidelines)"
+            )
+
+        # Q1: Prior vaccine reaction
+        if health_context.get('vaccine_reaction') == 'yes':
+            warnings.append(
+                "History of vaccine reaction — consult vet before administering. "
+                "Titer testing recommended for core vaccines. "
+                "(AAHA 2024 Guidelines)"
+            )
+
+        # Q2 + Q3: General advisory
+        if health_context.get('prescription_meds') == 'yes':
+            warnings.append(
+                "Note: Currently on prescription medications — consult vet "
+                "regarding vaccine timing."
+            )
+
+        if health_context.get('chronic_condition') == 'yes':
+            warnings.append(
+                "Note: Diagnosed with a long-term medical condition — consult vet "
+                "regarding vaccine safety."
+            )
+
+        combined_warning = ' | '.join(warnings) if warnings else None
+        return (combined_warning, contraindicated)
+
     def calculate_schedule(self,
                            birth_date: datetime.date,
                            selected_noncore: List[str],
                            past_history: Dict[str, List[datetime.date]],
-                           reference_date: datetime.date) -> List[ScheduleItem]:
+                           reference_date: datetime.date,
+                           health_context: Optional[Dict[str, str]] = None) -> List[ScheduleItem]:
         """
         Generates ONLY future doses based on birth date, selected vaccines, and history.
 
@@ -135,7 +214,10 @@ class RuleBasedScheduler:
             if active_rule:
                 total_series_doses = active_rule['doses']
                 interval_days = active_rule['interval_days']
-                
+
+                # Evaluate health warnings once per vaccine
+                warning_text, is_contraindicated = self._evaluate_health_warnings(vaccine, health_context)
+
                 # 4. Determine where to start generating
                 if last_dose_date:
                     start_tracking_date = max(last_dose_date + datetime.timedelta(days=interval_days), today)
@@ -198,7 +280,9 @@ class RuleBasedScheduler:
                         date_range_end=range_end.strftime("%Y-%m-%d"),
                         description=vaccine.get('description'),
                         side_effects_common=side_effects.get('common'),
-                        side_effects_seek_vet=side_effects.get('seek_vet_if')
+                        side_effects_seek_vet=side_effects.get('seek_vet_if'),
+                        warning=warning_text,
+                        contraindicated=is_contraindicated,
                     ))
                     start_tracking_date += datetime.timedelta(days=interval_days)
                     current_dose_num += 1
@@ -240,14 +324,11 @@ class RuleBasedScheduler:
                             notes=booster_note,
                             description=vaccine.get('description'),
                             side_effects_common=side_effects.get('common'),
-                            side_effects_seek_vet=side_effects.get('seek_vet_if')
+                            side_effects_seek_vet=side_effects.get('seek_vet_if'),
+                            warning=warning_text,
+                            contraindicated=is_contraindicated,
                         ))
                     else:
-                        # The 1-year booster is past due or was already given (assuming history isn't exhaustive, we schedule next cycle)
-                        # If we assume the dog is up to date, we schedule based on subsequent intervals
-                        # For safety in this app: If 1-year booster date is passed, we show it as "Due Now/Overdue"
-                        # unless we have logic to see if *that* was given.
-                        # (Simplification: Show Due Now)
                         schedule.append(ScheduleItem(
                             vaccine=vaccine['name'],
                             vaccine_id=v_id,
@@ -257,7 +338,9 @@ class RuleBasedScheduler:
                             notes=booster_note,
                             description=vaccine.get('description'),
                             side_effects_common=side_effects.get('common'),
-                            side_effects_seek_vet=side_effects.get('seek_vet_if')
+                            side_effects_seek_vet=side_effects.get('seek_vet_if'),
+                            warning=warning_text,
+                            contraindicated=is_contraindicated,
                         ))
 
         schedule.sort(key=lambda x: x.date)

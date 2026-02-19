@@ -77,6 +77,22 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
         ] : []}
       />
 
+      {dog && (dog.health_vaccine_reaction === 'yes' ||
+               dog.health_immune_condition === 'yes' ||
+               dog.health_immunosuppressive_meds === 'yes' ||
+               dog.health_pregnant_breeding === 'yes') && (
+        <div className="health-alert-banner">
+          <div className="schedule-item-warning schedule-item-warning--caution">
+            <p className="schedule-warning-text">
+              <strong>Health Screening Alert:</strong> Based on your health screening answers,
+              some vaccines below have been flagged with warnings or contraindications.
+              Look for warning badges on individual vaccines. Always consult your veterinarian
+              before making vaccination decisions.
+            </p>
+          </div>
+        </div>
+      )}
+
       {hasNoVaccines ? (
         <div className="schedule-empty">
           <p>All vaccinations are up to date!</p>

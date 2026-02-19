@@ -21,7 +21,11 @@ class DogSerializer(serializers.ModelSerializer):
             'id', 'name', 'breed', 'sex', 'sex_display', 'birth_date',
             'weight_kg', 'age_weeks', 'age_classification',
             'env_indoor_only', 'env_dog_parks', 'env_daycare_boarding',
-            'env_travel_shows', 'env_tick_exposure', 'vaccination_count',
+            'env_travel_shows', 'env_tick_exposure',
+            'health_vaccine_reaction', 'health_prescription_meds',
+            'health_chronic_condition', 'health_immune_condition',
+            'health_immunosuppressive_meds', 'health_pregnant_breeding',
+            'vaccination_count',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -40,12 +44,21 @@ class DogCreateSerializer(serializers.ModelSerializer):
         fields = [
             'name', 'breed', 'sex', 'birth_date', 'weight_kg',
             'env_indoor_only', 'env_dog_parks', 'env_daycare_boarding',
-            'env_travel_shows', 'env_tick_exposure'
+            'env_travel_shows', 'env_tick_exposure',
+            'health_vaccine_reaction', 'health_prescription_meds',
+            'health_chronic_condition', 'health_immune_condition',
+            'health_immunosuppressive_meds', 'health_pregnant_breeding',
         ]
         extra_kwargs = {
             'breed': {'required': False, 'allow_blank': True},
             'sex': {'required': False},
             'weight_kg': {'required': False},
+            'health_vaccine_reaction': {'required': False},
+            'health_prescription_meds': {'required': False},
+            'health_chronic_condition': {'required': False},
+            'health_immune_condition': {'required': False},
+            'health_immunosuppressive_meds': {'required': False},
+            'health_pregnant_breeding': {'required': False},
         }
 
     def validate_birth_date(self, value):

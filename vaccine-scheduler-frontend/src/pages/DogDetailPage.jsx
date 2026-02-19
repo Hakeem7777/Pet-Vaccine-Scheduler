@@ -232,6 +232,37 @@ function DogDetailPage() {
               </div>
             </div>
           )}
+
+          {(dog.health_vaccine_reaction === 'yes' ||
+            dog.health_immune_condition === 'yes' ||
+            dog.health_immunosuppressive_meds === 'yes' ||
+            dog.health_pregnant_breeding === 'yes' ||
+            dog.health_prescription_meds === 'yes' ||
+            dog.health_chronic_condition === 'yes') && (
+            <div className="dog-environment">
+              <label>Health Flags</label>
+              <div className="env-tags">
+                {dog.health_vaccine_reaction === 'yes' && (
+                  <span className="env-tag env-tag--warning">Prior vaccine reaction</span>
+                )}
+                {dog.health_immune_condition === 'yes' && (
+                  <span className="env-tag env-tag--danger">Immune condition</span>
+                )}
+                {dog.health_immunosuppressive_meds === 'yes' && (
+                  <span className="env-tag env-tag--danger">Immunosuppressive meds</span>
+                )}
+                {dog.health_pregnant_breeding === 'yes' && (
+                  <span className="env-tag env-tag--danger">Pregnant/breeding</span>
+                )}
+                {dog.health_prescription_meds === 'yes' && (
+                  <span className="env-tag env-tag--warning">Prescription meds</span>
+                )}
+                {dog.health_chronic_condition === 'yes' && (
+                  <span className="env-tag env-tag--warning">Chronic condition</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
