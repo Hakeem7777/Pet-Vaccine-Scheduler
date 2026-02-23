@@ -36,6 +36,11 @@ export async function updateProfile(data) {
   return response.data;
 }
 
+export async function patchProfile(data) {
+  const response = await client.patch('/auth/me/', data);
+  return response.data;
+}
+
 export async function changePassword(data) {
   const response = await client.post('/auth/password/change/', data);
   return response.data;

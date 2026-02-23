@@ -24,10 +24,10 @@ class AdminUserSerializer(serializers.ModelSerializer):
         ]
 
     def get_dog_count(self, obj):
-        return obj.dogs.count()
+        return getattr(obj, '_dog_count', 0) or 0
 
     def get_vaccination_count(self, obj):
-        return VaccinationRecord.objects.filter(dog__owner=obj).count()
+        return getattr(obj, '_vaccination_count', 0) or 0
 
     def get_total_tokens_used(self, obj):
         return getattr(obj, '_total_tokens_used', 0) or 0

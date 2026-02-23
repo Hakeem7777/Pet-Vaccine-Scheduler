@@ -33,6 +33,9 @@ class User(AbstractUser):
         blank=True,
         help_text="Contact phone number"
     )
+    has_seen_dashboard_tour = models.BooleanField(default=False)
+    has_seen_schedule_tour = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

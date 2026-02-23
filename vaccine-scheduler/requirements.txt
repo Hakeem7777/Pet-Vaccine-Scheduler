@@ -14,15 +14,16 @@ gunicorn>=21.0
 whitenoise>=6.6
 
 # LangChain and AI
-langchain==0.3.7
-langchain-community==0.3.7
-langchain-core>=0.3.27
-langchain-google-genai==2.0.4
-langchain-openai==0.2.14
-langchain-text-splitters==0.3.2
+langchain==1.2.10
+langchain-classic==1.0.1
+langchain-community==0.4.1
+langchain-core>=1.2.11
+langchain-google-genai==4.2.0
+langchain-openai==1.1.9
+langchain-text-splitters==1.1.0
 
 # LangGraph (AI agent framework)
-langgraph==0.5.4
+langgraph==1.0.8
 
 # Vector DB
 faiss-cpu==1.7.4

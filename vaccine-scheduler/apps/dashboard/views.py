@@ -92,7 +92,12 @@ class AdminStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        recent_users = User.objects.order_by('-date_joined')[:5]
+        recent_users = User.objects.annotate(
+            _dog_count=Count('dogs', distinct=True),
+            _vaccination_count=Count('dogs__vaccination_records', distinct=True),
+            _total_tokens_used=Sum('token_usages__total_tokens'),
+            _ai_call_count=Count('token_usages', distinct=True),
+        ).order_by('-date_joined')[:5]
 
         token_totals = TokenUsage.objects.aggregate(
             total_input=Sum('input_tokens'),
@@ -123,8 +128,10 @@ class AdminUserListView(ListAPIView):
 
     def get_queryset(self):
         return User.objects.annotate(
+            _dog_count=Count('dogs', distinct=True),
+            _vaccination_count=Count('dogs__vaccination_records', distinct=True),
             _total_tokens_used=Sum('token_usages__total_tokens'),
-            _ai_call_count=Count('token_usages'),
+            _ai_call_count=Count('token_usages', distinct=True),
         )
 
 
@@ -279,8 +286,10 @@ class AdminUserExportCSVView(ListAPIView):
 
     def get_queryset(self):
         return User.objects.annotate(
+            _dog_count=Count('dogs', distinct=True),
+            _vaccination_count=Count('dogs__vaccination_records', distinct=True),
             _total_tokens_used=Sum('token_usages__total_tokens'),
-            _ai_call_count=Count('token_usages'),
+            _ai_call_count=Count('token_usages', distinct=True),
         )
 
     def list(self, request, *args, **kwargs):

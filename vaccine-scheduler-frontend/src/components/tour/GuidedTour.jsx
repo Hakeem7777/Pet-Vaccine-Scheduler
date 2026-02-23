@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import useTourStore from '../../store/useTourStore';
 import useDogStore from '../../store/useDogStore';
+import { patchProfile } from '../../api/auth';
 import TourTooltip from './TourTooltip';
 import { DASHBOARD_TOUR_STEPS, DOG_DETAIL_TOUR_STEPS } from './TourSteps';
 import './GuidedTour.css';
@@ -18,7 +19,6 @@ function TourController() {
     isRunning,
     startTour,
     stopTour,
-    hasUserSeenTour,
   } = useTourStore();
 
   // When our store says to start, open reactour
@@ -37,22 +37,34 @@ function TourController() {
     }
   }, [isRunning, setIsOpen, setCurrentStep, location.pathname, dogs, stopTour]);
 
-  // Auto-start tour for authenticated users who haven't seen it yet
-  // Wait until user has added at least one dog before starting
+  // Auto-start dashboard tour for users who haven't seen it
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
-    if (hasUserSeenTour(user.id)) return;
+    if (user.has_seen_dashboard_tour) return;
     if (isRunning) return;
     if (location.pathname !== '/') return;
-    if (!dogs || dogs.length === 0) return; // Wait for first dog
+    if (!dogs || dogs.length === 0) return;
 
-    // Delay start to let page render
     const timer = setTimeout(() => {
       startTour('dashboard');
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, user?.id, hasUserSeenTour, isRunning, location.pathname, startTour, dogs]);
+  }, [isAuthenticated, user?.id, user?.has_seen_dashboard_tour, isRunning, location.pathname, startTour, dogs]);
+
+  // Auto-start schedule tour for users who haven't seen it
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+    if (user.has_seen_schedule_tour) return;
+    if (isRunning) return;
+    if (!location.pathname.startsWith('/dogs/')) return;
+
+    const timer = setTimeout(() => {
+      startTour('dogDetail');
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, user?.id, user?.has_seen_schedule_tour, isRunning, location.pathname, startTour]);
 
   return null;
 }
@@ -61,24 +73,28 @@ function TourController() {
 function CustomContentComponent(props) {
   const { currentStep, setCurrentStep, setIsOpen } = props;
   const { steps } = useTour();
-  const { stopTour, markTourSeen } = useTourStore();
-  const { user } = useAuth();
+  const { stopTour, currentTour } = useTourStore();
+  const { user, refreshUser } = useAuth();
 
-  // Get content from the current step - @reactour passes the step's content directly
-  // but we need to access it from steps array to ensure we have it
   const stepContent = steps[currentStep]?.content;
 
   // Handle closing the tour (called by tooltip buttons)
-  const handleClose = useCallback(() => {
-    // Mark as seen if user is logged in
+  const handleClose = useCallback(async () => {
+    // Mark the appropriate tour as seen in the DB
     if (user?.id) {
-      markTourSeen(user.id);
+      const field = currentTour === 'dogDetail'
+        ? 'has_seen_schedule_tour'
+        : 'has_seen_dashboard_tour';
+      try {
+        await patchProfile({ [field]: true });
+        refreshUser();
+      } catch {
+        // Tour still closes even if the API call fails
+      }
     }
-    // Stop the tour in our store
     stopTour();
-    // Close reactour
     setIsOpen(false);
-  }, [user?.id, markTourSeen, stopTour, setIsOpen]);
+  }, [user?.id, currentTour, stopTour, setIsOpen, refreshUser]);
 
   return (
     <TourTooltip
