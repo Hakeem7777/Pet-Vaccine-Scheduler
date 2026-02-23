@@ -39,3 +39,6 @@ numpy==1.26.4
 # Email Service
 resend>=2.0.0
 reportlab>=4.0.0
+
+# Image processing
+Pillow>=10.0

@@ -20,8 +20,8 @@ function DogList({ dogs }) {
   if (dogs.length === 0) {
     return (
       <div className="empty-state">
-        <p>No dogs registered yet.</p>
-        <p>Click "Add Dog" to get started!</p>
+        <p>No pets registered yet.</p>
+        <p>Click "Add New Pet" to get started!</p>
       </div>
     );
   }
@@ -37,6 +37,7 @@ function DogList({ dogs }) {
             animate="show"
             exit="exit"
             layout
+            style={{ height: '100%' }}
           >
             <DogCard dog={dog} />
           </motion.div>

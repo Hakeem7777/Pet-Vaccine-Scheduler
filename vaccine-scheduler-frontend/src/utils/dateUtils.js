@@ -1,3 +1,30 @@
+export function formatDogAge(birthDateStr) {
+  if (!birthDateStr) return '';
+  const birth = new Date(birthDateStr);
+  const today = new Date();
+
+  let years = today.getFullYear() - birth.getFullYear();
+  let months = today.getMonth() - birth.getMonth();
+  let days = today.getDate() - birth.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  const parts = [];
+  if (years > 0) parts.push(`${years}yr`);
+  if (months > 0) parts.push(`${months}m`);
+  if (days > 0 || parts.length === 0) parts.push(`${days}d`);
+
+  return parts.join(' ');
+}
+
 export function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);

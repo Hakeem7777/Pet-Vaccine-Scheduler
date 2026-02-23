@@ -26,12 +26,12 @@ class DogViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter dogs to only show those owned by the current user."""
         return Dog.objects.filter(owner=self.request.user).prefetch_related(
-            'vaccination_records'
+            'vaccination_records', 'vaccination_records__vaccine'
         )
 
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
-        if self.action == 'create':
+        if self.action in ('create', 'update', 'partial_update'):
             return DogCreateSerializer
         elif self.action == 'retrieve':
             return DogDetailSerializer

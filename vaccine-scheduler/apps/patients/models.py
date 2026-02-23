@@ -61,6 +61,12 @@ class Dog(models.Model):
         blank=True,
         help_text="Dog's weight in kilograms"
     )
+    image = models.ImageField(
+        upload_to='dogs/images/',
+        null=True,
+        blank=True,
+        help_text="Photo of the dog"
+    )
 
     # Living environment flags (for risk assessment)
     env_indoor_only = models.BooleanField(

@@ -10,12 +10,41 @@ export async function getDog(id) {
   return response.data;
 }
 
+function buildFormData(data) {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === null || value === undefined) return;
+    if (key === 'medical_conditions' || key === 'medications') {
+      formData.append(key, JSON.stringify(value));
+    } else if (typeof value === 'boolean') {
+      formData.append(key, value ? 'true' : 'false');
+    } else {
+      formData.append(key, value);
+    }
+  });
+  return formData;
+}
+
 export async function createDog(data) {
+  if (data.image instanceof File) {
+    const formData = buildFormData(data);
+    const response = await client.post('/dogs/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  }
   const response = await client.post('/dogs/', data);
   return response.data;
 }
 
 export async function updateDog(id, data) {
+  if (data.image instanceof File) {
+    const formData = buildFormData(data);
+    const response = await client.put(`/dogs/${id}/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  }
   const response = await client.put(`/dogs/${id}/`, data);
   return response.data;
 }

@@ -10,11 +10,11 @@ import {
 
 // Environment options with icons and descriptions
 const ENVIRONMENT_OPTIONS = [
-  { key: 'env_indoor_only', label: 'Indoor', icon: '🏠', description: 'Stays inside most of the time' },
-  { key: 'env_dog_parks', label: 'Dog Parks', icon: '🌳', description: 'Visits parks & public areas' },
-  { key: 'env_daycare_boarding', label: 'Daycare', icon: '🏨', description: 'Attends daycare or boarding' },
-  { key: 'env_travel_shows', label: 'Travel/Shows', icon: '✈️', description: 'Travels or attends shows' },
-  { key: 'env_tick_exposure', label: 'Tick Areas', icon: '🦟', description: 'Woods, tall grass, or tick-prone areas' },
+  { key: 'env_indoor_only', label: 'Indoor', icon: '/Images/home_icon.png', description: 'Stays inside most of the time' },
+  { key: 'env_dog_parks', label: 'Dog Parks', icon: '/Images/dogpark_icon.png', description: 'Visits parks & public areas' },
+  { key: 'env_daycare_boarding', label: 'Daycare', icon: '/Images/hospital_icon.png', description: 'Attends daycare or boarding' },
+  { key: 'env_travel_shows', label: 'Travel/Shows', icon: '/Images/plane_icon.png', description: 'Travels or attends shows' },
+  { key: 'env_tick_exposure', label: 'Tick Areas', icon: '/Images/mushroom_icon.png', description: 'Woods, tall grass, or tick-prone areas' },
 ];
 
 // Health screening questions with tooltips and sources
@@ -129,7 +129,9 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
   const [errors, setErrors] = useState({});
   const [focusedField, setFocusedField] = useState(null);
   const [activeTooltip, setActiveTooltip] = useState(null);
-  const [showSources, setShowSources] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
 
   // Calculate form completion percentage
   const completionPercentage = useMemo(() => {
@@ -189,6 +191,9 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
         medical_conditions: dog.medical_conditions || [],
         medications: dog.medications || {},
       });
+      if (dog.image) {
+        setImagePreview(dog.image);
+      }
     }
   }, [dog]);
 
@@ -237,6 +242,41 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
     });
   }
 
+  function handleImageSelect(file) {
+    if (!file) return;
+    const allowedTypes = ['image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrors((prev) => ({ ...prev, image: 'Only PNG and JPG files are allowed.' }));
+      return;
+    }
+    const maxSize = 100 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setErrors((prev) => ({ ...prev, image: 'File size cannot exceed 100MB.' }));
+      return;
+    }
+    setImageFile(file);
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(URL.createObjectURL(file));
+    if (errors.image) setErrors((prev) => ({ ...prev, image: null }));
+  }
+
+  function handleImageDrop(e) {
+    e.preventDefault();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    handleImageSelect(file);
+  }
+
+  function removeImage() {
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImageFile(null);
+    setImagePreview(null);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setErrors({});
@@ -250,6 +290,10 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
     if (!submitData.sex) delete submitData.sex;
     if (!submitData.breed) delete submitData.breed;
 
+    if (imageFile) {
+      submitData.image = imageFile;
+    }
+
     try {
       await onSubmit(submitData);
     } catch (err) {
@@ -261,16 +305,11 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
 
   return (
     <div className="dog-form-wrapper">
-      {/* Hero Header */}
+      {/* Form Header */}
       <div className="dog-form-header">
-        <div className="dog-form-header-icon">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
-            <path d="M4.5 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3-6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm9 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-4.5 3c0 2.5-2 4.5-4.5 4.5S6 17.5 6 15c0-1.5.5-2.5 1.5-3.5L9 10l1.5 1.5c.5.5 1 1.5 1 2.5 0 .6-.4 1-1 1s-1-.4-1-1c0-.3-.1-.6-.3-.8L9 13l-.2.2c-.6.6-1.3 1.3-1.3 2.3 0 1.4 1.1 2.5 2.5 2.5s2.5-1.1 2.5-2.5c0-.3-.1-.6-.2-.9l1.4-1.4c.5.7.8 1.5.8 2.3z"/>
-          </svg>
-        </div>
-        <h3 className="dog-form-header-title">{dog ? 'Update Dog Details' : 'Add a New Dog'}</h3>
+        <h3 className="dog-form-header-title">{dog ? 'Update your dog\'s details' : 'Tell us about your dog'}</h3>
         <p className="dog-form-header-subtitle">
-          {dog ? 'Keep your pup\'s information up to date' : 'Tell us about your furry friend'}
+          {dog ? 'Keep your pup\'s information up to date' : 'A few basic details about your dog so we can create a personalized vaccination schedule.'}
         </p>
       </div>
 
@@ -282,96 +321,129 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
             style={{ width: `${completionPercentage}%` }}
           />
         </div>
-        <span className="dog-form-progress-text">{completionPercentage}% complete</span>
+        <span className="dog-form-progress-text">{completionPercentage}% Complete</span>
       </div>
 
       <form onSubmit={handleSubmit} className="dog-form">
-        {/* Name Field - Floating Label */}
-        <div className={`form-group form-group-floating ${focusedField === 'name' || formData.name ? 'has-value' : ''}`}>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            onFocus={() => setFocusedField('name')}
-            onBlur={() => setFocusedField(null)}
-            required
-            placeholder=" "
-          />
-          <label htmlFor="name">Name *</label>
-          {errors.name && <span className="field-error">{errors.name}</span>}
-        </div>
-
-        {/* Breed Field - Floating Label */}
-        <div className={`form-group form-group-floating ${focusedField === 'breed' || formData.breed ? 'has-value' : ''}`}>
-          <input
-            type="text"
-            id="breed"
-            name="breed"
-            value={formData.breed}
-            onChange={handleChange}
-            onFocus={() => setFocusedField('breed')}
-            onBlur={() => setFocusedField(null)}
-            placeholder=" "
-          />
-          <label htmlFor="breed">Breed</label>
-        </div>
-
+        {/* Dog name + Date of Birth row */}
         <div className="form-row">
-          {/* Sex Field */}
-          <div className={`form-group form-group-floating ${focusedField === 'sex' || formData.sex ? 'has-value' : ''}`}>
-            <select
-              id="sex"
-              name="sex"
-              value={formData.sex}
+          <div className="form-group form-group-static">
+            <label htmlFor="name" className="form-label-static">Dog name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              onFocus={() => setFocusedField('sex')}
-              onBlur={() => setFocusedField(null)}
-            >
-              <option value=""></option>
-              {SEX_CHOICES.map((choice) => (
-                <option key={choice.value} value={choice.value}>
-                  {choice.label}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="sex">Sex</label>
+              required
+              placeholder="Eg. Max"
+            />
+            {errors.name && <span className="field-error">{errors.name}</span>}
           </div>
 
-          {/* Date of Birth Field */}
-          <div className={`form-group form-group-floating ${focusedField === 'birth_date' || formData.birth_date ? 'has-value' : ''}`}>
+          <div className="form-group form-group-static">
+            <label htmlFor="birth_date" className="form-label-static">Date of Birth</label>
             <input
               type="date"
               id="birth_date"
               name="birth_date"
               value={formData.birth_date}
               onChange={handleChange}
-              onFocus={() => setFocusedField('birth_date')}
-              onBlur={() => setFocusedField(null)}
               max={getToday()}
               required
+              placeholder="dd/mm/yyyy"
             />
-            <label htmlFor="birth_date">Date of Birth *</label>
             {errors.birth_date && <span className="field-error">{errors.birth_date}</span>}
           </div>
         </div>
 
-        {/* Weight Field - Floating Label */}
-        <div className={`form-group form-group-floating ${focusedField === 'weight_kg' || formData.weight_kg ? 'has-value' : ''}`}>
-          <input
-            type="number"
-            id="weight_kg"
-            name="weight_kg"
-            value={formData.weight_kg}
-            onChange={handleChange}
-            onFocus={() => setFocusedField('weight_kg')}
-            onBlur={() => setFocusedField(null)}
-            min="0.1"
-            step="0.1"
-            placeholder=" "
-          />
-          <label htmlFor="weight_kg">Weight (kg)</label>
+        {/* Image Upload */}
+        <div className="form-group image-upload-group">
+          <label className="image-upload-label">Image</label>
+
+          {imagePreview ? (
+            <div className="image-preview-container">
+              <img src={imagePreview} alt="Dog preview" className="image-preview" />
+              <button type="button" className="image-remove-btn" onClick={removeImage}>
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <div
+              className={`image-dropzone ${dragActive ? 'image-dropzone--active' : ''}`}
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleImageDrop}
+              onClick={() => document.getElementById('dog-image-input').click()}
+            >
+              <div className="image-dropzone-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <p className="image-dropzone-text">Click to upload or drag and drop</p>
+              <p className="image-dropzone-subtext">PNG, JPG  (max 100MB)</p>
+              <input
+                id="dog-image-input"
+                type="file"
+                accept="image/png,image/jpeg"
+                onChange={(e) => handleImageSelect(e.target.files?.[0])}
+                style={{ display: 'none' }}
+              />
+            </div>
+          )}
+
+          {errors.image && <span className="field-error">{errors.image}</span>}
+        </div>
+
+        {/* Sex Field - Pill Selector */}
+        <div className="form-group form-group-static">
+          <label className="form-label-static">Sex</label>
+          <div className="sex-pill-group">
+            {SEX_CHOICES.map((choice) => (
+              <button
+                key={choice.value}
+                type="button"
+                className={`sex-pill ${formData.sex === choice.value ? 'sex-pill--selected' : ''}`}
+                onClick={() => setFormData((prev) => ({ ...prev, sex: prev.sex === choice.value ? '' : choice.value }))}
+              >
+                {choice.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Breed + Weight row */}
+        <div className="form-row">
+          <div className="form-group form-group-static">
+            <label htmlFor="breed" className="form-label-static">Breed</label>
+            <input
+              type="text"
+              id="breed"
+              name="breed"
+              value={formData.breed}
+              onChange={handleChange}
+              placeholder="Enter breed"
+            />
+          </div>
+
+          <div className="form-group form-group-static">
+            <label htmlFor="weight_kg" className="form-label-static">Weight (KG)</label>
+            <input
+              type="number"
+              id="weight_kg"
+              name="weight_kg"
+              value={formData.weight_kg}
+              onChange={handleChange}
+              min="0.1"
+              step="0.1"
+              placeholder="Enter weight"
+            />
+          </div>
         </div>
 
         {/* Living Environment - Visual Cards */}
@@ -389,9 +461,11 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
                   checked={formData[option.key]}
                   onChange={handleChange}
                 />
-                <span className="env-card-icon">{option.icon}</span>
-                <span className="env-card-label">{option.label}</span>
-                <span className="env-card-description">{option.description}</span>
+                <img className="env-card-icon-img" src={option.icon} alt={option.label} />
+                <div className="env-card-text">
+                  <span className="env-card-label">{option.label}</span>
+                  <span className="env-card-description">{option.description}</span>
+                </div>
               </label>
             ))}
           </div>
@@ -402,8 +476,23 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
           <legend>Health Screening</legend>
           <p className="health-screening-intro">
             These questions help identify potential vaccine contraindications.
-            Answer to the best of your knowledge.
+            Answer to the best of your knowledge
           </p>
+
+          {/* Reference Sources */}
+          <div className="health-sources-section">
+            <div className="health-sources-title">Reference Sources</div>
+            <ul className="health-sources-list">
+              {HEALTH_SOURCES.map((source, index) => (
+                <li key={index}>
+                  {source.abbrev}:{' '}
+                  <a href={source.url} target="_blank" rel="noopener noreferrer">
+                    {source.full}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="health-questions">
             {HEALTH_SCREENING_QUESTIONS.map((question) => (
@@ -453,33 +542,6 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
               </div>
             ))}
           </div>
-
-          {/* Collapsible Sources Section */}
-          <div className="health-sources-section">
-            <button
-              type="button"
-              className="health-sources-toggle"
-              onClick={() => setShowSources(!showSources)}
-            >
-              {showSources ? 'Hide' : 'View'} Reference Sources
-              <span className={`health-sources-chevron ${showSources ? 'health-sources-chevron--open' : ''}`}>
-                &#9660;
-              </span>
-            </button>
-
-            {showSources && (
-              <ul className="health-sources-list">
-                {HEALTH_SOURCES.map((source, index) => (
-                  <li key={index}>
-                    <strong>{source.abbrev}:</strong>{' '}
-                    <a href={source.url} target="_blank" rel="noopener noreferrer">
-                      {source.full}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </fieldset>
 
         {/* Medical Conditions & Medications */}
@@ -490,29 +552,28 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
             will provide condition-specific vaccine guidance and medication warnings.
           </p>
 
-          <div className="env-card-group">
+          <div className="condition-card-group">
             {MEDICAL_CONDITIONS.map((condition) => (
               <label
                 key={condition.id}
-                className={`env-card ${formData.medical_conditions.includes(condition.id) ? 'env-card--selected' : ''}`}
+                className={`condition-card ${formData.medical_conditions.includes(condition.id) ? 'condition-card--selected' : ''}`}
               >
                 <input
                   type="checkbox"
                   checked={formData.medical_conditions.includes(condition.id)}
                   onChange={() => handleConditionToggle(condition.id)}
                 />
-                <span className="env-card-icon">{condition.icon}</span>
-                <span className="env-card-label">{condition.label}</span>
-                <span className="env-card-description">{condition.description}</span>
+                <span className="condition-card-label">{condition.label}</span>
+                <span className="condition-card-description">{condition.description}</span>
               </label>
             ))}
           </div>
 
           {formData.medical_conditions.length > 0 && (
             <div className="medication-categories">
-              <p className="medication-categories-intro">
+              <div className="medication-categories-intro">
                 Select the medications your dog is currently taking:
-              </p>
+              </div>
               {getMedicationCategoriesForConditions(formData.medical_conditions).map((category) => (
                 <div key={category.key} className="medication-category">
                   <h4 className="medication-category-label">{category.label}</h4>

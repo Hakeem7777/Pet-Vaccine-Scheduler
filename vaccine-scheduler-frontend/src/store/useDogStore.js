@@ -27,6 +27,7 @@ const useDogStore = create((set, get) => ({
       age_weeks: calculateAgeWeeks(formData.birth_date),
       age_classification: calculateAgeClassification(formData.birth_date),
       vaccination_count: 0,
+      vaccination_summary: { progress_percent: 0, overdue: [], next_upcoming: null },
       sex_display: getSexDisplay(formData.sex),
       _isOptimistic: true,
     };

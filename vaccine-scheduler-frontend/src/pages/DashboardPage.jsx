@@ -155,7 +155,7 @@ function DashboardPage() {
     return (
       <PageTransition className="dashboard-page" data-tour="welcome">
         <div className="page-header">
-          <h2>Add Your First Dog</h2>
+          <p>Welcome to Petvax Calendar!</p>
           {isAuthenticated && (
             <div className="page-header-actions">
               <button className="btn btn-secondary" onClick={handleUploadClick} data-tour="upload-doc-btn">
@@ -204,7 +204,7 @@ function DashboardPage() {
   return (
     <PageTransition className="dashboard-page" data-tour="welcome">
       <div className="page-header">
-        <h2>{isAuthenticated ? 'My Dogs' : 'Your Dog'}</h2>
+        <h2>{isAuthenticated ? 'My Pets' : 'Your Pet'}</h2>
         <div className="page-header-actions">
           {isAuthenticated && (
             <button className="btn btn-secondary" onClick={handleUploadClick} data-tour="upload-doc-btn">
@@ -212,7 +212,7 @@ function DashboardPage() {
             </button>
           )}
           <button className="btn btn-primary" onClick={handleAddDogClick} data-tour="add-dog-btn">
-            Add Dog
+            Add New Pet
           </button>
         </div>
       </div>

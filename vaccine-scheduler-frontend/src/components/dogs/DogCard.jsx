@@ -1,51 +1,94 @@
 import { useNavigate } from 'react-router-dom';
-import Card from '../common/Card';
 import { AGE_CLASSIFICATIONS } from '../../utils/constants';
+import { formatDogAge } from '../../utils/dateUtils';
+import { getDogImageUrl } from '../../utils/breedImageUtils';
+
+function formatBadgeDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function truncate(str, maxLen) {
+  if (!str || str.length <= maxLen) return str;
+  return str.slice(0, maxLen) + '\u2026';
+}
 
 function DogCard({ dog }) {
   const navigate = useNavigate();
 
-  // Don't render if dog data is missing
-  if (!dog || !dog.name) {
-    return null;
-  }
+  if (!dog || !dog.name) return null;
 
-  // Check if this is an optimistic (pending) dog
   const isOptimistic = dog._isOptimistic;
+  const imageUrl = getDogImageUrl(dog);
+  const ageClassification = dog.age_classification || 'unknown';
+  const vaccinationSummary = dog.vaccination_summary || {};
+  const progressPercent = vaccinationSummary.progress_percent ?? 0;
+  const overdueVaccines = vaccinationSummary.overdue || [];
 
   function handleClick() {
-    // Don't navigate for optimistic entries (they don't exist on server yet)
     if (isOptimistic) return;
     navigate(`/dogs/${dog.id}`);
   }
 
-  const ageClassification = dog.age_classification || 'unknown';
-  const ageWeeks = dog.age_weeks ?? 0;
-  const vaccinationCount = dog.vaccination_count ?? 0;
-
   return (
-    <Card
-      className={`dog-card ${isOptimistic ? 'dog-card--optimistic' : ''}`}
+    <div
+      className={`dog-card-v2 ${isOptimistic ? 'dog-card-v2--optimistic' : ''}`}
       onClick={handleClick}
     >
-      <div className="dog-card-header">
-        <h3 className="dog-name">{dog.name}</h3>
-        <span className={`age-badge age-${ageClassification}`}>
+      <div className="dog-card-v2__image-wrapper">
+        <img
+          src={imageUrl}
+          alt={dog.name}
+          className="dog-card-v2__image"
+          onError={(e) => { e.target.src = '/Images/dog_icon.svg'; }}
+        />
+      </div>
+
+      <div className="dog-card-v2__body">
+        <div className="dog-card-v2__name-row">
+          <h3 className="dog-card-v2__name">{dog.name}</h3>
+          {overdueVaccines.length > 0 && (
+            <span className="dog-card-v2__overdue-badge">
+              {truncate(overdueVaccines[0].vaccine, 14)}
+              <span className="dog-card-v2__overdue-due">
+                {'\u26A0'} Due: {formatBadgeDate(overdueVaccines[0].due_date)}
+              </span>
+            </span>
+          )}
+        </div>
+
+        <p className="dog-card-v2__breed">
+          {dog.breed || 'Unknown breed'}
+          <span className="dog-card-v2__dot">{' \u2022 '}</span>
           {AGE_CLASSIFICATIONS[ageClassification] || ageClassification}
-        </span>
+        </p>
+
+        <div className="dog-card-v2__info-row">
+          <span className="dog-card-v2__detail">
+            Age: <span className="dog-card-v2__detail-value">{formatDogAge(dog.birth_date)}</span>
+          </span>
+          <span className="dog-card-v2__detail">
+            Gender: <span className="dog-card-v2__detail-value">{dog.sex_display || '\u2014'}</span>
+          </span>
+        </div>
+
+        <div className="dog-card-v2__vaccination-status">
+          <div className="dog-card-v2__status-header">
+            <span>Vaccination Status</span>
+            <span className="dog-card-v2__status-percent">{progressPercent}%</span>
+          </div>
+          <div className="dog-card-v2__progress-bar">
+            <div
+              className="dog-card-v2__progress-fill"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {isOptimistic && <span className="dog-card-v2__saving">Saving...</span>}
       </div>
-      <div className="dog-card-body">
-        {dog.breed && <p className="dog-breed">{dog.breed}</p>}
-        <p className="dog-age">{ageWeeks} weeks old</p>
-        {dog.sex_display && <p className="dog-sex">{dog.sex_display}</p>}
-      </div>
-      <div className="dog-card-footer">
-        <span className="vaccination-count">
-          {vaccinationCount} vaccination{vaccinationCount !== 1 ? 's' : ''}
-        </span>
-        {isOptimistic && <span className="dog-card-saving">Saving...</span>}
-      </div>
-    </Card>
+    </div>
   );
 }
 

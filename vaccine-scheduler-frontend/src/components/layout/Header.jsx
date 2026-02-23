@@ -75,7 +75,7 @@ function Header() {
           </Link>
         )}
         <Link to="/faq" className="header-nav-link" data-tour="faq-link">
-          FAQ
+          FAQs
         </Link>
       </nav>
       <div className="header-user">
@@ -92,25 +92,19 @@ function Header() {
         ) : isGuestMode && guestDog ? (
           <>
             <span className="user-name guest-label">Guest Mode</span>
-            <Link to="/login" className="btn btn-outline">
-              Login
-            </Link>
-            <Link to="/register" className="btn btn-primary">
-              Sign Up
+            <Link to="/register" className="btn header-cta">
+              Get Started
+              <img src="/Images/dog_icon.svg" alt="" width="16" height="16" />
             </Link>
             <button onClick={handleGuestLogout} className="btn btn-outline btn-sm">
               Clear Data
             </button>
           </>
         ) : (
-          <>
-            <Link to="/login" className="btn btn-outline">
-              Login
-            </Link>
-            <Link to="/register" className="btn btn-primary">
-              Sign Up
-            </Link>
-          </>
+          <Link to="/register" className="btn header-cta">
+            Get Started
+            <img src="/Images/dog_icon.svg" alt="" width="16" height="16" />
+          </Link>
         )}
       </div>
     </motion.header>

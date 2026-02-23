@@ -15,19 +15,20 @@ class DogSerializer(serializers.ModelSerializer):
     age_weeks = serializers.IntegerField(read_only=True)
     age_classification = serializers.CharField(read_only=True)
     vaccination_count = serializers.SerializerMethodField()
+    vaccination_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = Dog
         fields = [
             'id', 'name', 'breed', 'sex', 'sex_display', 'birth_date',
-            'weight_kg', 'age_weeks', 'age_classification',
+            'weight_kg', 'image', 'age_weeks', 'age_classification',
             'env_indoor_only', 'env_dog_parks', 'env_daycare_boarding',
             'env_travel_shows', 'env_tick_exposure',
             'health_vaccine_reaction', 'health_prescription_meds',
             'health_chronic_condition', 'health_immune_condition',
             'health_immunosuppressive_meds', 'health_pregnant_breeding',
             'medical_conditions', 'medications',
-            'vaccination_count',
+            'vaccination_count', 'vaccination_summary',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -35,6 +36,53 @@ class DogSerializer(serializers.ModelSerializer):
     def get_vaccination_count(self, obj: Dog) -> int:
         """Get the number of vaccination records for this dog."""
         return obj.vaccination_records.count()
+
+    def get_vaccination_summary(self, obj: Dog) -> dict:
+        """Get vaccination progress and overdue/upcoming summary."""
+        import datetime
+        from apps.vaccinations.services import scheduler_service
+
+        today = datetime.date.today()
+        try:
+            schedule = scheduler_service.calculate_schedule_for_dog(
+                dog=obj, selected_noncore=[], reference_date=today
+            )
+        except Exception:
+            return {'progress_percent': 0, 'overdue': [], 'next_upcoming': None}
+
+        completed = obj.vaccination_records.count()
+        total_remaining = (
+            len(schedule['overdue'])
+            + len(schedule['upcoming'])
+            + len(schedule['future'])
+        )
+        total = completed + total_remaining
+        progress = round(completed / total * 100) if total > 0 else 100
+
+        overdue_list = [
+            {
+                'vaccine': item['vaccine'],
+                'vaccine_id': item['vaccine_id'],
+                'due_date': item['date'],
+                'days_overdue': item['days_overdue'],
+            }
+            for item in schedule['overdue'][:2]
+        ]
+
+        next_upcoming = None
+        if schedule['upcoming']:
+            u = schedule['upcoming'][0]
+            next_upcoming = {
+                'vaccine': u['vaccine'],
+                'due_date': u['date'],
+                'days_until': u['days_until'],
+            }
+
+        return {
+            'progress_percent': progress,
+            'overdue': overdue_list,
+            'next_upcoming': next_upcoming,
+        }
 
 
 class DogCreateSerializer(serializers.ModelSerializer):
@@ -44,7 +92,7 @@ class DogCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dog
         fields = [
-            'name', 'breed', 'sex', 'birth_date', 'weight_kg',
+            'name', 'breed', 'sex', 'birth_date', 'weight_kg', 'image',
             'env_indoor_only', 'env_dog_parks', 'env_daycare_boarding',
             'env_travel_shows', 'env_tick_exposure',
             'health_vaccine_reaction', 'health_prescription_meds',
@@ -56,6 +104,7 @@ class DogCreateSerializer(serializers.ModelSerializer):
             'breed': {'required': False, 'allow_blank': True},
             'sex': {'required': False},
             'weight_kg': {'required': False},
+            'image': {'required': False},
             'health_vaccine_reaction': {'required': False},
             'health_prescription_meds': {'required': False},
             'health_chronic_condition': {'required': False},
@@ -65,6 +114,36 @@ class DogCreateSerializer(serializers.ModelSerializer):
             'medical_conditions': {'required': False},
             'medications': {'required': False},
         }
+
+    def validate_image(self, value):
+        """Validate image file size and type."""
+        if value:
+            max_size = 100 * 1024 * 1024  # 100MB
+            if value.size > max_size:
+                raise serializers.ValidationError("Image file size cannot exceed 100MB.")
+            allowed_types = ['image/jpeg', 'image/png']
+            if hasattr(value, 'content_type') and value.content_type not in allowed_types:
+                raise serializers.ValidationError("Only PNG and JPG images are allowed.")
+        return value
+
+    def to_internal_value(self, data):
+        """Handle JSON string fields from FormData submissions."""
+        import json
+        if hasattr(data, 'getlist'):  # QueryDict from FormData
+            # Convert to plain dict to avoid deepcopy which fails on file
+            # upload objects (_io.BufferedRandom can't be pickled)
+            mutable = {}
+            for key in data:
+                values = data.getlist(key)
+                mutable[key] = values[0] if len(values) == 1 else values
+            for field in ('medical_conditions', 'medications'):
+                if field in mutable and isinstance(mutable[field], str):
+                    try:
+                        mutable[field] = json.loads(mutable[field])
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+            data = mutable
+        return super().to_internal_value(data)
 
     def validate_birth_date(self, value):
         """Ensure birth date is not in the future."""
