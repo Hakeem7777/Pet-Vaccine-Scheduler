@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getSchedule } from '../../api/vaccines';
 import NoncoreSelector from './NoncoreSelector';
 import ScheduleCategory from './ScheduleCategory';
@@ -13,6 +13,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
   const [error, setError] = useState(null);
   const [selectedNoncore, setSelectedNoncore] = useState([]);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [hideContraindicated, setHideContraindicated] = useState(false);
 
   // Auto-select lifestyle vaccines based on dog's environment
   useEffect(() => {
@@ -65,13 +66,28 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
     onVaccinationAdded?.();
   }
 
-  const hasNoVaccines =
-    schedule &&
-    schedule.overdue.length === 0 &&
-    schedule.upcoming.length === 0 &&
-    schedule.future.length === 0;
+  const hasContraindicated = useMemo(() => {
+    if (!schedule) return false;
+    return [...schedule.overdue, ...schedule.upcoming, ...schedule.future]
+      .some(item => item.contraindicated);
+  }, [schedule]);
 
-  const hasVaccines = schedule && !hasNoVaccines;
+  const filteredSchedule = useMemo(() => {
+    if (!schedule || !hideContraindicated) return schedule;
+    return {
+      overdue: schedule.overdue.filter(item => !item.contraindicated),
+      upcoming: schedule.upcoming.filter(item => !item.contraindicated),
+      future: schedule.future.filter(item => !item.contraindicated),
+    };
+  }, [schedule, hideContraindicated]);
+
+  const hasNoVaccines =
+    filteredSchedule &&
+    filteredSchedule.overdue.length === 0 &&
+    filteredSchedule.upcoming.length === 0 &&
+    filteredSchedule.future.length === 0;
+
+  const hasVaccines = filteredSchedule && !hasNoVaccines;
 
   return (
     <div className="schedule-view">
@@ -91,7 +107,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        schedule={schedule}
+        schedule={filteredSchedule}
         dogName={dogName}
         dogInfo={dogInfo}
       />
@@ -110,16 +126,31 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
       {dog && (dog.health_vaccine_reaction === 'yes' ||
                dog.health_immune_condition === 'yes' ||
                dog.health_immunosuppressive_meds === 'yes' ||
-               dog.health_pregnant_breeding === 'yes') && (
+               dog.health_pregnant_breeding === 'yes' ||
+               dog.medical_conditions?.length > 0) && (
         <div className="health-alert-banner">
           <div className="schedule-item-warning schedule-item-warning--caution">
             <p className="schedule-warning-text">
-              <strong>Health Screening Alert:</strong> Based on your health screening answers,
-              some vaccines below have been flagged with warnings or contraindications.
+              <strong>Health Screening Alert:</strong> Based on your health screening answers
+              {dog.medical_conditions?.length > 0 && ' and reported medical conditions'}
+              , some vaccines below have been flagged with warnings or contraindications.
               Look for warning badges on individual vaccines. Always consult your veterinarian
               before making vaccination decisions.
             </p>
           </div>
+        </div>
+      )}
+
+      {hasContraindicated && (
+        <div className="contraindication-filter">
+          <label className="contraindication-filter__label">
+            <input
+              type="checkbox"
+              checked={hideContraindicated}
+              onChange={(e) => setHideContraindicated(e.target.checked)}
+            />
+            Hide contraindicated vaccines
+          </label>
         </div>
       )}
 
@@ -131,7 +162,11 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
         <div className="error-message">{error}</div>
       ) : hasNoVaccines ? (
         <div className="schedule-empty">
-          <p>All vaccinations are up to date!</p>
+          <p>
+            {hideContraindicated && schedule && (schedule.overdue.length > 0 || schedule.upcoming.length > 0 || schedule.future.length > 0)
+              ? 'All remaining vaccines are contraindicated. Uncheck the filter above to see them.'
+              : 'All vaccinations are up to date!'}
+          </p>
         </div>
       ) : (
         <motion.div
@@ -142,7 +177,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
         >
           <ScheduleCategory
             title="Overdue"
-            items={schedule.overdue}
+            items={filteredSchedule.overdue}
             type="overdue"
             dogId={dogId}
             dogName={dogName}
@@ -151,7 +186,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
           />
           <ScheduleCategory
             title="Upcoming (Next 30 Days)"
-            items={schedule.upcoming}
+            items={filteredSchedule.upcoming}
             type="upcoming"
             dogId={dogId}
             dogName={dogName}
@@ -160,7 +195,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
           />
           <ScheduleCategory
             title="Future"
-            items={schedule.future}
+            items={filteredSchedule.future}
             type="future"
             dogId={dogId}
             dogName={dogName}

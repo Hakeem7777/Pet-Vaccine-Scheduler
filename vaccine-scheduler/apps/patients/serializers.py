@@ -3,6 +3,7 @@ Serializers for patient (dog) management.
 """
 from rest_framework import serializers
 
+from core.contraindications import VALID_CONDITIONS, MEDICATION_CATALOG
 from .models import Dog
 
 
@@ -25,6 +26,7 @@ class DogSerializer(serializers.ModelSerializer):
             'health_vaccine_reaction', 'health_prescription_meds',
             'health_chronic_condition', 'health_immune_condition',
             'health_immunosuppressive_meds', 'health_pregnant_breeding',
+            'medical_conditions', 'medications',
             'vaccination_count',
             'created_at', 'updated_at'
         ]
@@ -48,6 +50,7 @@ class DogCreateSerializer(serializers.ModelSerializer):
             'health_vaccine_reaction', 'health_prescription_meds',
             'health_chronic_condition', 'health_immune_condition',
             'health_immunosuppressive_meds', 'health_pregnant_breeding',
+            'medical_conditions', 'medications',
         ]
         extra_kwargs = {
             'breed': {'required': False, 'allow_blank': True},
@@ -59,6 +62,8 @@ class DogCreateSerializer(serializers.ModelSerializer):
             'health_immune_condition': {'required': False},
             'health_immunosuppressive_meds': {'required': False},
             'health_pregnant_breeding': {'required': False},
+            'medical_conditions': {'required': False},
+            'medications': {'required': False},
         }
 
     def validate_birth_date(self, value):
@@ -66,6 +71,34 @@ class DogCreateSerializer(serializers.ModelSerializer):
         import datetime
         if value > datetime.date.today():
             raise serializers.ValidationError("Birth date cannot be in the future.")
+        return value
+
+    def validate_medical_conditions(self, value):
+        """Validate medical conditions are from the allowed set."""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Must be a list of condition identifiers.")
+        for cond in value:
+            if cond not in VALID_CONDITIONS:
+                raise serializers.ValidationError(
+                    f"Unknown condition: '{cond}'. Valid: {', '.join(sorted(VALID_CONDITIONS))}"
+                )
+        return value
+
+    def validate_medications(self, value):
+        """Validate medications structure is a dict of category -> list."""
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Must be a dict of category -> [medication_ids].")
+        valid_categories = set(MEDICATION_CATALOG.keys())
+        for cat_key, med_list in value.items():
+            if cat_key not in valid_categories:
+                raise serializers.ValidationError(
+                    f"Unknown medication category: '{cat_key}'. "
+                    f"Valid: {', '.join(sorted(valid_categories))}"
+                )
+            if not isinstance(med_list, list):
+                raise serializers.ValidationError(
+                    f"Medications for '{cat_key}' must be a list."
+                )
         return value
 
 

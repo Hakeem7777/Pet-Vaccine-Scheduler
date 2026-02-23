@@ -69,9 +69,20 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
       )}
       {item.warning && (
         <div className={`schedule-item-warning ${item.contraindicated ? 'schedule-item-warning--contraindicated' : 'schedule-item-warning--caution'}`}>
-          {item.warning.split(' | ').map((w, i) => (
-            <p key={i} className="schedule-warning-text">{w}</p>
-          ))}
+          {item.warning.split(' | ').map((w, i) => {
+            const severity = w.startsWith('CONTRAINDICATED') || w.startsWith('APOQUEL CONTRAINDICATION')
+              ? 'contraindicated'
+              : w.startsWith('FDA SEIZURE WARNING')
+              ? 'fda-warning'
+              : w.startsWith('ACTIVE CHEMOTHERAPY')
+              ? 'contraindicated'
+              : w.includes('CAUTION') || w.includes('WARNING') || w.includes('ALERT')
+              ? 'warning'
+              : 'note';
+            return (
+              <p key={i} className={`schedule-warning-text schedule-warning-text--${severity}`}>{w}</p>
+            );
+          })}
         </div>
       )}
       <div className="schedule-item-body">

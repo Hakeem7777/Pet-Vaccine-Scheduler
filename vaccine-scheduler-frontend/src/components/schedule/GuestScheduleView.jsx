@@ -9,6 +9,7 @@ import ExportDropdown from '../export/ExportDropdown';
 function GuestScheduleView({ dog, onVaccinationAdded }) {
   const { vaccinations } = useGuestStore();
   const [selectedNoncore, setSelectedNoncore] = useState([]);
+  const [hideContraindicated, setHideContraindicated] = useState(false);
 
   // Auto-select lifestyle vaccines based on dog's environment
   useEffect(() => {
@@ -36,6 +37,21 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
   const schedule = scheduleData?.schedule;
   const historyAnalysis = scheduleData?.history_analysis;
 
+  const hasContraindicated = useMemo(() => {
+    if (!schedule) return false;
+    return [...schedule.overdue, ...schedule.upcoming, ...schedule.future]
+      .some(item => item.contraindicated);
+  }, [schedule]);
+
+  const filteredSchedule = useMemo(() => {
+    if (!schedule || !hideContraindicated) return schedule;
+    return {
+      overdue: schedule.overdue.filter(item => !item.contraindicated),
+      upcoming: schedule.upcoming.filter(item => !item.contraindicated),
+      future: schedule.future.filter(item => !item.contraindicated),
+    };
+  }, [schedule, hideContraindicated]);
+
   function handleNoncoreChange(vaccineId) {
     setSelectedNoncore((prev) =>
       prev.includes(vaccineId)
@@ -45,12 +61,12 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
   }
 
   const hasNoVaccines =
-    schedule &&
-    schedule.overdue.length === 0 &&
-    schedule.upcoming.length === 0 &&
-    schedule.future.length === 0;
+    filteredSchedule &&
+    filteredSchedule.overdue.length === 0 &&
+    filteredSchedule.upcoming.length === 0 &&
+    filteredSchedule.future.length === 0;
 
-  const hasVaccines = schedule && !hasNoVaccines;
+  const hasVaccines = filteredSchedule && !hasNoVaccines;
 
   return (
     <div className="schedule-view">
@@ -58,7 +74,7 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
         <h3>Vaccination Schedule</h3>
         {hasVaccines && (
           <ExportDropdown
-            schedule={schedule}
+            schedule={filteredSchedule}
             dogName={dog.name}
             dogInfo={dog}
             historyAnalysis={historyAnalysis}
@@ -80,12 +96,14 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
       {dog && (dog.health_vaccine_reaction === 'yes' ||
                dog.health_immune_condition === 'yes' ||
                dog.health_immunosuppressive_meds === 'yes' ||
-               dog.health_pregnant_breeding === 'yes') && (
+               dog.health_pregnant_breeding === 'yes' ||
+               dog.medical_conditions?.length > 0) && (
         <div className="health-alert-banner">
           <div className="schedule-item-warning schedule-item-warning--caution">
             <p className="schedule-warning-text">
-              <strong>Health Screening Alert:</strong> Based on your health screening answers,
-              some vaccines below have been flagged with warnings or contraindications.
+              <strong>Health Screening Alert:</strong> Based on your health screening answers
+              {dog.medical_conditions?.length > 0 && ' and reported medical conditions'}
+              , some vaccines below have been flagged with warnings or contraindications.
               Look for warning badges on individual vaccines. Always consult your veterinarian
               before making vaccination decisions.
             </p>
@@ -93,9 +111,26 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
         </div>
       )}
 
+      {hasContraindicated && (
+        <div className="contraindication-filter">
+          <label className="contraindication-filter__label">
+            <input
+              type="checkbox"
+              checked={hideContraindicated}
+              onChange={(e) => setHideContraindicated(e.target.checked)}
+            />
+            Hide contraindicated vaccines
+          </label>
+        </div>
+      )}
+
       {hasNoVaccines ? (
         <div className="schedule-empty">
-          <p>All vaccinations are up to date!</p>
+          <p>
+            {hideContraindicated && schedule && (schedule.overdue.length > 0 || schedule.upcoming.length > 0 || schedule.future.length > 0)
+              ? 'All remaining vaccines are contraindicated. Uncheck the filter above to see them.'
+              : 'All vaccinations are up to date!'}
+          </p>
         </div>
       ) : (
         <motion.div
@@ -106,7 +141,7 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
         >
           <GuestScheduleCategory
             title="Overdue"
-            items={schedule.overdue}
+            items={filteredSchedule.overdue}
             type="overdue"
             dogName={dog.name}
             dogInfo={dog}
@@ -114,7 +149,7 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
           />
           <GuestScheduleCategory
             title="Upcoming (Next 30 Days)"
-            items={schedule.upcoming}
+            items={filteredSchedule.upcoming}
             type="upcoming"
             dogName={dog.name}
             dogInfo={dog}
@@ -122,7 +157,7 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
           />
           <GuestScheduleCategory
             title="Future"
-            items={schedule.future}
+            items={filteredSchedule.future}
             type="future"
             dogName={dog.name}
             dogInfo={dog}

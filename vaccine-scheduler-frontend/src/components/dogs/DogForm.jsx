@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { SEX_CHOICES } from '../../utils/constants';
 import { getToday } from '../../utils/dateUtils';
+import {
+  MEDICAL_CONDITIONS,
+  MEDICATION_CATALOG,
+  ISOXAZOLINE_MEDS,
+  getMedicationCategoriesForConditions,
+} from '../../utils/medicalConstants';
 
 // Environment options with icons and descriptions
 const ENVIRONMENT_OPTIONS = [
@@ -117,6 +123,8 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
     health_immune_condition: 'no',
     health_immunosuppressive_meds: 'no',
     health_pregnant_breeding: 'no',
+    medical_conditions: [],
+    medications: {},
   });
   const [errors, setErrors] = useState({});
   const [focusedField, setFocusedField] = useState(null);
@@ -178,6 +186,8 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
         health_immune_condition: dog.health_immune_condition || 'no',
         health_immunosuppressive_meds: dog.health_immunosuppressive_meds || 'no',
         health_pregnant_breeding: dog.health_pregnant_breeding || 'no',
+        medical_conditions: dog.medical_conditions || [],
+        medications: dog.medications || {},
       });
     }
   }, [dog]);
@@ -191,6 +201,40 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
+  }
+
+  function handleConditionToggle(conditionId) {
+    setFormData((prev) => {
+      const conditions = prev.medical_conditions.includes(conditionId)
+        ? prev.medical_conditions.filter((c) => c !== conditionId)
+        : [...prev.medical_conditions, conditionId];
+
+      // Clean up medications for removed conditions
+      const relevantCategories = getMedicationCategoriesForConditions(conditions);
+      const relevantKeys = new Set(relevantCategories.map((c) => c.key));
+      const cleanedMeds = {};
+      for (const [key, value] of Object.entries(prev.medications)) {
+        if (relevantKeys.has(key)) {
+          cleanedMeds[key] = value;
+        }
+      }
+
+      return { ...prev, medical_conditions: conditions, medications: cleanedMeds };
+    });
+  }
+
+  function handleMedicationToggle(categoryKey, medId) {
+    setFormData((prev) => {
+      const currentMeds = prev.medications[categoryKey] || [];
+      const updatedMeds = currentMeds.includes(medId)
+        ? currentMeds.filter((m) => m !== medId)
+        : [...currentMeds, medId];
+
+      return {
+        ...prev,
+        medications: { ...prev.medications, [categoryKey]: updatedMeds },
+      };
+    });
   }
 
   async function handleSubmit(e) {
@@ -436,6 +480,81 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
               </ul>
             )}
           </div>
+        </fieldset>
+
+        {/* Medical Conditions & Medications */}
+        <fieldset className="form-fieldset form-fieldset-conditions">
+          <legend>Medical Conditions</legend>
+          <p className="health-screening-intro">
+            If your dog has been diagnosed with any of these conditions, selecting them
+            will provide condition-specific vaccine guidance and medication warnings.
+          </p>
+
+          <div className="env-card-group">
+            {MEDICAL_CONDITIONS.map((condition) => (
+              <label
+                key={condition.id}
+                className={`env-card ${formData.medical_conditions.includes(condition.id) ? 'env-card--selected' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.medical_conditions.includes(condition.id)}
+                  onChange={() => handleConditionToggle(condition.id)}
+                />
+                <span className="env-card-icon">{condition.icon}</span>
+                <span className="env-card-label">{condition.label}</span>
+                <span className="env-card-description">{condition.description}</span>
+              </label>
+            ))}
+          </div>
+
+          {formData.medical_conditions.length > 0 && (
+            <div className="medication-categories">
+              <p className="medication-categories-intro">
+                Select the medications your dog is currently taking:
+              </p>
+              {getMedicationCategoriesForConditions(formData.medical_conditions).map((category) => (
+                <div key={category.key} className="medication-category">
+                  <h4 className="medication-category-label">{category.label}</h4>
+                  <div className="medication-checklist">
+                    {category.options.map((med) => (
+                      <label
+                        key={med.id}
+                        className={`medication-option ${
+                          (formData.medications[category.key] || []).includes(med.id)
+                            ? 'medication-option--selected'
+                            : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(formData.medications[category.key] || []).includes(med.id)}
+                          onChange={() => handleMedicationToggle(category.key, med.id)}
+                        />
+                        <span>{med.label}</span>
+                        {med.drugClass === 'isoxazoline' && (
+                          <span className="medication-warning-badge">FDA Warning</span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Inline isoxazoline warning for epileptic dogs */}
+                  {category.key === 'flea_tick' &&
+                    formData.medical_conditions.includes('epilepsy') &&
+                    (formData.medications.flea_tick || []).some((m) => ISOXAZOLINE_MEDS.has(m)) && (
+                      <div className="medication-inline-warning">
+                        <strong>FDA Seizure Warning:</strong> Isoxazoline flea/tick products
+                        (NexGard, Bravecto, Simparica, Credelio) have an FDA warning for
+                        seizures, tremors, and ataxia in dogs. These should be <strong>avoided</strong> in
+                        epileptic dogs. Safer alternatives include Frontline (fipronil),
+                        Revolution (selamectin), or Comfortis (spinosad).
+                      </div>
+                    )}
+                </div>
+              ))}
+            </div>
+          )}
         </fieldset>
 
         <div className="form-actions">

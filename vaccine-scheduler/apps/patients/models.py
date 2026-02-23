@@ -122,6 +122,18 @@ class Dog(models.Model):
         help_text="Is dog currently pregnant or being used for breeding?"
     )
 
+    # Medical conditions and medications (for condition-specific vaccine rules)
+    medical_conditions = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of diagnosed conditions: epilepsy, autoimmune, cancer"
+    )
+    medications = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Medications by category, e.g. {'anti_seizure': ['keppra'], 'flea_tick': ['nexgard']}"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -151,6 +163,8 @@ class Dog(models.Model):
             'immune_condition': self.health_immune_condition,
             'immunosuppressive_meds': self.health_immunosuppressive_meds,
             'pregnant_breeding': self.health_pregnant_breeding,
+            'medical_conditions': self.medical_conditions or [],
+            'medications': self.medications or {},
         }
 
     @property

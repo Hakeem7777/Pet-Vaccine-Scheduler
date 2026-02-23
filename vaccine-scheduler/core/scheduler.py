@@ -4,6 +4,7 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass
 
 from core.config import VACCINE_RULES_PATH, AGE_PUPPY_MAX_WEEKS, AGE_ADOLESCENT_MAX_WEEKS, AGE_ADULT_MAX_YEARS
+from core.contraindications import evaluate_condition_warnings
 
 
 @dataclass
@@ -138,6 +139,17 @@ class RuleBasedScheduler:
                 "Note: Diagnosed with a long-term medical condition — consult vet "
                 "regarding vaccine safety."
             )
+
+        # Condition-specific checks (epilepsy, autoimmune, cancer)
+        condition_results = evaluate_condition_warnings(
+            vaccine_id=vaccine.get('id', ''),
+            vaccine_type=vaccine.get('vaccine_type', ''),
+            health_context=health_context,
+        )
+        for warning_text, is_contra in condition_results:
+            warnings.append(warning_text)
+            if is_contra:
+                contraindicated = True
 
         combined_warning = ' | '.join(warnings) if warnings else None
         return (combined_warning, contraindicated)

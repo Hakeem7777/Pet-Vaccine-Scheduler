@@ -3,6 +3,8 @@
  * Mirrors the backend RuleBasedScheduler logic
  */
 
+import { ISOXAZOLINE_MEDS, MEDICATION_CATALOG } from './medicalConstants';
+
 // Vaccine rules (same as backend vaccine_rules.json)
 const VACCINE_RULES = [
   {
@@ -271,10 +273,147 @@ function evaluateHealthWarnings(vaccine, healthContext) {
     );
   }
 
+  // Condition-specific checks (epilepsy, autoimmune, cancer)
+  const conditionResults = evaluateConditionWarnings(
+    vaccine.id, vaccine.vaccine_type, healthContext
+  );
+  for (const result of conditionResults) {
+    warnings.push(result.text);
+    if (result.contraindicated) contraindicated = true;
+  }
+
   return {
     warning: warnings.length > 0 ? warnings.join(' | ') : null,
     contraindicated,
   };
+}
+
+/**
+ * Evaluate condition-specific warnings for a vaccine.
+ * Mirrors backend core/contraindications.py logic.
+ */
+function evaluateConditionWarnings(vaccineId, vaccineType, healthContext) {
+  const conditions = healthContext.medical_conditions || [];
+  const medications = healthContext.medications || {};
+  const results = [];
+
+  if (conditions.includes('epilepsy')) {
+    results.push(...evaluateEpilepsy(vaccineId, vaccineType, medications));
+  }
+  if (conditions.includes('autoimmune')) {
+    results.push(...evaluateAutoimmune(vaccineId, vaccineType, medications));
+  }
+  if (conditions.includes('cancer')) {
+    results.push(...evaluateCancer(vaccineId, vaccineType, medications));
+  }
+
+  return results;
+}
+
+function evaluateEpilepsy(vaccineId, vaccineType, medications) {
+  const results = [];
+
+  if (vaccineId === 'core_dap') {
+    results.push({
+      text: 'EPILEPSY CAUTION: For epileptic dogs, request recombinant CDV component instead of modified-live. Administer separately from other vaccines. Space all vaccines 3-4 weeks apart. Consider titer testing before revaccination. (AAHA 2024)',
+      contraindicated: false,
+    });
+  } else if (vaccineId === 'core_rabies') {
+    results.push({
+      text: 'EPILEPSY CAUTION: Use 3-year rabies schedule where legally permitted. Administer separately from all other vaccines. Monitor for seizure activity for 30 days post-vaccination. (AAHA 2024; WSAVA 2024)',
+      contraindicated: false,
+    });
+  } else if (vaccineId === 'core_lepto') {
+    results.push({
+      text: 'EPILEPSY WARNING: Leptospirosis vaccine has the highest adverse reaction rate among canine vaccines. Neurological adverse events including seizures have been reported. AVOID unless dog has genuine high exposure risk (wildlife contact, standing water). If administered, give separately and monitor closely for 48-72 hours. (AAHA 2024)',
+      contraindicated: false,
+    });
+  } else if (vaccineId.startsWith('noncore_')) {
+    results.push({
+      text: 'EPILEPSY NOTE: For epileptic dogs, non-core vaccines should only be administered if there is genuine exposure risk. Space 3-4 weeks apart from other vaccines. Never combine multiple vaccines in one visit. (AAHA 2024; WSAVA 2024)',
+      contraindicated: false,
+    });
+  }
+
+  // Flea/tick medication warnings
+  const fleaTickMeds = medications.flea_tick || [];
+  const isoxUsed = fleaTickMeds.filter((m) => ISOXAZOLINE_MEDS.has(m));
+  if (isoxUsed.length > 0) {
+    const isoxLabels = isoxUsed.map((medId) => {
+      const opt = MEDICATION_CATALOG.flea_tick.options.find((o) => o.id === medId);
+      return opt ? opt.label : medId;
+    });
+    results.push({
+      text: `FDA SEIZURE WARNING: Isoxazoline flea/tick products (${isoxLabels.join(', ')}) have an FDA warning for seizures, tremors, and ataxia in dogs. These should be AVOIDED in dogs with epilepsy or seizure history. Safer alternatives include Frontline (fipronil), Revolution (selamectin), or Comfortis (spinosad). (FDA Animal Drug Safety Communication, 2018)`,
+      contraindicated: false,
+    });
+  }
+
+  if (fleaTickMeds.includes('seresto')) {
+    results.push({
+      text: 'CAUTION: Seresto collar has reported neurological adverse events including convulsions and ataxia. Use with caution in epileptic dogs and monitor closely. (EPA Adverse Event Reports)',
+      contraindicated: false,
+    });
+  }
+
+  return results;
+}
+
+function evaluateAutoimmune(vaccineId, vaccineType, medications) {
+  const results = [];
+  const isMlv = vaccineType === 'mlv';
+  const immunoMeds = medications.immunosuppressive || [];
+  const onApoquel = immunoMeds.includes('apoquel');
+  const onAnyImmunosuppressive = immunoMeds.length > 0;
+
+  results.push({
+    text: 'AUTOIMMUNE ALERT: Dogs with autoimmune disease should AVOID vaccination during active disease flares. Titer testing is strongly recommended over revaccination for core vaccines (CDV, CPV, CAV). (AAHA 2024; WSAVA 2024)',
+    contraindicated: false,
+  });
+
+  if (isMlv && onAnyImmunosuppressive) {
+    results.push({
+      text: 'CONTRAINDICATED: Modified-live vaccines (MLV) are contraindicated while on immunosuppressive medications. MLV vaccines can cause disease in immunosuppressed patients. Wait at least 2-4 weeks after stopping immunosuppressive therapy before vaccinating. (WSAVA 2024)',
+      contraindicated: true,
+    });
+  }
+
+  if (onApoquel) {
+    results.push({
+      text: 'APOQUEL CONTRAINDICATION: Avoid ALL vaccines during Oclacitinib (Apoquel) treatment and for 28 days after discontinuation. Apoquel suppresses immune response, increasing risk of vaccine-induced disease from MLV vaccines and making killed vaccines ineffective. (Zoetis prescribing information; WSAVA 2024)',
+      contraindicated: true,
+    });
+  }
+
+  return results;
+}
+
+function evaluateCancer(vaccineId, vaccineType, medications) {
+  const results = [];
+  const isMlv = vaccineType === 'mlv';
+  const chemoMeds = medications.chemo_agents || [];
+  const onChemo = chemoMeds.length > 0;
+
+  if (isMlv) {
+    results.push({
+      text: 'CONTRAINDICATED: Modified-live vaccines are contraindicated during cancer treatment. MLV vaccines can cause disease in immunocompromised patients. Titer testing is recommended to assess existing immunity. (WSAVA 2024; AAHA 2024)',
+      contraindicated: true,
+    });
+  } else {
+    results.push({
+      text: 'CANCER/CHEMO NOTE: Killed vaccines are likely ineffective during active chemotherapy due to suppressed immune response. Wait minimum 2 weeks (ideally 4-8 weeks) after completing chemotherapy before vaccinating. Titer testing is preferred over revaccination. (WSAVA 2024; AAHA 2024)',
+      contraindicated: false,
+    });
+  }
+
+  if (onChemo) {
+    results.push({
+      text: 'ACTIVE CHEMOTHERAPY: Patient is currently on chemotherapy agents. Vaccination should be deferred until treatment is complete. If possible, vaccinate at least 14 days BEFORE starting chemotherapy. (AAHA 2024)',
+      contraindicated: true,
+    });
+  }
+
+  return results;
 }
 
 /**
@@ -375,6 +514,8 @@ export function calculateGuestSchedule(dog, selectedNoncore = [], vaccinations =
     health_immune_condition: dog.health_immune_condition || 'no',
     health_immunosuppressive_meds: dog.health_immunosuppressive_meds || 'no',
     health_pregnant_breeding: dog.health_pregnant_breeding || 'no',
+    medical_conditions: dog.medical_conditions || [],
+    medications: dog.medications || {},
   };
 
   const scheduleItems = [];

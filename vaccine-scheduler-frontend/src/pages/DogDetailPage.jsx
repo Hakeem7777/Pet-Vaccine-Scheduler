@@ -15,6 +15,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageTransition from '../components/common/PageTransition';
 import { formatDate } from '../utils/dateUtils';
 import { AGE_CLASSIFICATIONS, SEX_CHOICES } from '../utils/constants';
+import { MEDICAL_CONDITIONS, MEDICATION_CATALOG } from '../utils/medicalConstants';
 
 function DogDetailPage() {
   const { dogId } = useParams();
@@ -259,6 +260,47 @@ function DogDetailPage() {
                 )}
                 {dog.health_chronic_condition === 'yes' && (
                   <span className="env-tag env-tag--warning">Chronic condition</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {dog.medical_conditions?.length > 0 && (
+            <div className="dog-environment">
+              <label>Medical Conditions</label>
+              <div className="env-tags">
+                {dog.medical_conditions.map((condId) => {
+                  const cond = MEDICAL_CONDITIONS.find((c) => c.id === condId);
+                  return (
+                    <span key={condId} className="env-tag env-tag--danger">
+                      {cond ? `${cond.icon} ${cond.label}` : condId}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {dog.medications && Object.keys(dog.medications).some((k) => dog.medications[k]?.length > 0) && (
+            <div className="dog-environment">
+              <label>Current Medications</label>
+              <div className="env-tags">
+                {Object.entries(dog.medications).flatMap(([catKey, meds]) =>
+                  (meds || []).map((medId) => {
+                    const catData = MEDICATION_CATALOG[catKey];
+                    const medData = catData?.options.find((o) => o.id === medId);
+                    const isIsox = medData?.drugClass === 'isoxazoline' &&
+                      dog.medical_conditions?.includes('epilepsy');
+                    return (
+                      <span
+                        key={`${catKey}-${medId}`}
+                        className={`env-tag ${isIsox ? 'env-tag--danger' : 'env-tag--warning'}`}
+                      >
+                        {medData?.label || medId}
+                        {isIsox && ' (FDA Warning)'}
+                      </span>
+                    );
+                  })
                 )}
               </div>
             </div>
