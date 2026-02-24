@@ -32,11 +32,13 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-neutral-dark);
+  font-family: 'Urbanist', sans-serif;
 }
 
 .reminder-settings__desc {
   font-size: 0.75rem;
   color: var(--color-text-muted, #718096);
+  font-family: 'Open Sans', sans-serif;
 }
 
 .reminder-settings__select {
@@ -44,6 +46,8 @@
   min-width: 160px;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
+  border-radius: 8px;
+  font-family: 'Open Sans', sans-serif;
 }
 
 .reminder-settings__select--wide {
@@ -64,7 +68,7 @@
 }
 
 .reminder-toggle--on {
-  background: var(--color-secondary);
+  background: var(--color-primary);
 }
 
 .reminder-toggle__thumb {

@@ -3174,7 +3174,7 @@ a:hover {
 }
 
 .schedule-category--overdue .schedule-category-title { color: var(--color-danger); }
-.schedule-category--upcoming .schedule-category-title { color: var(--color-accent); }
+.schedule-category--upcoming .schedule-category-title { color: #2680C2; }
 .schedule-category--future .schedule-category-title { color: var(--color-secondary); }
 
 /* DEPRECATED - replaced by .schedule-accordion styles */
@@ -3396,7 +3396,7 @@ a:hover {
 .schedule-accordion {
   border-left: 4px solid;
   margin-bottom: var(--spacing-md);
-  border-radius: 0 var(--radius) var(--radius) 0;
+  border-radius: 16px;
   background: white;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s;
@@ -3409,7 +3409,7 @@ a:hover {
 /* Status-based left border colors only */
 .schedule-accordion--overdue {
   border-left-color: #D92D20;
-  border-left-width: 5px;
+  border-left-width: 4px;
 }
 
 .schedule-accordion--upcoming {

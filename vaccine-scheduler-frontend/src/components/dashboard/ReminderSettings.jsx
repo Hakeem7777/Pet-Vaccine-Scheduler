@@ -149,7 +149,7 @@ function ReminderSettings() {
         <div className="reminder-settings__toggle-info">
           <span className="reminder-settings__label">Email Reminders</span>
           <span className="reminder-settings__desc">
-            Get notified before vaccinations are due
+            Get notified before vaccinations are due.
           </span>
         </div>
         <button
@@ -242,9 +242,7 @@ function ReminderSettings() {
         </>
       )}
 
-      {msg && (
-        <p className={`profile-msg profile-msg--${msg.type}`}>{msg.text}</p>
-      )}
+    
     </div>
   );
 }

@@ -80,13 +80,13 @@ function GuestScheduleItem({ item, type, dogName, dogInfo, onVaccinationAdded })
           )}
 
           {hasExpandableContent && (
-            <motion.span
-              className="schedule-accordion__chevron"
-              animate={{ rotate: isOpen ? 180 : 0 }}
+            <motion.img
+              src="/Images/generic_icons/arrow_svg.svg"
+              alt=""
+              className="schedule-accordion__chevron icon"
+              animate={{ rotate: isOpen ? 0 : 180 }}
               transition={{ duration: 0.2 }}
-            >
-              &#8964;
-            </motion.span>
+            />
           )}
         </div>
       </div>
