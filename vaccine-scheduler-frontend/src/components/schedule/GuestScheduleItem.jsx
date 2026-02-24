@@ -1,39 +1,36 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { formatDate, getToday } from '../../utils/dateUtils';
 import useGuestStore from '../../store/useGuestStore';
-import FlipCard from './FlipCard';
 import ExportModal from '../export/ExportModal';
-
-// Maximum characters to show before truncating
-const MAX_DESCRIPTION_LENGTH = 80;
 
 function GuestScheduleItem({ item, type, dogName, dogInfo, onVaccinationAdded }) {
   const { addVaccination } = useGuestStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  const hasSafetyInfo = item.side_effects_common?.length > 0 || item.side_effects_seek_vet?.length > 0;
+  const hasWarnings = !!item.warning;
+  const hasExpandableContent = hasSafetyInfo || hasWarnings || item.description || item.notes;
 
   const getDaysText = () => {
     if (type === 'overdue') {
-      return `${item.days_overdue} day${item.days_overdue !== 1 ? 's' : ''} overdue`;
+      const days = item.days_overdue;
+      return `Past due: ${formatDate(item.date)} (${days} day${days !== 1 ? 's' : ''} overdue)`;
     }
     if (item.days_until === 0) {
-      return 'Due today';
+      return `Due: ${formatDate(item.date)} (Due Today)`;
     }
-    return `${item.days_until} day${item.days_until !== 1 ? 's' : ''} until`;
+    return `Due: ${formatDate(item.date)}`;
   };
 
-  const daysText = getDaysText();
-
-  // Check if we have safety info to show on the back
-  const hasSafetyInfo = item.side_effects_common?.length > 0 || item.side_effects_seek_vet?.length > 0;
-
-  function handleMarkAsDone() {
+  function handleMarkAsDone(e) {
+    e.stopPropagation();
     if (isSubmitting) return;
 
     setIsSubmitting(true);
 
-    // Add vaccination to guest store
     addVaccination({
       vaccine_id: item.vaccine_id,
       vaccine_name: item.vaccine,
@@ -47,178 +44,189 @@ function GuestScheduleItem({ item, type, dogName, dogInfo, onVaccinationAdded })
     onVaccinationAdded?.();
   }
 
-  // Front of the card - current schedule item display
-  const frontContent = (
-    <div className={`schedule-item schedule-item--${type}${item.contraindicated ? ' schedule-item--contraindicated' : ''}${item.warning && !item.contraindicated ? ' schedule-item--has-warning' : ''}`}>
-      <div className="schedule-item-header">
-        <span className="schedule-vaccine">{item.vaccine}</span>
-        <span className="schedule-dose">{item.dose}</span>
-      </div>
-      {item.contraindicated && (
-        <div className="schedule-item-badge schedule-item-badge--contraindicated">
-          <span className="badge-icon">&#9888;</span>
-          <span className="badge-text">CONTRAINDICATED</span>
-        </div>
-      )}
-      {item.warning && !item.contraindicated && (
-        <div className="schedule-item-badge schedule-item-badge--warning">
-          <span className="badge-icon">&#9888;</span>
-          <span className="badge-text">VET CONSULT ADVISED</span>
-        </div>
-      )}
-      {item.warning && (
-        <div className={`schedule-item-warning ${item.contraindicated ? 'schedule-item-warning--contraindicated' : 'schedule-item-warning--caution'}`}>
-          {item.warning.split(' | ').map((w, i) => {
-            const severity = w.startsWith('CONTRAINDICATED') || w.startsWith('APOQUEL CONTRAINDICATION')
-              ? 'contraindicated'
-              : w.startsWith('FDA SEIZURE WARNING')
-              ? 'fda-warning'
-              : w.startsWith('ACTIVE CHEMOTHERAPY')
-              ? 'contraindicated'
-              : w.includes('CAUTION') || w.includes('WARNING') || w.includes('ALERT')
-              ? 'warning'
-              : 'note';
-            return (
-              <p key={i} className={`schedule-warning-text schedule-warning-text--${severity}`}>{w}</p>
-            );
-          })}
-        </div>
-      )}
-      <div className="schedule-item-body">
-        <span className="schedule-date">Due: {formatDate(item.date)}</span>
-        <span className={`schedule-days ${type === 'overdue' ? 'schedule-days--overdue' : ''}`}>
-          ({daysText})
-        </span>
-      </div>
-      {item.date_range_start && item.date_range_end && item.date_range_start !== item.date_range_end && (
-        <div className="schedule-date-range">
-          Acceptable window: {formatDate(item.date_range_start)} - {formatDate(item.date_range_end)}
-        </div>
-      )}
-      {item.notes && (
-        <>
-          <p className="schedule-notes schedule-notes--screen">
-            {item.notes.length > MAX_DESCRIPTION_LENGTH && !isExpanded ? (
-              <>
-                {item.notes.substring(0, MAX_DESCRIPTION_LENGTH).trim()}...
-                <button
-                  className="schedule-notes-expand"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsExpanded(true);
-                  }}
-                  type="button"
-                >
-                  more
-                </button>
-              </>
-            ) : (
-              <>
-                {item.notes}
-                {item.notes.length > MAX_DESCRIPTION_LENGTH && (
-                  <button
-                    className="schedule-notes-expand"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsExpanded(false);
-                    }}
-                    type="button"
-                  >
-                    less
-                  </button>
-                )}
-              </>
-            )}
-          </p>
-          <p className="schedule-notes schedule-notes--print">
-            {item.notes}
-          </p>
-        </>
-      )}
-      <div className="schedule-item-actions">
-        <button
-          className="btn btn-sm btn-outline schedule-item-export-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExportModalOpen(true);
-          }}
-          type="button"
-        >
-          Export
-        </button>
-        <button
-          className="btn btn-sm btn-primary schedule-item-done-btn"
-          onClick={handleMarkAsDone}
-          disabled={isSubmitting || item.contraindicated}
-          title={item.contraindicated ? 'This vaccine is contraindicated based on health screening' : ''}
-        >
-          {isSubmitting ? 'Saving...' : item.contraindicated ? 'Contraindicated' : 'Mark as Done'}
-        </button>
-      </div>
-      {hasSafetyInfo && (
-        <div className="schedule-item-flip-hint">
-          Tap card for safety info
-        </div>
-      )}
-    </div>
-  );
+  const toggleOpen = () => {
+    if (hasExpandableContent) {
+      setIsOpen(!isOpen);
+    }
+  };
 
-  // Back of the card - safety information
-  const backContent = (
-    <>
-      <h4 className="flip-card-vaccine-name">{item.vaccine}</h4>
+  const infoAreaClass = item.contraindicated
+    ? 'schedule-accordion__info-widget--contraindicated'
+    : 'schedule-accordion__info-widget--caution';
 
-      {item.description && (
-        <p className="vaccine-description">{item.description}</p>
-      )}
-
-      {item.side_effects_common && item.side_effects_common.length > 0 && (
-        <div className="safety-section safety-section--common">
-          <h4>Common Side Effects (Normal)</h4>
-          <ul>
-            {item.side_effects_common.map((effect, index) => (
-              <li key={index}>{effect}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {item.side_effects_seek_vet && item.side_effects_seek_vet.length > 0 && (
-        <div className="safety-section safety-section--warning">
-          <h4>Contact Your Veterinarian If:</h4>
-          <ul>
-            {item.side_effects_seek_vet.map((warning, index) => (
-              <li key={index}>{warning}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
-  );
-
-  // If we have safety info, render as a flip card
-  if (hasSafetyInfo) {
-    return (
-      <>
-        <FlipCard
-          front={frontContent}
-          back={backContent}
-        />
-        <ExportModal
-          isOpen={isExportModalOpen}
-          onClose={() => setIsExportModalOpen(false)}
-          dogName={dogName}
-          dogInfo={dogInfo}
-          singleItem={item}
-        />
-      </>
-    );
-  }
-
-  // Otherwise, render just the front content without flip functionality
   return (
-    <>
-      {frontContent}
+    <div className={`schedule-accordion schedule-accordion--${type}`} data-tour="schedule-item">
+      {/* Header row: vaccine name + warning icon + chevron */}
+      <div
+        className="schedule-accordion__header"
+        onClick={toggleOpen}
+        role={hasExpandableContent ? 'button' : undefined}
+        aria-expanded={hasExpandableContent ? isOpen : undefined}
+        tabIndex={hasExpandableContent ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (hasExpandableContent && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            toggleOpen();
+          }
+        }}
+      >
+        <span className="schedule-accordion__vaccine-name">{item.vaccine}</span>
+
+        <div className="schedule-accordion__header-right">
+          {(item.contraindicated || item.warning) && (
+            <span className={`schedule-accordion__warning-icon ${item.contraindicated ? 'schedule-accordion__warning-icon--danger' : 'schedule-accordion__warning-icon--caution'}`}>
+              &#9888;
+            </span>
+          )}
+
+          {hasExpandableContent && (
+            <motion.span
+              className="schedule-accordion__chevron"
+              animate={{ rotate: isOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              &#8964;
+            </motion.span>
+          )}
+        </div>
+      </div>
+
+      {/* Expanded body */}
+      <motion.div
+        className="schedule-accordion__body"
+        animate={{
+          height: isOpen ? 'auto' : 0,
+          opacity: isOpen ? 1 : 0,
+        }}
+        initial={false}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        style={{ overflow: 'hidden' }}
+      >
+        <div className="schedule-accordion__body-inner">
+
+          {/* === Fluid tab info widget (warnings) === */}
+          {hasWarnings ? (
+            <div className={`schedule-accordion__info-widget ${infoAreaClass}`}>
+              {/* Tabs row: fluid tab + other badges */}
+              <div className="sa-info__tabs-row">
+                <div className="sa-info__fluid-tab">
+                  {item.contraindicated ? (
+                    <span className="schedule-accordion__badge schedule-accordion__badge--contraindicated">
+                      <span>&#9888;</span>
+                      <span>Contraindicated</span>
+                    </span>
+                  ) : (
+                    <span className="schedule-accordion__badge schedule-accordion__badge--warning">
+                      <span>&#9888;</span>
+                      <span>Vet Consult Required</span>
+                    </span>
+                  )}
+                </div>
+
+                <span className={`schedule-accordion__badge schedule-accordion__badge--date schedule-accordion__badge--${type}`}>
+                  {getDaysText()}
+                </span>
+
+                <span className="schedule-accordion__badge schedule-accordion__badge--dose">
+                  {item.dose}
+                </span>
+              </div>
+
+              {/* Main body with warning text */}
+              <div className="sa-info__main-body">
+                {item.warning.split(' | ').map((w, i) => {
+                  const severity = w.startsWith('CONTRAINDICATED') || w.startsWith('APOQUEL CONTRAINDICATION')
+                    ? 'contraindicated'
+                    : w.startsWith('FDA SEIZURE WARNING')
+                    ? 'fda-warning'
+                    : w.startsWith('ACTIVE CHEMOTHERAPY')
+                    ? 'contraindicated'
+                    : w.includes('CAUTION') || w.includes('WARNING') || w.includes('ALERT')
+                    ? 'warning'
+                    : 'note';
+                  return (
+                    <p key={i} className={`schedule-warning-text schedule-warning-text--${severity}`}>{w}</p>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="schedule-accordion__badges">
+              <span className={`schedule-accordion__badge schedule-accordion__badge--date schedule-accordion__badge--${type}`}>
+                {getDaysText()}
+              </span>
+              <span className="schedule-accordion__badge schedule-accordion__badge--dose">
+                {item.dose}
+              </span>
+            </div>
+          )}
+
+          {/* Vaccine description */}
+          {item.description && (
+            <p className="schedule-accordion__description">{item.description}</p>
+          )}
+
+          {/* Common Side Effects */}
+          {item.side_effects_common?.length > 0 && (
+            <div className="schedule-accordion__safety schedule-accordion__safety--common">
+              <h4>Common Side Effects ( Normal )</h4>
+              <ul>
+                {item.side_effects_common.map((effect, index) => (
+                  <li key={index}>{effect}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Contact Vet warnings */}
+          {item.side_effects_seek_vet?.length > 0 && (
+            <div className="schedule-accordion__safety schedule-accordion__safety--warning">
+              <h4>Contact your Veterinarian If:</h4>
+              <ul>
+                {item.side_effects_seek_vet.map((warning, index) => (
+                  <li key={index}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Date range */}
+          {item.date_range_start && item.date_range_end && item.date_range_start !== item.date_range_end && (
+            <div className="schedule-accordion__date-range">
+              Acceptable window: {formatDate(item.date_range_start)} - {formatDate(item.date_range_end)}
+            </div>
+          )}
+
+          {/* Notes */}
+          {item.notes && (
+            <p className="schedule-accordion__notes">{item.notes}</p>
+          )}
+
+          {/* Action buttons */}
+          <div className="schedule-accordion__actions">
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExportModalOpen(true);
+              }}
+              type="button"
+            >
+              Export &#8679;
+            </button>
+            {!item.contraindicated && (
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={handleMarkAsDone}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : 'Mark as Done \u2714'}
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
@@ -226,7 +234,7 @@ function GuestScheduleItem({ item, type, dogName, dogInfo, onVaccinationAdded })
         dogInfo={dogInfo}
         singleItem={item}
       />
-    </>
+    </div>
   );
 }
 

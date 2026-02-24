@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
 import { getDog, updateDog, deleteDog } from '../api/dogs';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
@@ -13,9 +13,10 @@ import GuestVaccinationList from '../components/vaccinations/GuestVaccinationLis
 import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageTransition from '../components/common/PageTransition';
-import { formatDate } from '../utils/dateUtils';
-import { AGE_CLASSIFICATIONS, SEX_CHOICES } from '../utils/constants';
+import { SEX_CHOICES } from '../utils/constants';
 import { MEDICAL_CONDITIONS, MEDICATION_CATALOG } from '../utils/medicalConstants';
+import { getDogImageUrl } from '../utils/breedImageUtils';
+import { formatDogAge } from '../utils/dateUtils';
 
 function DogDetailPage() {
   const { dogId } = useParams();
@@ -153,9 +154,32 @@ function DogDetailPage() {
 
   return (
     <PageTransition className="dog-detail-page">
-      <button className="btn btn-outline back-btn" onClick={() => navigate('/')}>
-        &larr; Back to Dashboard
-      </button>
+      {/* Breadcrumb */}
+      <div className="dog-detail-breadcrumb">
+        <Link to="/" className="breadcrumb-link">My Dogs</Link>
+        <span className="breadcrumb-separator">/</span>
+        <span className="breadcrumb-current">{dog.name}</span>
+      </div>
+
+      {/* Top bar: Back + Actions */}
+      <div className="dog-detail-topbar">
+        <button className="btn btn-outline btn-pill back-btn" onClick={() => navigate('/')}>
+          &larr; Back
+        </button>
+        <div className="dog-detail-topbar-actions">
+          <button className="btn btn-outline btn-pill" onClick={() => setShowEditModal(true)}>
+            Edit <img src="/Images/generic_icons/Edit-Icon.svg" alt="" width="16" height="16" style={{marginLeft:"5px"}} />
+          </button>
+          {!isGuestDog && (
+            <button className="btn btn-outline btn-pill" onClick={() => setShowUploadModal(true)}>
+              Upload Document <img src="/Images/generic_icons/export-icon.svg" alt="" width="16" height="16" style={{marginLeft:"5px"}} />
+            </button>
+          )}
+          <button className="btn btn-outline-danger btn-pill" onClick={handleDelete}>
+            Delete <img src="/Images/generic_icons/Delete-icon.svg" alt="" width="16" height="16" style={{marginLeft:"5px"}}/>
+          </button>
+        </div>
+      </div>
 
       {isGuestDog && (
         <div className="guest-banner guest-banner--info">
@@ -168,59 +192,46 @@ function DogDetailPage() {
         </div>
       )}
 
-      <div className="dog-info-card" data-tour="dog-info-card">
-        <div className="dog-info-header">
-          <div className="dog-info-title">
-            <h2>{dog.name}</h2>
-            <span className={`age-badge age-${dog.age_classification}`}>
-              {AGE_CLASSIFICATIONS[dog.age_classification] || dog.age_classification}
-            </span>
-          </div>
-          <div className="dog-info-actions">
-            {!isGuestDog && (
-              <button className="btn btn-secondary" onClick={() => setShowUploadModal(true)}>
-                Upload Document
-              </button>
-            )}
-            <button className="btn btn-outline" onClick={() => setShowEditModal(true)}>
-              Edit
-            </button>
-            <button className="btn btn-danger" onClick={handleDelete}>
-              Delete
-            </button>
-          </div>
-        </div>
-
-        <div className="dog-info-body">
-          <div className="dog-info-grid">
-            {dog.breed && (
-              <div className="info-item">
-                <label>Breed</label>
-                <span>{dog.breed}</span>
-              </div>
-            )}
-            <div className="info-item">
-              <label>Age</label>
-              <span>{dog.age_weeks} weeks</span>
+      {/* Two-column: Dog Info + Vaccination Progress */}
+      <div className="dog-detail-hero" data-tour="dog-info-card">
+        <div className="dog-info-card">
+          <div className="dog-info-card-inner">
+            <div className="dog-info-photo">
+              <img
+                src={getDogImageUrl(dog)}
+                alt={dog.name}
+                onError={(e) => { e.target.src = '/Images/dog_icon.svg'; }}
+              />
             </div>
-            {sexLabel && (
-              <div className="info-item">
-                <label>Sex</label>
-                <span>{sexLabel}</span>
+            <div className="dog-info-body">
+              <div className="dog-info-row dog-info-row--3">
+                <div className="info-item">
+                  <label>Name</label>
+                  <span>{dog.name}</span>
+                </div>
+                <div className="info-item">
+                  <label>Weight</label>
+                  <span>{dog.weight_kg ? `${dog.weight_kg}kg` : '\u2014'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Breed</label>
+                  <span className="info-item-breed" title={dog.breed || ''}>{dog.breed || '\u2014'}</span>
+                </div>
               </div>
-            )}
-            <div className="info-item">
-              <label>Birth Date</label>
-              <span>{formatDate(dog.birth_date)}</span>
+              <div className="dog-info-row dog-info-row--2">
+                <div className="info-item">
+                  <label>Age</label>
+                  <span>{formatDogAge(dog.birth_date)}</span>
+                </div>
+                <div className="info-item">
+                  <label>Sex</label>
+                  <span>{sexLabel || '\u2014'}</span>
+                </div>
+              </div>
             </div>
-            {dog.weight_kg && (
-              <div className="info-item">
-                <label>Weight</label>
-                <span>{dog.weight_kg} kg</span>
-              </div>
-            )}
           </div>
 
+          {/* Environment & Health tags below the grid
           {(dog.env_indoor_only || dog.env_dog_parks || dog.env_daycare_boarding || dog.env_travel_shows || dog.env_tick_exposure) && (
             <div className="dog-environment">
               <label>Environment</label>
@@ -232,7 +243,7 @@ function DogDetailPage() {
                 {dog.env_tick_exposure && <span className="env-tag">Tick exposure</span>}
               </div>
             </div>
-          )}
+          )} */}
 
           {(dog.health_vaccine_reaction === 'yes' ||
             dog.health_immune_condition === 'yes' ||
@@ -305,6 +316,39 @@ function DogDetailPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Vaccination Progress Card */}
+        <div className="vaccination-progress-card">
+          <div className="vaccination-progress-header">
+            <h3>Vaccination Progress</h3>
+            <span className="vaccination-progress-percent">
+              {dog.vaccination_summary?.progress_percent ?? 0} %
+            </span>
+          </div>
+          <div className="vaccination-progress-details">
+            {dog.vaccination_summary?.next_upcoming && (
+              <p className="vaccination-progress-upcoming">
+                Upcoming Vaccine: {dog.vaccination_summary.next_upcoming.vaccine}
+              </p>
+            )}
+            <p className="vaccination-progress-count">
+              {dog.vaccination_summary?.overdue?.length > 0
+                ? `${dog.vaccination_summary.overdue.length} vaccine(s) overdue`
+                : 'All vaccines on track'}
+            </p>
+          </div>
+          <div className="vaccination-progress-bar-wrapper">
+            <div className="vaccination-progress-bar">
+              <div
+                className="vaccination-progress-fill"
+                style={{ width: `${dog.vaccination_summary?.progress_percent ?? 0}%` }}
+              />
+            </div>
+            <span className="vaccination-progress-bar-label">
+              {dog.vaccination_summary?.progress_percent ?? 0}%
+            </span>
+          </div>
         </div>
       </div>
 

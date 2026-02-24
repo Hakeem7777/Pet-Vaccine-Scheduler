@@ -336,13 +336,16 @@ a:hover {
 
 .btn-outline {
   background-color: transparent;
-  border: 2px solid var(--color-primary);
-  color: var(--color-primary);
+  border: 1px solid #D9D9D9;
 }
 
 .btn-outline:hover:not(:disabled) {
   background-color: var(--color-primary);
   color: white;
+}
+
+.btn-outline:hover:not(:disabled) img {
+  filter: brightness(0) invert(1);
 }
 
 .btn-danger {
@@ -1123,6 +1126,7 @@ a:hover {
 
 /* ==========================================
    SCHEDULE CONTRAINDICATION STYLES
+   DEPRECATED - replaced by .schedule-accordion--* classes
    ========================================== */
 
 .schedule-item--contraindicated {
@@ -2666,66 +2670,191 @@ a:hover {
 }
 
 /* Dog Detail Page */
-.dog-detail-page .back-btn {
-  margin-bottom: var(--spacing-lg);
+
+/* Breadcrumb */
+.dog-detail-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-sm);
 }
 
-.dog-info-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  margin-bottom: var(--spacing-lg);
-  overflow: hidden;
+.breadcrumb-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
 }
 
-.dog-info-header {
+.breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  color: var(--color-text-muted);
+}
+
+.breadcrumb-current {
+  color: var(--color-text-muted);
+}
+
+/* Top bar */
+.dog-detail-topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-color);
-  background: var(--color-neutral-light);
+  margin-bottom: var(--spacing-lg);
 }
 
-.dog-info-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.dog-info-title h2 {
-  margin: 0;
-  color: var(--color-primary);
-}
-
-.dog-info-actions {
+.dog-detail-topbar-actions {
   display: flex;
   gap: var(--spacing-sm);
 }
 
-.dog-info-body {
-  padding: var(--spacing-lg);
+.btn-pill {
+  border-radius: 10px;
+  height: 44px;
+  padding: 0 20px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 22px;
+  box-shadow: none;
+  gap: 5px;
 }
 
-.dog-info-grid {
+.dog-detail-topbar-actions .btn-outline.btn-pill {
+  background: transparent;
+  border: 1px solid #D9D9D9;
+  color: #252B37;
+}
+
+.dog-detail-topbar-actions .btn-outline.btn-pill:hover:not(:disabled) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.dog-detail-topbar-actions .btn-outline.btn-pill:hover:not(:disabled) img {
+  filter: brightness(0) invert(1);
+}
+
+.dog-detail-topbar-actions .btn-outline-danger.btn-pill {
+  background: transparent;
+  border: 1px solid #D9D9D9;
+  color: var(--color-danger);
+}
+
+.dog-detail-topbar-actions .btn-outline-danger.btn-pill:hover:not(:disabled) {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: white;
+}
+
+.dog-detail-topbar-actions .btn-outline-danger.btn-pill:hover:not(:disabled) img {
+  filter: brightness(0) invert(1);
+}
+
+/* Outline danger button variant */
+.btn-outline-danger {
+  background-color: transparent;
+  border: 1px solid #D9D9D9;
+  color: var(--color-danger);
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.btn-outline-danger:hover:not(:disabled) img {
+  filter: brightness(0) invert(1);
+}
+
+/* Hero: two-column layout */
+.dog-detail-hero {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: 43fr 21fr;
   gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg); 
+}
+
+.dog-info-card {
+  background: #FBFBFB;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--spacing-lg);
+  overflow: hidden;
+}
+
+.dog-info-card-inner {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.dog-info-photo {
+  flex-shrink: 0;
+  width: 160px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.dog-info-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dog-info-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.dog-info-row {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.dog-info-row--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.dog-info-row--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.info-item {
+  background: #FFFFFF;
+  border-radius: var(--radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-width: 0;
+  box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.04);
 }
 
 .info-item label {
   display: block;
   font-size: 0.8rem;
-  color: var(--color-text-muted);
-  margin-bottom: var(--spacing-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--color-primary);
+  margin-bottom: 2px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .info-item span {
-  font-weight: 600;
-  font-size: 1.1rem;
+  display: block;
+  font-weight: 700;
+  font-size: 1.05rem;
   color: var(--color-neutral-dark);
+}
+
+.info-item-breed {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dog-environment {
@@ -2741,6 +2870,101 @@ a:hover {
   margin-bottom: var(--spacing-sm);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Vaccination Progress Card */
+.vaccination-progress-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.vaccination-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+}
+
+.vaccination-progress-header h3 {
+  margin: 0;
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: var(--color-neutral-dark);
+}
+
+.vaccination-progress-percent {
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: right;
+  vertical-align: middle;
+  color: var(--color-primary);
+}
+
+.vaccination-progress-details {
+  margin-bottom: var(--spacing-lg);
+}
+
+.vaccination-progress-upcoming {
+  margin: 0 0 var(--spacing-xs);
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: var(--color-neutral-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.vaccination-progress-count {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.vaccination-progress-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.vaccination-progress-bar {
+  flex: 1;
+  height: 10px;
+  background: #E2E8F0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.vaccination-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #006D9C, #0088C2);
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.vaccination-progress-bar-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .env-tags {
@@ -2766,16 +2990,26 @@ a:hover {
 
 @media (min-width: 1024px) {
   .dog-detail-content {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 215fr 105fr;
   }
 }
 
-.schedule-section,
-.history-section {
+.schedule-section {
   background: white;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: var(--spacing-lg);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.history-section {
+  background: #FBFBFB;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--spacing-lg);
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Schedule View */
@@ -2792,9 +3026,15 @@ a:hover {
 
 .schedule-view__header h3 {
   margin: 0;
-  color: var(--color-primary);
+  color: #000000;
   border-bottom: none;
   padding-bottom: 0;
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: 0;
+  vertical-align: middle;
 }
 
 .schedule-view__export {
@@ -2806,17 +3046,17 @@ a:hover {
 }
 .schedule-view h3 {
   margin-bottom: var(--spacing-md);
-  color: var(--color-primary);
+  color: #000000;
   border-bottom: 2px solid var(--color-neutral-light);
   padding-bottom: var(--spacing-sm);
 }
 
 .noncore-selector {
-  background: var(--color-neutral-light);
+  background: #F8F9FC;
   padding: var(--spacing-md);
   border-radius: var(--radius);
   margin-bottom: var(--spacing-lg);
-  border: 1px solid var(--border-color);
+  border: 1px solid #EAECF5;
 }
 
 .noncore-selector h4 {
@@ -2836,11 +3076,62 @@ a:hover {
   gap: var(--spacing-md);
 }
 
+.noncore-options .checkbox-label {
+  background: #fff;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-family: 'Urbanist', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text);
+  gap: 12px;
+  transition: border-color 0.2s, background-color 0.2s;
+  max-height: 56px;
+}
+
+.noncore-options .checkbox-label:hover {
+  background-color: #F5F7FA;
+  border-color: #C4C4C4;
+}
+
+.noncore-options .checkbox-label input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: 2px solid #D0D0D0;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  margin: 0;
+  position: relative;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.noncore-options .checkbox-label input[type="checkbox"]:checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.noncore-options .checkbox-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+}
+
 .checkbox-label--recommended {
-  background: rgba(56, 161, 105, 0.1);
-  border: 1px solid var(--color-success);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
+  background: rgba(56, 161, 105, 0.1) !important;
+  border-color: var(--color-success) !important;
+  padding: 14px 20px;
+  border-radius: 50px;
 }
 
 .recommended-badge {
@@ -2886,6 +3177,7 @@ a:hover {
 .schedule-category--upcoming .schedule-category-title { color: var(--color-accent); }
 .schedule-category--future .schedule-category-title { color: var(--color-secondary); }
 
+/* DEPRECATED - replaced by .schedule-accordion styles */
 .schedule-item {
   padding: var(--spacing-md);
   border-left: 4px solid;
@@ -3097,6 +3389,408 @@ a:hover {
   color: var(--color-text-muted);
 }
 
+/* ==========================================
+   SCHEDULE ACCORDION STYLES
+   ========================================== */
+
+.schedule-accordion {
+  border-left: 4px solid;
+  margin-bottom: var(--spacing-md);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+
+.schedule-accordion:hover {
+  box-shadow: var(--shadow);
+}
+
+/* Status-based left border colors only */
+.schedule-accordion--overdue {
+  border-left-color: #D92D20;
+  border-left-width: 5px;
+}
+
+.schedule-accordion--upcoming {
+  border-left-color: #2680C2;
+}
+
+.schedule-accordion--future {
+  border-left-color: var(--color-secondary);
+}
+
+/* Header row - clickable */
+.schedule-accordion__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1rem 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  gap: var(--spacing-sm);
+}
+
+.schedule-accordion__header:hover {
+  background: rgba(0, 0, 0, 0.015);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.schedule-accordion__vaccine-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-neutral-dark);
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-accordion__header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Badges row inside expanded body */
+.schedule-accordion__badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+}
+
+/* Base badge pill */
+.schedule-accordion__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* Dose badge - outlined */
+.schedule-accordion__badge--dose {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Date badge - colored by status */
+.schedule-accordion__badge--date {
+  font-weight: 500;
+  padding: 3px 10px;
+}
+
+.schedule-accordion__badge--overdue {
+  background: rgba(217, 45, 32, 0.08);
+  color: #D92D20;
+  font-weight: 600;
+}
+
+.schedule-accordion__badge--upcoming {
+  background: rgba(38, 128, 194, 0.08);
+  color: #2680C2;
+}
+
+.schedule-accordion__badge--future {
+  background: rgba(42, 181, 127, 0.08);
+  color: #276749;
+}
+
+/* Warning icon indicator in collapsed header */
+.schedule-accordion__warning-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+.schedule-accordion__warning-icon--danger {
+  background: rgba(217, 45, 32, 0.1);
+  color: #D92D20;
+}
+
+.schedule-accordion__warning-icon--caution {
+  background: rgba(255, 156, 59, 0.1);
+  color: var(--color-accent);
+}
+
+/* Chevron */
+.schedule-accordion__chevron {
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+
+.schedule-accordion__chevron.icon{
+  width: 25px;
+  padding: 3px;
+}
+
+.schedule-accordion__header:hover .schedule-accordion__chevron {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* ---- Expanded body ---- */
+.schedule-accordion__body-inner {
+  padding: 0 1.25rem 1.25rem;
+}
+
+/* Contraindicated badge */
+.schedule-accordion__badge--contraindicated {
+  background: #D92D20;
+  color: white;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.3px;
+  gap: 4px;
+  padding: 4px 12px;
+}
+
+/* Warning / vet consult badge */
+.schedule-accordion__badge--warning {
+  background: var(--color-accent);
+  color: white;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.3px;
+  gap: 4px;
+  padding: 4px 12px;
+}
+
+/*
+  Fluid Tab Info Widget — "CSS Fillet" / "Gooey Tab" effect.
+  A tab wraps the status badge with rounded top corners.
+  A ::after pseudo-element with radial-gradient creates a concave curve
+  bridging the tab to the main body below.
+  The main body has rounded corners except top-left (where it meets the tab).
+*/
+.schedule-accordion__info-widget {
+  position: relative;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Color variants — define CSS variable for the tint color */
+.schedule-accordion__info-widget--contraindicated {
+  --sa-info-bg: #FEF3F2;
+}
+
+.schedule-accordion__info-widget--caution {
+  --sa-info-bg: #FFF7ED;
+}
+
+/* Tabs row: aligns tab + other badges at the bottom */
+.sa-info__tabs-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* The fluid tab wrapping the status badge */
+.sa-info__fluid-tab {
+  background-color: var(--sa-info-bg);
+  padding: 8px 10px 8px 10px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  position: relative;
+}
+
+/* The concave curve bridge connecting tab to main body */
+.sa-info__fluid-tab::after {
+  content: '';
+  position: absolute;
+  right: -14px;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle at top right, transparent 14px, var(--sa-info-bg) 14px);
+}
+
+/* Other badges sitting beside the tab - lifted slightly */
+.sa-info__tabs-row > .schedule-accordion__badge {
+  margin-bottom: 8px;
+}
+
+/* The main body with warning text */
+.sa-info__main-body {
+  background-color: var(--sa-info-bg);
+  padding: 1rem 1.25rem;
+  border-radius: 0 16px 16px 16px;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+/* Vaccine description */
+.schedule-accordion__description {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  line-height: 1.5;
+  margin: var(--spacing-sm) 0 var(--spacing-md) 0;
+}
+
+/* Date range */
+.schedule-accordion__date-range {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-sm);
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Safety sections */
+.schedule-accordion__safety {
+  margin: var(--spacing-sm) 0;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+}
+
+.schedule-accordion__safety h4 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.schedule-accordion__safety ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.schedule-accordion__safety li {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.schedule-accordion__safety li:last-child {
+  margin-bottom: 0;
+}
+
+.schedule-accordion__safety--common {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.schedule-accordion__safety--common h4 {
+  color: var(--color-neutral-dark);
+}
+
+.schedule-accordion__safety--warning {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+}
+
+.schedule-accordion__safety--warning h4 {
+  color: var(--color-neutral-dark);
+}
+
+/* Notes */
+.schedule-accordion__notes {
+  margin: var(--spacing-sm) 0 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Actions row */
+.schedule-accordion__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.schedule-accordion__actions .btn {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0%;
+  text-align: center;
+  border: 1px solid #D9D9D9;
+  border-radius: 10px;
+  height: 44px;
+  padding: 0 20px;
+}
+
+.schedule-accordion__actions .btn-outline {
+  background: transparent;
+  border: 1px solid #D9D9D9;
+  color: #252B37;
+}
+
+.schedule-accordion__actions .btn-outline:hover:not(:disabled) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.schedule-accordion__actions .btn-outline:hover:not(:disabled) img {
+  filter: brightness(0) invert(1);
+}
+
+.schedule-accordion__actions .btn-primary {
+  background: transparent;
+  border: 1px solid #D9D9D9;
+  color: #008A4C;
+}
+
+.schedule-accordion__actions .btn-primary:hover:not(:disabled) {
+  background: #008A4C;
+  border-color: #008A4C;
+  color: white;
+}
+
+.schedule-accordion__actions .btn-primary:hover:not(:disabled) img {
+  filter: brightness(0) invert(1);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .schedule-accordion__badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .schedule-accordion__badge--date {
+    font-size: 0.7rem;
+  }
+
+  .schedule-accordion__info-area {
+    padding: 0.75rem;
+  }
+
+  .schedule-accordion__safety h4 {
+    font-size: 0.8125rem;
+  }
+
+  .schedule-accordion__safety ul {
+    font-size: 0.75rem;
+  }
+}
+
 /* Vaccination List */
 .vaccination-list-header {
   display: flex;
@@ -3107,44 +3801,84 @@ a:hover {
 
 .vaccination-list-header h3 {
   margin: 0;
-  color: var(--color-primary);
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--color-neutral-dark);
+}
+
+.vaccination-list-header .btn-outline {
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .no-vaccinations {
   color: var(--color-text-muted);
   text-align: center;
   padding: var(--spacing-lg);
-  background: var(--color-neutral-light);
-  border-radius: var(--radius);
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
 }
 
-.vaccination-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 0.9rem;
+.vaccination-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow-y: auto;
+  max-height: 500px;
 }
 
-.vaccination-table th {
-  padding: var(--spacing-md);
-  text-align: left;
-  background: var(--color-neutral-light);
-  color: var(--color-text-muted);
+.vaccination-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.vaccination-card__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.vaccination-card__name {
+  margin: 0 0 6px 0;
+  font-family: 'Urbanist', sans-serif;
   font-weight: 600;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 2px solid var(--border-color);
-}
-
-.vaccination-table td {
-  padding: var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
+  font-size: 16px;
   color: var(--color-neutral-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.vaccination-table tr:last-child td {
-  border-bottom: none;
+.vaccination-card__meta {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-family: 'Urbanist', sans-serif;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.vaccination-card__delete {
+  background: none;
+  border: none;
+  color: #D9534F;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.vaccination-card__delete:hover {
+  background: rgba(217, 83, 79, 0.08);
 }
 
 .vax-notes {
@@ -3167,10 +3901,31 @@ a:hover {
     grid-template-columns: 1fr;
   }
 
-  .dog-info-header {
+  .dog-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .dog-detail-topbar {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+
+  .dog-info-card-inner {
+    flex-direction: column;
+  }
+
+  .dog-info-photo {
+    width: 100%;
+    height: 200px;
+  }
+
+  .dog-info-row--3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dog-info-row--2 {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -3255,7 +4010,7 @@ a:hover {
   /* Two column layout - keep side by side */
   .dog-detail-content {
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 215fr 105fr !important;
     gap: 15px !important;
   }
 
@@ -3292,6 +4047,30 @@ a:hover {
   .schedule-days--overdue {
     color: #E53E3E !important;
     font-weight: 700 !important;
+  }
+
+  /* Accordion print styles */
+  .schedule-accordion {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  .schedule-accordion:hover {
+    box-shadow: none !important;
+  }
+
+  .schedule-accordion__header {
+    cursor: default;
+  }
+
+  .schedule-accordion__chevron {
+    display: none !important;
+  }
+
+  .schedule-accordion__body {
+    height: auto !important;
+    opacity: 1 !important;
+    overflow: visible !important;
   }
 }
 

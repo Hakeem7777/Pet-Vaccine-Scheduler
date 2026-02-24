@@ -207,11 +207,11 @@ function DashboardPage() {
         <h2>{isAuthenticated ? 'My Pets' : 'Your Pet'}</h2>
         <div className="page-header-actions">
           {isAuthenticated && (
-            <button className="btn btn-secondary" onClick={handleUploadClick} data-tour="upload-doc-btn">
-              Upload Document
+            <button className="btn btn-outline btn-pill" onClick={handleUploadClick} data-tour="upload-doc-btn">
+              Quick Add
             </button>
           )}
-          <button className="btn btn-primary" onClick={handleAddDogClick} data-tour="add-dog-btn">
+          <button className="btn btn-primary btn-pill" onClick={handleAddDogClick} data-tour="add-dog-btn">
             Add New Pet
           </button>
         </div>

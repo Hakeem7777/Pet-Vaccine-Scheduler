@@ -134,6 +134,15 @@ def generate_schedule_pdf(
         leading=11,
     )
 
+    caution_cell_style = ParagraphStyle(
+        'CautionCell',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=ACCENT_COLOR,
+        fontName='Helvetica-Bold',
+        leading=11,
+    )
+
     # Build document elements
     elements = []
 
@@ -202,7 +211,7 @@ def generate_schedule_pdf(
                 Paragraph("Dose", header_cell_style),
                 Paragraph("Date", header_cell_style),
                 Paragraph("Window", header_cell_style),
-                Paragraph("Notes", header_cell_style)
+                Paragraph("Warnings", header_cell_style)
             ]]
             for item in items:
                 # Format date range if available
@@ -210,16 +219,36 @@ def generate_schedule_pdf(
                 if item.get("date_range_start") and item.get("date_range_end"):
                     date_range = f"{item['date_range_start']} - {item['date_range_end']}"
 
+                # Build warnings text from contraindication/warning fields
+                # Shorten pipe-separated warnings to just condition names
+                warning_text = ""
+                raw_warning = item.get("warning", "") or ""
+                if item.get("contraindicated"):
+                    # Extract just condition names before the colon
+                    parts = [p.split(":")[0].strip() for p in raw_warning.split("|") if p.strip()] if raw_warning else []
+                    warning_text = "Contraindicated" + (f" ({', '.join(parts)})" if parts else "")
+                elif raw_warning:
+                    parts = [p.split(":")[0].strip() for p in raw_warning.split("|") if p.strip()]
+                    warning_text = ", ".join(parts) if parts else raw_warning
+
+                # Red for contraindications, orange for cautions
+                if item.get("contraindicated"):
+                    warning_style = danger_cell_style
+                elif warning_text:
+                    warning_style = caution_cell_style
+                else:
+                    warning_style = row_cell_style
+
                 table_data.append([
                     Paragraph(item.get("vaccine", "Unknown"), row_cell_style),
                     Paragraph(item.get("dose", "N/A"), row_cell_style),
                     Paragraph(item.get("date", "N/A"), row_cell_style),
                     Paragraph(date_range or "-", row_cell_style),
-                    Paragraph(item.get("notes", "") or "-", row_cell_style)
+                    Paragraph(warning_text or "-", warning_style)
                 ])
 
             # Adjusted column widths for better text distribution
-            vaccine_table = Table(table_data, colWidths=[130, 80, 70, 100, 100])
+            vaccine_table = Table(table_data, colWidths=[120, 70, 70, 100, 120])
 
             # Base table style (font styling handled by Paragraph objects)
             table_style = [

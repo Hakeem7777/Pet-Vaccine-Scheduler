@@ -64,9 +64,9 @@ function VaccinationList({ dogId, onUpdate, refreshKey }) {
   return (
     <div className="vaccination-list">
       <div className="vaccination-list-header">
-        <h3>Vaccination History</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
-          Add Vaccination
+        <h3>History</h3>
+        <button className="btn btn-outline btn-sm" onClick={() => setShowAddModal(true)}>
+          Add History +
         </button>
       </div>
 
@@ -75,38 +75,26 @@ function VaccinationList({ dogId, onUpdate, refreshKey }) {
       {vaccinations.length === 0 ? (
         <p className="no-vaccinations">No vaccination records yet.</p>
       ) : (
-        <table className="vaccination-table">
-          <thead>
-            <tr>
-              <th>Vaccine</th>
-              <th>Date</th>
-              <th>Dose</th>
-              <th>Administered By</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {vaccinations.map((vax) => (
-              <tr key={vax.id}>
-                <td>
-                  <strong>{vax.vaccine_name}</strong>
-                  {vax.notes && <p className="vax-notes">{vax.notes}</p>}
-                </td>
-                <td>{formatDate(vax.date_administered)}</td>
-                <td>{vax.dose_number || '-'}</td>
-                <td>{vax.administered_by || '-'}</td>
-                <td>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleDelete(vax.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="vaccination-cards">
+          {vaccinations.map((vax) => (
+            <div key={vax.id} className="vaccination-card">
+              <div className="vaccination-card__content">
+                <p className="vaccination-card__name">{vax.vaccine_name}</p>
+                <div className="vaccination-card__meta">
+                  <span>Date: {formatDate(vax.date_administered)}</span>
+                  <span>Dose: {vax.dose_number || '-'}</span>
+                </div>
+              </div>
+              <button
+                className="vaccination-card__delete"
+                onClick={() => handleDelete(vax.id)}
+                aria-label="Delete vaccination"
+              >
+                <img src="/Images/generic_icons/Delete-icon.svg" alt="Delete" width="20" height="20" />
+              </button>
+            </div>
+          ))}
+        </div>
       )}
 
       <Modal
