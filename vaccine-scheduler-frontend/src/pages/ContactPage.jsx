@@ -59,8 +59,8 @@ function ContactPage() {
           transition={{ duration: 0.4 }}
         >
           <div className="contact-header">
-            <Link to="/" className="contact-back-link">
-              Back to Dashboard
+            <Link to="/home" className="contact-back-link">
+              Back to Home
             </Link>
           </div>
 
@@ -72,8 +72,8 @@ function ContactPage() {
               respond as soon as possible. You should receive a confirmation email
               shortly.
             </p>
-            <Link to="/" className="btn btn-primary">
-              Return to Dashboard
+            <Link to="/home" className="btn btn-primary">
+              Return to Home
             </Link>
           </div>
         </motion.div>
@@ -91,8 +91,8 @@ function ContactPage() {
         transition={{ duration: 0.4 }}
       >
         <div className="contact-header">
-          <Link to="/" className="contact-back-link">
-            Back to Dashboard
+          <Link to="/home" className="contact-back-link">
+            Back to Home
           </Link>
           <h1>Contact Us</h1>
           <p className="contact-subtitle">
@@ -161,7 +161,7 @@ function ContactPage() {
           </div>
 
           <div className="form-actions">
-            <Link to="/" className="btn btn-outline">
+            <Link to="/home" className="btn btn-outline">
               Cancel
             </Link>
             <button type="submit" className="btn btn-primary" disabled={isLoading}>

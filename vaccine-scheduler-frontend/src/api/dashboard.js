@@ -14,3 +14,8 @@ export async function updateReminderPreferences(data) {
   const response = await client.put('/dashboard/reminders/', data);
   return response.data;
 }
+
+export async function captureLeadEmail(email, source = 'guest_schedule') {
+  const response = await client.post('/leads/capture/', { email, source });
+  return response.data;
+}

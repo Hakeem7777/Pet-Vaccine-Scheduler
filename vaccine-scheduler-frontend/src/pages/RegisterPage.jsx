@@ -7,7 +7,7 @@ function RegisterPage() {
   const navigate = useNavigate();
 
   function handleSuccess() {
-    navigate('/');
+    navigate('/home');
   }
 
   return (

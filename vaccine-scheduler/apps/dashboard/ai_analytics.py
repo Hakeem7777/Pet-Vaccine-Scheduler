@@ -1,5 +1,5 @@
 """
-AI Analytics engine for admin panel — LangChain ReAct Agent approach.
+AI Analytics engine for admin panel - LangChain ReAct Agent approach.
 
 Uses GPT-4o-mini with a compact prompt for cost-efficient analytics.
 Simple single-number questions bypass the agent entirely (single LLM call).
@@ -161,7 +161,7 @@ def _validate_field_access(field_ref: str, model_name: str, filter_value=None, e
 
         # Annotation aliases are valid at the first position only
         if i == 0 and extra_allowed and part in extra_allowed:
-            # Annotation alias — skip model field check, no further traversal
+            # Annotation alias - skip model field check, no further traversal
             if len(parts) > 1 and parts[1] not in _DJANGO_LOOKUPS:
                 raise ValueError(f"Cannot traverse annotation alias '{part}'")
             i += 1
@@ -277,7 +277,7 @@ def _execute_query(plan: dict) -> list | dict:
     annotation_aliases.update(plan.get('trunc_annotations', {}).keys())
     annotation_aliases.update(plan.get('annotations', {}).keys())
 
-    # 1. Pre-filters (validated — no annotation aliases available yet)
+    # 1. Pre-filters (validated - no annotation aliases available yet)
     filters = plan.get('filters', {})
     if filters:
         _validate_filters(filters, model_name)
@@ -378,7 +378,7 @@ def run_database_query(query_plan_json: str) -> str:
     try:
         plan = json.loads(query_plan_json)
     except json.JSONDecodeError as e:
-        return f"ERROR: Invalid JSON — {e}"
+        return f"ERROR: Invalid JSON - {e}"
 
     try:
         result = _execute_query(plan)
@@ -424,7 +424,7 @@ AGENT_TOOLS = [run_database_query, get_model_fields]
 
 AGENT_SYSTEM_PROMPT = """You are a DB analytics assistant for a dog vaccination app. Query the database and return results with visualization config.
 
-CRITICAL: You MUST finish within 3-4 tool calls. After gathering enough data, STOP calling tools and output your final JSON answer immediately. Do NOT keep querying — use what you have.
+CRITICAL: You MUST finish within 3-4 tool calls. After gathering enough data, STOP calling tools and output your final JSON answer immediately. Do NOT keep querying - use what you have.
 
 ## Schema
 - User: email, username, first_name, last_name, clinic_name, phone, is_staff, is_active, date_joined | rev: dogs, token_usages
@@ -445,7 +445,7 @@ CRITICAL: You MUST finish within 3-4 tool calls. After gathering enough data, ST
 6. MAX 4 tool calls total. After that you MUST output the final JSON answer with whatever data you have.
 
 ## Final Answer
-When done (or after 4 tool calls), output ONLY this JSON block — no extra text, no more tool calls:
+When done (or after 4 tool calls), output ONLY this JSON block - no extra text, no more tool calls:
 ```json
 {"summary":"answer with numbers","visualization":"pie|bar|line|area|table|number","chart_config":{"title":"...","x_key":"...","y_key":"..."}}
 ```

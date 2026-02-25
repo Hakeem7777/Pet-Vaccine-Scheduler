@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import './FAQPage.css';
 
@@ -347,11 +347,9 @@ function FAQPage() {
 
   return (
     <div className="app-layout">
+      <Header />
       <div className="faq-page">
         <div className="faq-header">
-          <Link to="/" className="faq-back-link">
-            Back to Dashboard
-          </Link>
           <h1>Frequently Asked Questions</h1>
           <p className="faq-subtitle">
             Learn about dog vaccinations, schedules, and safety information.

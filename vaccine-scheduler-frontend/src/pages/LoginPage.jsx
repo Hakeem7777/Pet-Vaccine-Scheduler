@@ -7,7 +7,7 @@ function LoginPage() {
   const navigate = useNavigate();
 
   function handleSuccess(userData) {
-    navigate(userData?.is_staff ? '/admin-panel' : '/');
+    navigate(userData?.is_staff ? '/admin-panel' : '/home');
   }
 
   return (

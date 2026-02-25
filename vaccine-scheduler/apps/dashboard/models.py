@@ -27,6 +27,20 @@ class ContactSubmission(models.Model):
         return f"{self.name} - {self.subject}"
 
 
+class LeadCapture(models.Model):
+    """Captures guest user emails for lead generation."""
+    email = models.EmailField()
+    source = models.CharField(max_length=50, default='guest_schedule')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'lead_captures'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.email} ({self.source})"
+
+
 class ReminderPreference(models.Model):
     """Per-user vaccination reminder preferences. One record per user, applies to all their dogs."""
     user = models.OneToOneField(

@@ -13,7 +13,7 @@ function TermsPage() {
         transition={{ duration: 0.3 }}
       >
         <div className="legal-content">
-          <Link to="/" className="legal-back-link">
+          <Link to="/home" className="legal-back-link">
             Back to Home
           </Link>
 

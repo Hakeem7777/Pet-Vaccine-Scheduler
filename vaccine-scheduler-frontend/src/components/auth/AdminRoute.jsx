@@ -14,7 +14,7 @@ function AdminRoute() {
   }
 
   if (!isAuthenticated || !isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <Outlet />;

@@ -5,11 +5,13 @@ import { calculateGuestSchedule } from '../../utils/guestScheduler';
 import NoncoreSelector from './NoncoreSelector';
 import GuestScheduleCategory from './GuestScheduleCategory';
 import ExportDropdown from '../export/ExportDropdown';
+import EmailCaptureGate from './EmailCaptureGate';
 
 function GuestScheduleView({ dog, onVaccinationAdded }) {
-  const { vaccinations } = useGuestStore();
+  const { vaccinations, capturedEmail } = useGuestStore();
   const [selectedNoncore, setSelectedNoncore] = useState([]);
   const [hideContraindicated, setHideContraindicated] = useState(false);
+  const [emailUnlocked, setEmailUnlocked] = useState(!!capturedEmail);
 
   // Auto-select lifestyle vaccines based on dog's environment
   useEffect(() => {
@@ -67,6 +69,18 @@ function GuestScheduleView({ dog, onVaccinationAdded }) {
     filteredSchedule.future.length === 0;
 
   const hasVaccines = filteredSchedule && !hasNoVaccines;
+
+  // Show email gate for guest users who haven't provided email yet
+  if (!emailUnlocked) {
+    return (
+      <div className="schedule-view">
+        <div className="schedule-view__header">
+          <h3>Vaccination Schedule</h3>
+        </div>
+        <EmailCaptureGate onUnlock={() => setEmailUnlocked(true)} />
+      </div>
+    );
+  }
 
   return (
     <div className="schedule-view">

@@ -8,7 +8,7 @@ import useTourStore from '../../store/useTourStore';
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, isAuthenticated, isAdmin, isGuestMode, exitGuestMode } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin, isGuestMode, exitGuestMode, isPaid, subscriptionPlan } = useAuth();
   const { guestDog, clearGuestData } = useGuestStore();
   const dogs = useDogStore((state) => state.dogs);
   const { startTour, isRunning } = useTourStore();
@@ -28,7 +28,7 @@ function Header() {
     if (window.confirm('This will clear your guest data. Are you sure?')) {
       clearGuestData();
       exitGuestMode();
-      navigate('/');
+      navigate('/home');
     }
   }
 
@@ -40,7 +40,7 @@ function Header() {
       transition={{ duration: 0.5 }}
     >
       <div className="header-brand">
-        <Link to={isAdmin ? '/admin-panel' : '/'} className="header-brand-link">
+        <Link to={isAdmin ? '/admin-panel' : '/home'} className="header-brand-link">
           <img
             src="/logoBanner.png"
             alt="Pet Vaccine Planner"
@@ -74,6 +74,11 @@ function Header() {
             Admin Panel
           </Link>
         )}
+        {(!isAuthenticated || !isPaid) && !isAdmin && (
+          <Link to="/pricing" className="header-nav-link">
+            Pricing
+          </Link>
+        )}
         <Link to="/faq" className="header-nav-link" data-tour="faq-link">
           FAQs
         </Link>
@@ -84,6 +89,11 @@ function Header() {
             <span className="user-name">
               {user.first_name || user.username}
               {user.clinic_name && ` - ${user.clinic_name}`}
+              {isPaid && (
+                <span className={`plan-badge plan-badge--${subscriptionPlan}`}>
+                  {subscriptionPlan === 'plan_unlock' ? 'Unlocked' : 'Pro'}
+                </span>
+              )}
             </span>
             <button onClick={logout} className="btn btn-outline">
               Logout
@@ -92,7 +102,7 @@ function Header() {
         ) : isGuestMode && guestDog ? (
           <>
             <span className="user-name guest-label">Guest Mode</span>
-            <Link to="/register" className="btn header-cta">
+            <Link to="/signup" className="btn header-cta">
               Get Started
               <img src="/Images/dog_icon.svg" alt="" width="16" height="16" />
             </Link>
@@ -101,7 +111,7 @@ function Header() {
             </button>
           </>
         ) : (
-          <Link to="/register" className="btn header-cta">
+          <Link to="/signup" className="btn header-cta">
             Get Started
             <img src="/Images/dog_icon.svg" alt="" width="16" height="16" />
           </Link>

@@ -80,7 +80,7 @@ function LoginForm({ onSuccess }) {
       </button>
 
       <p className="auth-link">
-        Don't have an account? <Link to="/register">Sign up</Link>
+        Don't have an account? <Link to="/signup">Sign up</Link>
       </p>
 
       <div className="auth-divider">
@@ -88,7 +88,7 @@ function LoginForm({ onSuccess }) {
       </div>
 
       <p className="auth-link auth-link-guest">
-        <Link to="/">Try it as Guest</Link> without an account
+        <Link to="/home">Try it as Guest</Link> without an account
       </p>
     </form>
   );

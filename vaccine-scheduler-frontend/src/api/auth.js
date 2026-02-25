@@ -21,7 +21,7 @@ export async function resendOTP(email) {
 }
 
 export async function refreshToken() {
-  // Cookie is sent automatically — no body needed
+  // Cookie is sent automatically - no body needed
   const response = await client.post('/auth/refresh/');
   return response.data;
 }
@@ -47,7 +47,7 @@ export async function changePassword(data) {
 }
 
 export async function logout() {
-  // Cookie is sent automatically — no body needed
+  // Cookie is sent automatically - no body needed
   const response = await client.post('/auth/logout/');
   return response.data;
 }

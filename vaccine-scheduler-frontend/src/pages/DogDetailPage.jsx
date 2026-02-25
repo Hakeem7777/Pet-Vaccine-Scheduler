@@ -109,11 +109,11 @@ function DogDetailPage() {
 
     if (isGuestDog) {
       deleteGuestDog();
-      navigate('/');
+      navigate('/home');
     } else {
       try {
         await deleteDog(dogId);
-        navigate('/');
+        navigate('/home');
       } catch (err) {
         setError('Failed to delete dog.');
       }
@@ -142,7 +142,7 @@ function DogDetailPage() {
   if (error || !dog) {
     return (
       <PageTransition className="dog-detail-page">
-        <button className="btn btn-outline" onClick={() => navigate('/')}>
+        <button className="btn btn-outline" onClick={() => navigate('/home')}>
           &larr; Back to Dashboard
         </button>
         <div className="error-message">{error || 'Dog not found'}</div>
@@ -156,14 +156,14 @@ function DogDetailPage() {
     <PageTransition className="dog-detail-page">
       {/* Breadcrumb */}
       <div className="dog-detail-breadcrumb">
-        <Link to="/" className="breadcrumb-link">My Dogs</Link>
+        <Link to="/home" className="breadcrumb-link">My Dogs</Link>
         <span className="breadcrumb-separator">/</span>
         <span className="breadcrumb-current">{dog.name}</span>
       </div>
 
       {/* Top bar: Back + Actions */}
       <div className="dog-detail-topbar">
-        <button className="btn btn-outline btn-pill back-btn" onClick={() => navigate('/')}>
+        <button className="btn btn-outline btn-pill back-btn" onClick={() => navigate('/home')}>
           &larr; Back
         </button>
         <div className="dog-detail-topbar-actions">
@@ -186,7 +186,7 @@ function DogDetailPage() {
           <p>
             <strong>Guest Mode:</strong> Your schedule is saved locally. Sign up to save your data permanently and access all features.
           </p>
-          <button className="btn btn-primary btn-sm" onClick={() => navigate('/register')}>
+          <button className="btn btn-primary btn-sm" onClick={() => navigate('/signup')}>
             Sign Up Free
           </button>
         </div>

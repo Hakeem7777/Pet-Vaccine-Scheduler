@@ -85,7 +85,7 @@ def _clear_auth_cookies(response):
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
     """
-    User registration endpoint — sends OTP for email verification.
+    User registration endpoint - sends OTP for email verification.
     The actual user account is created only after OTP verification.
 
     POST /api/auth/register/
@@ -177,7 +177,7 @@ class VerifyOTPView(APIView):
             log_audit(request, 'otp_failed', details={'email': email})
             return Response(generic_error, status=status.HTTP_400_BAD_REQUEST)
 
-        # OTP valid — reset attempts and create user
+        # OTP valid - reset attempts and create user
         pending.reset_otp_attempts()
 
         # Create the actual user with the pre-hashed password.

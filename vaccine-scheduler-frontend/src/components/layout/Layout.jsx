@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Header from './Header';
 import Footer from './Footer';
 import ChatBubble from '../chat/ChatBubble';
@@ -6,6 +7,8 @@ import ChatWindow from '../chat/ChatWindow';
 import GuidedTour from '../tour/GuidedTour';
 
 function Layout() {
+  const { hasAiChat } = useAuth();
+
   return (
     <div className="app-layout">
       <Header />
@@ -13,8 +16,12 @@ function Layout() {
         <Outlet />
       </main>
       <Footer />
-      <ChatBubble />
-      <ChatWindow />
+      {hasAiChat && (
+        <>
+          <ChatBubble />
+          <ChatWindow />
+        </>
+      )}
       <GuidedTour />
     </div>
   );

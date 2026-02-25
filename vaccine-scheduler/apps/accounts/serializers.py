@@ -57,18 +57,45 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+class SubscriptionInlineSerializer(serializers.Serializer):
+    """Inline serializer for subscription data in user profile."""
+    plan = serializers.CharField()
+    billing_cycle = serializers.CharField()
+    status = serializers.CharField()
+    is_active = serializers.BooleanField()
+    is_paid = serializers.BooleanField()
+    is_pro = serializers.BooleanField()
+    can_export = serializers.BooleanField()
+    can_use_reminders = serializers.BooleanField()
+    can_use_multi_pet = serializers.BooleanField()
+    dog_limit = serializers.IntegerField(allow_null=True)
+    has_ai_chat = serializers.BooleanField()
+    current_period_start = serializers.DateTimeField()
+    current_period_end = serializers.DateTimeField(allow_null=True)
+    cancelled_at = serializers.DateTimeField(allow_null=True)
+
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for user profile display and updates.
     """
+    subscription = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
             'clinic_name', 'phone', 'is_staff', 'date_joined', 'created_at', 'updated_at',
-            'has_seen_dashboard_tour', 'has_seen_schedule_tour',
+            'has_seen_dashboard_tour', 'has_seen_schedule_tour', 'subscription',
         ]
-        read_only_fields = ['id', 'date_joined', 'created_at', 'updated_at', 'is_staff']
+        read_only_fields = ['id', 'date_joined', 'created_at', 'updated_at', 'is_staff', 'subscription']
+
+    def get_subscription(self, obj):
+        try:
+            sub = obj.subscription
+            return SubscriptionInlineSerializer(sub).data
+        except Exception:
+            return None
 
     def validate_email(self, value):
         user = self.instance
@@ -140,7 +167,7 @@ class PendingRegistrationSerializer(serializers.Serializer):
         return attrs
 
     def validate_email(self, value: str) -> str:
-        # Don't reveal whether the email exists — the view's update_or_create
+        # Don't reveal whether the email exists - the view's update_or_create
         # handles duplicates, and OTP verification uses generic errors.
         return value
 

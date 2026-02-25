@@ -15,7 +15,7 @@ from rest_framework import serializers as drf_serializers, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import DestroyAPIView, ListAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -30,7 +30,7 @@ from .filters import (
     AdminUserFilter,
     AdminVaccinationFilter,
 )
-from .models import ContactSubmission, ReminderPreference, TokenUsage
+from .models import ContactSubmission, LeadCapture, ReminderPreference, TokenUsage
 from .permissions import IsAdminUser
 from .serializers import (
     AdminDogSerializer,
@@ -84,6 +84,22 @@ class ReminderPreferenceView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class LeadCaptureView(APIView):
+    """Capture guest user email for lead generation. No auth required."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        source = request.data.get('source', 'guest_schedule')
+        if not email or '@' not in email:
+            return Response(
+                {'error': 'A valid email is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        LeadCapture.objects.create(email=email, source=source)
+        return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
 
 
 # ── Admin Views ───────────────────────────────────────────────────

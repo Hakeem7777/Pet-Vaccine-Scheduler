@@ -37,6 +37,10 @@ const useGuestStore = create(
       guestDog: null,
       vaccinations: [],
       hasUsedGuestMode: false,
+      capturedEmail: null,
+
+      // Set captured email (for lead gen gate)
+      setCapturedEmail: (email) => set({ capturedEmail: email }),
 
       // Check if guest has a dog
       hasGuestDog: () => !!get().guestDog,
@@ -134,6 +138,7 @@ const useGuestStore = create(
         guestDog: state.guestDog,
         vaccinations: state.vaccinations,
         hasUsedGuestMode: state.hasUsedGuestMode,
+        capturedEmail: state.capturedEmail,
       }),
     }
   )

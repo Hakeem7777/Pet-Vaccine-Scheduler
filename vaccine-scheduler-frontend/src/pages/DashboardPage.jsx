@@ -11,10 +11,11 @@ import DocumentUploadModal from '../components/dogs/DocumentUploadModal';
 import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageTransition from '../components/common/PageTransition';
+import UpgradePrompt from '../components/subscription/UpgradePrompt';
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin, enterGuestMode } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading: isAuthLoading, enterGuestMode, hasActiveSubscription, dogLimit } = useAuth();
   const { setAllDogsContext } = useChat();
   const { dogs, isLoading, error, fetchDogs, addDog, clearError } = useDogStore();
   const { guestDog, addGuestDog } = useGuestStore();
@@ -23,6 +24,7 @@ function DashboardPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch dogs only if authenticated
@@ -108,6 +110,11 @@ function DashboardPage() {
       setShowSignupPrompt(true);
       return;
     }
+    // If authenticated, check dog limit
+    if (isAuthenticated && dogLimit !== null && dogs.length >= dogLimit) {
+      setShowUpgradePrompt(true);
+      return;
+    }
     // Pause tour if running while opening modal
     if (isRunning) {
       pauseTour();
@@ -135,6 +142,15 @@ function DashboardPage() {
       return;
     }
     setShowUploadModal(true);
+  }
+
+  // Show spinner while auth is still resolving to prevent flash of guest UI
+  if (isAuthLoading) {
+    return (
+      <div className="page-loading">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   // Admin users should only see the admin dashboard
@@ -222,7 +238,7 @@ function DashboardPage() {
           <p>
             <strong>You're in guest mode.</strong> Sign up to save your data, add more dogs, and access all features.
           </p>
-          <button className="btn btn-primary btn-sm" onClick={() => navigate('/register')}>
+          <button className="btn btn-primary btn-sm" onClick={() => navigate('/signup')}>
             Sign Up Free
           </button>
         </div>
@@ -268,7 +284,7 @@ function DashboardPage() {
         </Modal>
       )}
 
-      {/* Signup Prompt Modal */}
+      {/* Signup Prompt Modal (for guests) */}
       <Modal
         isOpen={showSignupPrompt}
         onClose={() => setShowSignupPrompt(false)}
@@ -295,7 +311,7 @@ function DashboardPage() {
             </button>
             <button
               className="btn btn-primary"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/signup')}
             >
               Sign Up Free
             </button>
@@ -310,6 +326,19 @@ function DashboardPage() {
             </button>
           </p>
         </div>
+      </Modal>
+
+      {/* Upgrade Prompt Modal (for authenticated users hitting limits) */}
+      <Modal
+        isOpen={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        title="Upgrade Required"
+      >
+        <UpgradePrompt
+          feature="dogs"
+          currentLimit={dogLimit}
+          onClose={() => setShowUpgradePrompt(false)}
+        />
       </Modal>
     </PageTransition>
   );

@@ -16,19 +16,19 @@ export function AuthProvider({ children }) {
 
   async function checkAuth() {
     try {
-      // Cookie is sent automatically — if valid, we get the profile
+      // Cookie is sent automatically - if valid, we get the profile
       const userData = await authApi.getProfile();
       setUser(userData);
       setIsGuestMode(false);
     } catch (error) {
-      // Not authenticated — that's fine
+      // Not authenticated - that's fine
     }
     setIsLoading(false);
   }
 
   async function login(email, password) {
     const data = await authApi.login(email, password);
-    // Server sets httpOnly cookies — user data is in the response body
+    // Server sets httpOnly cookies - user data is in the response body
     setUser(data.user);
     setIsGuestMode(false);
     return data.user;
@@ -36,13 +36,13 @@ export function AuthProvider({ children }) {
 
   async function register(formData) {
     const data = await authApi.register(formData);
-    // Registration sends OTP — no tokens/cookies yet
+    // Registration sends OTP - no tokens/cookies yet
     return data;
   }
 
   async function verifyOTP(email, otp) {
     const data = await authApi.verifyOTP(email, otp);
-    // Server sets httpOnly cookies — user data is in the response body
+    // Server sets httpOnly cookies - user data is in the response body
     if (data.user) {
       setUser(data.user);
       setIsGuestMode(false);
@@ -86,6 +86,19 @@ export function AuthProvider({ children }) {
     setIsGuestMode(false);
   }
 
+  // Subscription helpers derived from user data
+  const subscription = user?.subscription ?? null;
+  const isPaid = subscription?.is_paid ?? false;
+  const isPro = subscription?.is_pro ?? false;
+  const subscriptionPlan = isPaid ? subscription.plan : null; // 'plan_unlock' or 'pro'
+  const canExport = subscription?.can_export ?? false;
+  const canUseReminders = subscription?.can_use_reminders ?? false;
+  const hasAiChat = subscription?.has_ai_chat ?? false;
+  const dogLimit = isPaid ? subscription.dog_limit : 1; // null = unlimited for paid
+
+  // Keep hasActiveSubscription as alias for isPaid (backward compat with Layout/Header)
+  const hasActiveSubscription = isPaid;
+
   const value = {
     user,
     isLoading,
@@ -94,6 +107,17 @@ export function AuthProvider({ children }) {
     guestDog,
     hasUsedGuestMode,
     isAdmin: user?.is_staff ?? false,
+    // Subscription
+    subscription,
+    isPaid,
+    isPro,
+    subscriptionPlan,
+    canExport,
+    canUseReminders,
+    hasAiChat,
+    hasActiveSubscription,
+    dogLimit,
+    // Methods
     login,
     register,
     verifyOTP,

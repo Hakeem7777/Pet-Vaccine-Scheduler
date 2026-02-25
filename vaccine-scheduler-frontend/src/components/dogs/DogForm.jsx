@@ -27,7 +27,7 @@ const HEALTH_SCREENING_QUESTIONS = [
       { value: 'yes', label: 'Yes' },
       { value: 'unsure', label: 'Not sure' },
     ],
-    tooltip: 'Dogs with previous vaccine reactions are at higher risk for future reactions. All vaccines in the schedule will be flagged — including DHPP, Rabies, Leptospirosis, Bordetella, Canine Influenza, and Lyme. Your vet may recommend pre-treatment with antihistamines, titer testing instead of revaccination, or adjusted protocols.',
+    tooltip: 'Dogs with previous vaccine reactions are at higher risk for future reactions. All vaccines in the schedule will be flagged - including DHPP, Rabies, Leptospirosis, Bordetella, Canine Influenza, and Lyme. Your vet may recommend pre-treatment with antihistamines, titer testing instead of revaccination, or adjusted protocols.',
     source: 'AAHA Canine Vaccination Guidelines, 2024',
   },
   {
@@ -60,7 +60,7 @@ const HEALTH_SCREENING_QUESTIONS = [
       { value: 'yes', label: 'Yes' },
       { value: 'unsure', label: 'Not sure' },
     ],
-    tooltip: 'Immune-mediated diseases (e.g., IMHA, ITP, autoimmune skin conditions) can be triggered or worsened by vaccination. All vaccines will be flagged — DHPP and Bordetella (Intranasal) carry extra risk as modified-live vaccines. Titer testing is recommended as an alternative to revaccination, especially for DHPP and Rabies.',
+    tooltip: 'Immune-mediated diseases (e.g., IMHA, ITP, autoimmune skin conditions) can be triggered or worsened by vaccination. All vaccines will be flagged - DHPP and Bordetella (Intranasal) carry extra risk as modified-live vaccines. Titer testing is recommended as an alternative to revaccination, especially for DHPP and Rabies.',
     source: 'AAHA 2024; WSAVA Vaccination Guidelines, 2024',
   },
   {
@@ -71,7 +71,7 @@ const HEALTH_SCREENING_QUESTIONS = [
       { value: 'yes', label: 'Yes' },
       { value: 'unsure', label: 'Not sure' },
     ],
-    tooltip: 'Modified-live vaccines can cause disease in immunosuppressed patients. DHPP and Bordetella (Intranasal) will be marked as CONTRAINDICATED. Killed vaccines — Rabies, Leptospirosis, Canine Influenza, Lyme, and Bordetella (Injectable) — may be ineffective and require veterinary consultation. Vaccination should generally be delayed until at least 2 weeks after stopping immunosuppressive therapy.',
+    tooltip: 'Modified-live vaccines can cause disease in immunosuppressed patients. DHPP and Bordetella (Intranasal) will be marked as CONTRAINDICATED. Killed vaccines - Rabies, Leptospirosis, Canine Influenza, Lyme, and Bordetella (Injectable) - may be ineffective and require veterinary consultation. Vaccination should generally be delayed until at least 2 weeks after stopping immunosuppressive therapy.',
     source: 'WSAVA Vaccination Guidelines, 2024',
   },
   {
@@ -82,7 +82,7 @@ const HEALTH_SCREENING_QUESTIONS = [
       { value: 'yes', label: 'Yes' },
       { value: 'na', label: 'N/A' },
     ],
-    tooltip: 'Modified-live vaccines can cross the placenta and cause birth defects or fetal death. DHPP and Bordetella (Intranasal) will be marked as CONTRAINDICATED. Killed vaccines — Rabies, Leptospirosis, Canine Influenza, Lyme, and Bordetella (Injectable) — should only be given during pregnancy when absolutely necessary. Ideally, all vaccinations should be completed before breeding.',
+    tooltip: 'Modified-live vaccines can cross the placenta and cause birth defects or fetal death. DHPP and Bordetella (Intranasal) will be marked as CONTRAINDICATED. Killed vaccines - Rabies, Leptospirosis, Canine Influenza, Lyme, and Bordetella (Injectable) - should only be given during pregnancy when absolutely necessary. Ideally, all vaccinations should be completed before breeding.',
     source: 'WSAVA 2024; Veterinary Information Network (VIN)',
   },
 ];

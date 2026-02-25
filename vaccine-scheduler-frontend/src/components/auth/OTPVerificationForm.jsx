@@ -115,7 +115,7 @@ function OTPVerificationForm({ email, onSuccess }) {
       </p>
 
       <p className="auth-link">
-        <Link to="/register">Back to registration</Link>
+        <Link to="/signup">Back to registration</Link>
       </p>
     </form>
   );

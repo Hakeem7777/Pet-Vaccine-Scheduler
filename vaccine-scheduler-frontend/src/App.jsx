@@ -1,5 +1,6 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
@@ -13,6 +14,7 @@ import DashboardPage from './pages/DashboardPage';
 import DogDetailPage from './pages/DogDetailPage';
 import MyDashboardPage from './pages/MyDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import PricingPage from './pages/PricingPage';
 import FAQPage from './pages/FAQPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -21,17 +23,28 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+const paypalOptions = {
+  'client-id': import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
+  vault: true,
+  intent: 'subscription',
+};
+
 function App() {
   const location = useLocation();
 
   return (
     <ErrorBoundary>
+    <PayPalScriptProvider options={paypalOptions}>
     <AuthProvider>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
+          {/* Redirect bare "/" to "/home" */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
+
           {/* Auth routes */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/signup" element={<RegisterPage />} />
+          <Route path="/register" element={<Navigate to="/signup" replace />} />
           <Route path="/verify-otp" element={<VerifyOTPPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -54,8 +67,11 @@ function App() {
               </ChatProvider>
             }
           >
-            {/* Dashboard is accessible to everyone (guest + authenticated) */}
-            <Route path="/" element={<DashboardPage />} />
+            {/* Home is accessible to everyone (guest + authenticated) */}
+            <Route path="/home" element={<DashboardPage />} />
+
+            {/* Pricing page - public, with header/footer */}
+            <Route path="/pricing" element={<PricingPage />} />
 
             {/* Personal dashboard - requires authentication */}
             <Route element={<ProtectedRoute />}>
@@ -74,6 +90,7 @@ function App() {
         </Routes>
       </AnimatePresence>
     </AuthProvider>
+    </PayPalScriptProvider>
     </ErrorBoundary>
   );
 }

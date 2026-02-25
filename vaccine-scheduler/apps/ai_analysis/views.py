@@ -343,6 +343,7 @@ class DogAIAnalysisView(APIView):
 class AIChatView(APIView):
     """
     Conversational chat endpoint with optional single or multi-dog context.
+    Requires a paid subscription (Plan Unlock or Pro).
 
     POST /api/ai/chat/
     """
@@ -351,6 +352,22 @@ class AIChatView(APIView):
 
     # Maximum dogs to include in context to avoid token limits
     MAX_DOGS_IN_CONTEXT = 10
+
+    def _check_subscription(self, user):
+        """Check if user has a paid plan with AI chat access. Returns (allowed, error_response)."""
+        try:
+            sub = user.subscription
+            if not sub.has_ai_chat:
+                return False, Response(
+                    {'error': 'A paid plan is required to use the AI chatbot.', 'upgrade_required': True},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            return True, None
+        except Exception:
+            return False, Response(
+                {'error': 'A paid plan is required to use the AI chatbot.', 'upgrade_required': True},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
     def post(self, request):
         """
@@ -374,6 +391,11 @@ class AIChatView(APIView):
             "dog_context": {...}  // if dog_id or dog_ids provided
         }
         """
+        # Check subscription before processing
+        allowed, error_response = self._check_subscription(request.user)
+        if not allowed:
+            return error_response
+
         serializer = ChatRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

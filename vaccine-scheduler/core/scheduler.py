@@ -81,7 +81,7 @@ class RuleBasedScheduler:
         contraindicated = False
         is_mlv = vaccine.get('vaccine_type') == 'mlv'
 
-        # Q5: Immunosuppressive meds (strongest — check first)
+        # Q5: Immunosuppressive meds (strongest - check first)
         if health_context.get('immunosuppressive_meds') == 'yes':
             if is_mlv:
                 contraindicated = True
@@ -102,7 +102,7 @@ class RuleBasedScheduler:
                 contraindicated = True
                 warnings.append(
                     "CONTRAINDICATED: Modified-live vaccines are contraindicated "
-                    "during pregnancy — risk of fetal harm. "
+                    "during pregnancy - risk of fetal harm. "
                     "(WSAVA 2024 Guidelines; Veterinary Information Network)"
                 )
             else:
@@ -115,14 +115,14 @@ class RuleBasedScheduler:
         if health_context.get('immune_condition') == 'yes':
             warnings.append(
                 "WARNING: Immune-mediated condition detected. Revaccination not "
-                "recommended — use titer testing to assess immunity. "
+                "recommended - use titer testing to assess immunity. "
                 "(AAHA 2024 Guidelines; WSAVA 2024 Guidelines)"
             )
 
         # Q1: Prior vaccine reaction
         if health_context.get('vaccine_reaction') == 'yes':
             warnings.append(
-                "History of vaccine reaction — consult vet before administering. "
+                "History of vaccine reaction - consult vet before administering. "
                 "Titer testing recommended for core vaccines. "
                 "(AAHA 2024 Guidelines)"
             )
@@ -130,13 +130,13 @@ class RuleBasedScheduler:
         # Q2 + Q3: General advisory
         if health_context.get('prescription_meds') == 'yes':
             warnings.append(
-                "Note: Currently on prescription medications — consult vet "
+                "Note: Currently on prescription medications - consult vet "
                 "regarding vaccine timing."
             )
 
         if health_context.get('chronic_condition') == 'yes':
             warnings.append(
-                "Note: Diagnosed with a long-term medical condition — consult vet "
+                "Note: Diagnosed with a long-term medical condition - consult vet "
                 "regarding vaccine safety."
             )
 

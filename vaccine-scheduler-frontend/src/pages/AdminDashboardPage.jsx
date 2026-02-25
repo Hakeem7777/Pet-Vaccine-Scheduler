@@ -99,8 +99,9 @@ function AdminDashboardPage() {
   const [replySending, setReplySending] = useState(false);
   const [replyStatus, setReplyStatus] = useState(null);
 
-  // Users tab kebab menu state
+  // Kebab menu state
   const [openKebabUserId, setOpenKebabUserId] = useState(null);
+  const [openKebabDogId, setOpenKebabDogId] = useState(null);
   const kebabMenuRef = useRef(null);
 
   // AI Analytics state
@@ -124,6 +125,7 @@ function AdminDashboardPage() {
     function handleClickOutside(e) {
       if (kebabMenuRef.current && !kebabMenuRef.current.contains(e.target)) {
         setOpenKebabUserId(null);
+        setOpenKebabDogId(null);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -370,40 +372,18 @@ function AdminDashboardPage() {
     }
   }
 
-  function renderPagination(data) {
+
+  function renderTabPagination(data, totalPages) {
     if (!data) return null;
     const hasNext = !!data.next;
     const hasPrev = !!data.previous;
     if (!hasNext && !hasPrev) return null;
     return (
-      <div className="admin-pagination">
-        <button className="btn btn-outline btn-sm" disabled={!hasPrev} onClick={() => handlePageChange(page - 1)}>Previous</button>
-        <span className="admin-pagination__info">Page {page}</span>
-        <button className="btn btn-outline btn-sm" disabled={!hasNext} onClick={() => handlePageChange(page + 1)}>Next</button>
-      </div>
-    );
-  }
-
-  function renderSearchBar() {
-    return (
-      <form className="admin-search-form" onSubmit={handleSearch}>
-        <input type="text" className="input admin-search-input" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <button type="submit" className="btn btn-primary btn-sm">Search</button>
-      </form>
-    );
-  }
-
-  function renderUsersPagination(data, totalPages) {
-    if (!data) return null;
-    const hasNext = !!data.next;
-    const hasPrev = !!data.previous;
-    if (!hasNext && !hasPrev) return null;
-    return (
-      <div className="admin-users-pagination">
-        <span className="admin-users-pagination__info">Page {page} of {totalPages}</span>
-        <div className="admin-users-pagination__buttons">
-          <button className="btn btn-outline btn-sm admin-users-pagination__btn" disabled={!hasPrev} onClick={() => handlePageChange(page - 1)}>Previous</button>
-          <button className="btn btn-outline btn-sm admin-users-pagination__btn" disabled={!hasNext} onClick={() => handlePageChange(page + 1)}>Next</button>
+      <div className="admin-tab-pagination">
+        <span className="admin-tab-pagination__info">Page {page} of {totalPages}</span>
+        <div className="admin-tab-pagination__buttons">
+          <button className="btn btn-outline btn-sm admin-tab-pagination__btn" disabled={!hasPrev} onClick={() => handlePageChange(page - 1)}>Previous</button>
+          <button className="btn btn-outline btn-sm admin-tab-pagination__btn" disabled={!hasNext} onClick={() => handlePageChange(page + 1)}>Next</button>
         </div>
       </div>
     );
@@ -414,17 +394,17 @@ function AdminDashboardPage() {
   function renderUsersFilterBar() {
     const f = filters.users;
     return (
-      <div className="admin-users-filter-bar">
-        <div className="admin-users-filter-group">
-          <label className="admin-users-filter-label">Search</label>
-          <div className="admin-users-search-wrapper">
-            <svg className="admin-users-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Search</label>
+          <div className="admin-tab-search-wrapper">
+            <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               type="text"
-              className="admin-users-search-input"
+              className="admin-tab-search-input"
               placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -432,28 +412,28 @@ function AdminDashboardPage() {
             />
           </div>
         </div>
-        <div className="admin-users-filter-group">
-          <label className="admin-users-filter-label">Role</label>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Role</label>
           <select className="admin-filter-select" value={f.is_staff ?? ''} onChange={(e) => handleFilterChange('users', 'is_staff', e.target.value)}>
             <option value="">All</option>
             <option value="true">Staff</option>
             <option value="false">Non-Staff</option>
           </select>
         </div>
-        <div className="admin-users-filter-group">
-          <label className="admin-users-filter-label">Status</label>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Status</label>
           <select className="admin-filter-select" value={f.is_active ?? ''} onChange={(e) => handleFilterChange('users', 'is_active', e.target.value)}>
             <option value="">All</option>
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
         </div>
-        <div className="admin-users-filter-group">
-          <label className="admin-users-filter-label">Joined After</label>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Joined After</label>
           <input type="date" className="admin-filter-input" value={f.date_joined_after || ''} onChange={(e) => handleFilterChange('users', 'date_joined_after', e.target.value)} />
         </div>
-        <div className="admin-users-filter-group">
-          <label className="admin-users-filter-label">Joined Before</label>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Joined Before</label>
           <input type="date" className="admin-filter-input" value={f.date_joined_before || ''} onChange={(e) => handleFilterChange('users', 'date_joined_before', e.target.value)} />
         </div>
         {Object.keys(f).length > 0 && (
@@ -466,9 +446,26 @@ function AdminDashboardPage() {
   function renderDogFilters() {
     const f = filters.dogs;
     return (
-      <div className="admin-filter-bar">
-        <div className="admin-filter-group">
-          <label>Sex</label>
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Search</label>
+          <div className="admin-tab-search-wrapper">
+            <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className="admin-tab-search-input"
+              placeholder="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(e); }}
+            />
+          </div>
+        </div>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Sex</label>
           <select className="admin-filter-select" value={f.sex ?? ''} onChange={(e) => handleFilterChange('dogs', 'sex', e.target.value)}>
             <option value="">All</option>
             <option value="M">Male</option>
@@ -477,12 +474,12 @@ function AdminDashboardPage() {
             <option value="FS">Female (Spayed)</option>
           </select>
         </div>
-        <div className="admin-filter-group">
-          <label>Breed</label>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Breed</label>
           <input type="text" className="admin-filter-input" placeholder="Filter by breed..." value={f.breed || ''} onChange={(e) => handleFilterChange('dogs', 'breed', e.target.value)} />
         </div>
         {Object.keys(f).length > 0 && (
-          <button className="btn btn-outline btn-sm" onClick={() => clearFilters('dogs')}>Clear</button>
+          <button className="btn btn-outline btn-sm" style={{ alignSelf: 'flex-end' }} onClick={() => clearFilters('dogs')}>Clear</button>
         )}
       </div>
     );
@@ -491,9 +488,26 @@ function AdminDashboardPage() {
   function renderVaccinationFilters() {
     const f = filters.vaccinations;
     return (
-      <div className="admin-filter-bar">
-        <div className="admin-filter-group">
-          <label>Vaccine Type</label>
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Search</label>
+          <div className="admin-tab-search-wrapper">
+            <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className="admin-tab-search-input"
+              placeholder="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(e); }}
+            />
+          </div>
+        </div>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Vaccine Type</label>
           <select className="admin-filter-select" value={f.vaccine_type ?? ''} onChange={(e) => handleFilterChange('vaccinations', 'vaccine_type', e.target.value)}>
             <option value="">All</option>
             <option value="core">Core</option>
@@ -501,16 +515,16 @@ function AdminDashboardPage() {
             <option value="noncore">Non-Core</option>
           </select>
         </div>
-        <div className="admin-filter-group">
-          <label>Date After</label>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Date After</label>
           <input type="date" className="admin-filter-input" value={f.date_after || ''} onChange={(e) => handleFilterChange('vaccinations', 'date_after', e.target.value)} />
         </div>
-        <div className="admin-filter-group">
-          <label>Date Before</label>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Date Before</label>
           <input type="date" className="admin-filter-input" value={f.date_before || ''} onChange={(e) => handleFilterChange('vaccinations', 'date_before', e.target.value)} />
         </div>
         {Object.keys(f).length > 0 && (
-          <button className="btn btn-outline btn-sm" onClick={() => clearFilters('vaccinations')}>Clear</button>
+          <button className="btn btn-outline btn-sm" style={{ alignSelf: 'flex-end' }} onClick={() => clearFilters('vaccinations')}>Clear</button>
         )}
       </div>
     );
@@ -519,9 +533,9 @@ function AdminDashboardPage() {
   function renderContactFilters() {
     const f = filters.contacts;
     return (
-      <div className="admin-filter-bar">
-        <div className="admin-filter-group">
-          <label>Status</label>
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Status</label>
           <select className="admin-filter-select" value={f.is_read ?? ''} onChange={(e) => handleFilterChange('contacts', 'is_read', e.target.value)}>
             <option value="">All</option>
             <option value="false">New</option>
@@ -529,7 +543,7 @@ function AdminDashboardPage() {
           </select>
         </div>
         {Object.keys(f).length > 0 && (
-          <button className="btn btn-outline btn-sm" onClick={() => clearFilters('contacts')}>Clear</button>
+          <button className="btn btn-outline btn-sm" style={{ alignSelf: 'flex-end' }} onClick={() => clearFilters('contacts')}>Clear</button>
         )}
       </div>
     );
@@ -659,19 +673,19 @@ function AdminDashboardPage() {
     const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
 
     return (
-      <div className="admin-users-card">
+      <div className="admin-tab-card">
         {/* Header */}
-        <div className="admin-users-card__header">
-          <div className="admin-users-card__header-left">
-            <div className="admin-users-card__title-row">
-              <h2 className="admin-users-card__title">Total Users</h2>
-              <span className="admin-users-card__count-badge">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Total Users</h2>
+              <span className="admin-tab-card__count-badge">
                 {totalCount} {totalCount === 1 ? 'User' : 'Users'}
               </span>
             </div>
-            <p className="admin-users-card__subtitle">Keep the track of all the users</p>
+            <p className="admin-tab-card__subtitle">Keep the track of all the users</p>
           </div>
-          <button className="admin-users-card__export-btn" onClick={handleExportCSV}>
+          <button className="admin-tab-card__export-btn" onClick={handleExportCSV}>
             <img src="/Images/generic_icons/export-icon.svg" alt="" />
             Export CSV
           </button>
@@ -763,7 +777,7 @@ function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-            {renderUsersPagination(users, totalPages)}
+            {renderTabPagination(users, totalPages)}
           </>
         )}
       </div>
@@ -772,10 +786,28 @@ function AdminDashboardPage() {
 
   function renderDogs() {
     const results = dogs?.results || [];
+    const totalCount = dogs?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
     return (
-      <div>
-        {renderSearchBar()}
+      <div className="admin-tab-card">
+        {/* Header */}
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Total Dogs</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Dog' : 'Dogs'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Manage all registered dogs</p>
+          </div>
+        </div>
+
+        {/* Filters */}
         {renderDogFilters()}
+
+        {/* Table */}
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -790,7 +822,7 @@ function AdminDashboardPage() {
                     <th>Owner</th>
                     <th>Vaccinations</th>
                     <SortableHeader label="Created" field="created_at" currentOrdering={ordering} onSort={handleSort} />
-                    <th>Actions</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -805,8 +837,30 @@ function AdminDashboardPage() {
                         <td>{dog.owner_email}</td>
                         <td>{dog.vaccination_count}</td>
                         <td>{new Date(dog.created_at).toLocaleDateString()}</td>
-                        <td>
-                          <button className="btn btn-sm admin-delete-btn" onClick={() => handleDeleteDog(dog.id, dog.name)}>Delete</button>
+                        <td className="admin-kebab-cell">
+                          <button
+                            className="admin-kebab-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenKebabDogId(openKebabDogId === dog.id ? null : dog.id);
+                            }}
+                            aria-label="Dog actions"
+                          >
+                            &#8942;
+                          </button>
+                          {openKebabDogId === dog.id && (
+                            <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                              <button
+                                className="admin-kebab-menu__item admin-kebab-menu__item--danger"
+                                onClick={() => {
+                                  setOpenKebabDogId(null);
+                                  handleDeleteDog(dog.id, dog.name);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -814,7 +868,7 @@ function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-            {renderPagination(dogs)}
+            {renderTabPagination(dogs, totalPages)}
           </>
         )}
       </div>
@@ -823,10 +877,28 @@ function AdminDashboardPage() {
 
   function renderVaccinations() {
     const results = vaccinations?.results || [];
+    const totalCount = vaccinations?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
     return (
-      <div>
-        {renderSearchBar()}
+      <div className="admin-tab-card">
+        {/* Header */}
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Vaccination Records</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Record' : 'Records'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Track all vaccination records</p>
+          </div>
+        </div>
+
+        {/* Filters */}
         {renderVaccinationFilters()}
+
+        {/* Table */}
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -861,7 +933,7 @@ function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-            {renderPagination(vaccinations)}
+            {renderTabPagination(vaccinations, totalPages)}
           </>
         )}
       </div>
@@ -870,9 +942,28 @@ function AdminDashboardPage() {
 
   function renderContacts() {
     const results = contacts?.results || [];
+    const totalCount = contacts?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
     return (
-      <div>
+      <div className="admin-tab-card">
+        {/* Header */}
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Contact Submissions</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Submission' : 'Submissions'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Manage contact form submissions</p>
+          </div>
+        </div>
+
+        {/* Filters */}
         {renderContactFilters()}
+
+        {/* Table */}
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -911,7 +1002,7 @@ function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-            {renderPagination(contacts)}
+            {renderTabPagination(contacts, totalPages)}
           </>
         )}
       </div>
@@ -920,9 +1011,46 @@ function AdminDashboardPage() {
 
   function renderTokenUsage() {
     const results = tokenUsage?.results || [];
+    const totalCount = tokenUsage?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
     return (
-      <div>
-        {renderSearchBar()}
+      <div className="admin-tab-card">
+        {/* Header */}
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Token Usage</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Record' : 'Records'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Monitor AI token consumption</p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="admin-tab-filter-bar">
+          <div className="admin-tab-filter-group">
+            <label className="admin-tab-filter-label">Search</label>
+            <div className="admin-tab-search-wrapper">
+              <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                className="admin-tab-search-input"
+                placeholder="Search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(e); }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -959,7 +1087,7 @@ function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-            {renderPagination(tokenUsage)}
+            {renderTabPagination(tokenUsage, totalPages)}
           </>
         )}
       </div>
@@ -1002,7 +1130,7 @@ function AdminDashboardPage() {
     setAiLoading(true);
 
     try {
-      // Build conversation history — only send the last 4 text-only pairs
+      // Build conversation history - only send the last 4 text-only pairs
       const history = [...aiMessages, userMsg]
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .slice(-8)
@@ -1041,7 +1169,7 @@ function AdminDashboardPage() {
     const { visualization, data, chartConfig = {} } = msg;
     const { x_key, y_key, title } = chartConfig;
 
-    // Number visualization — single aggregate value
+    // Number visualization - single aggregate value
     if (visualization === 'number') {
       const value = typeof data === 'object' && !Array.isArray(data)
         ? Object.values(data)[0]

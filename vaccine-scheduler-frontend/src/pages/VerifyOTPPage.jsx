@@ -9,11 +9,11 @@ function VerifyOTPPage() {
   const email = location.state?.email;
 
   if (!email) {
-    return <Navigate to="/register" replace />;
+    return <Navigate to="/signup" replace />;
   }
 
   function handleSuccess() {
-    navigate('/');
+    navigate('/home');
   }
 
   return (

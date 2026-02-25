@@ -15,7 +15,7 @@ class ErrorBoundary extends Component {
   }
 
   handleReload = () => {
-    window.location.href = '/';
+    window.location.href = '/home';
   };
 
   render() {

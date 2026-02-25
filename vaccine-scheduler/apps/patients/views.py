@@ -42,7 +42,22 @@ class DogViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        """Create a new dog and return full details."""
+        """Create a new dog and return full details. Enforces subscription dog limits."""
+        # Check dog limit based on subscription
+        current_count = Dog.objects.filter(owner=request.user).count()
+        dog_limit = self._get_dog_limit(request.user)
+
+        if dog_limit is not None and current_count >= dog_limit:
+            return Response(
+                {
+                    'error': 'Dog limit reached for your subscription plan.',
+                    'current_count': current_count,
+                    'limit': dog_limit,
+                    'upgrade_required': True,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -51,3 +66,14 @@ class DogViewSet(viewsets.ModelViewSet):
         dog = Dog.objects.get(pk=serializer.instance.pk)
         output_serializer = DogSerializer(dog)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+    def _get_dog_limit(self, user):
+        """Return dog limit based on user's subscription. None means unlimited."""
+        try:
+            sub = user.subscription
+            if sub.is_active:
+                return sub.dog_limit
+        except Exception:
+            pass
+        # No active subscription - free tier limit
+        return 1

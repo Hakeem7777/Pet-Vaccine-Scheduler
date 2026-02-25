@@ -46,7 +46,7 @@ function onRefreshFailed() {
 }
 
 // URLs that should NOT trigger token refresh on 401
-// (auth probes and auth endpoints — a 401 here is expected, not a stale session)
+// (auth probes and auth endpoints - a 401 here is expected, not a stale session)
 const SKIP_REFRESH_URLS = ['/auth/me/', '/auth/login/', '/auth/refresh/', '/auth/register/'];
 
 function shouldSkipRefresh(url) {
@@ -80,7 +80,7 @@ client.interceptors.response.use(
 
       isRefreshing = true;
       try {
-        // Cookie is sent automatically — no body needed
+        // Cookie is sent automatically - no body needed
         await axios.post(`${API_BASE_URL}/auth/refresh/`, null, {
           withCredentials: true,
         });
@@ -92,7 +92,7 @@ client.interceptors.response.use(
       } catch (refreshError) {
         isRefreshing = false;
         onRefreshFailed();
-        // Refresh failed — redirect to login only if not already there
+        // Refresh failed - redirect to login only if not already there
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }

@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDashboardStats } from '../api/dashboard';
 import * as authApi from '../api/auth';
+import * as subscriptionsApi from '../api/subscriptions';
 import ReminderSettings from '../components/dashboard/ReminderSettings';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageTransition from '../components/common/PageTransition';
 import './MyDashboardPage.css';
 
 function MyDashboardPage() {
-  const { user, isAdmin, refreshUser } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAdmin, refreshUser, subscription, isPaid, isPro, subscriptionPlan } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Subscription cancel state
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
+  const [subMsg, setSubMsg] = useState(null);
 
   // Edit mode state
   const [editing, setEditing] = useState(false);
@@ -110,7 +116,7 @@ function MyDashboardPage() {
       <div className="page-header">
         <h2>User Dashboard</h2>
         <div className="page-header-actions">
-          <Link to="/" className="btn btn-primary btn-pill">
+          <Link to="/home" className="btn btn-primary btn-pill">
             My Pets
           </Link>
         </div>
@@ -190,7 +196,7 @@ function MyDashboardPage() {
             )}
             <div className="my-dashboard__profile-grid">
               <div className="my-dashboard__profile-card">
-                <label className="my-dashboard__profile-label" htmlFor="edit-username">Field name</label>
+                <label className="my-dashboard__profile-label" htmlFor="edit-username">Username</label>
                 <input
                   id="edit-username"
                   type="text"
@@ -258,6 +264,92 @@ function MyDashboardPage() {
                 {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Subscription Management */}
+      <div className="my-dashboard__section">
+        <div className="my-dashboard__section-header">
+          <h3 className="my-dashboard__section-title">Subscription</h3>
+        </div>
+        {isPaid ? (
+          <div className="my-dashboard__subscription">
+            <div className="my-dashboard__profile-grid">
+              <div className="my-dashboard__profile-card">
+                <span className="my-dashboard__profile-label">Plan</span>
+                <span className="my-dashboard__profile-value">
+                  <span className={`plan-badge plan-badge--${subscriptionPlan}`}>
+                    {subscriptionPlan === 'plan_unlock' ? 'Plan Unlock' : 'Pro Care'}
+                  </span>
+                </span>
+              </div>
+              <div className="my-dashboard__profile-card">
+                <span className="my-dashboard__profile-label">Billing</span>
+                <span className="my-dashboard__profile-value">
+                  {subscription?.billing_cycle === 'one_time' ? 'One-time purchase' : '$29/year'}
+                </span>
+              </div>
+              {isPro && (
+                <div className="my-dashboard__profile-card">
+                  <span className="my-dashboard__profile-label">Next Renewal</span>
+                  <span className="my-dashboard__profile-value">
+                    {subscription?.current_period_end
+                      ? new Date(subscription.current_period_end).toLocaleDateString()
+                      : '-'}
+                  </span>
+                </div>
+              )}
+              <div className="my-dashboard__profile-card">
+                <span className="my-dashboard__profile-label">Features</span>
+                <span className="my-dashboard__profile-value">
+                  {isPro
+                    ? 'PDF, Calendar, Reminders, AI Chat'
+                    : 'PDF, Calendar, Email Delivery'}
+                </span>
+              </div>
+            </div>
+
+            {subMsg && (
+              <p className={`profile-msg profile-msg--${subMsg.type}`} style={{ marginTop: '1rem' }}>{subMsg.text}</p>
+            )}
+
+            <div className="my-dashboard__subscription-actions">
+              {subscriptionPlan === 'plan_unlock' && (
+                <button className="btn btn-primary btn-pill" onClick={() => navigate('/pricing')}>
+                  Upgrade to Pro
+                </button>
+              )}
+              {isPro && (
+                <button
+                  className="btn btn-outline btn-pill"
+                  onClick={async () => {
+                    if (!window.confirm('Cancel your Pro subscription? You\'ll keep Plan Unlock features (PDF, calendar, AI chat) but lose reminders and history storage.')) return;
+                    setCancellingSubscription(true);
+                    setSubMsg(null);
+                    try {
+                      await subscriptionsApi.cancelSubscription('Cancelled from dashboard');
+                      await refreshUser();
+                      setSubMsg({ type: 'success', text: 'Pro subscription cancelled. You\'ve been downgraded to Plan Unlock.' });
+                    } catch {
+                      setSubMsg({ type: 'error', text: 'Failed to cancel subscription. Please try again.' });
+                    } finally {
+                      setCancellingSubscription(false);
+                    }
+                  }}
+                  disabled={cancellingSubscription}
+                >
+                  {cancellingSubscription ? 'Cancelling...' : 'Cancel Pro'}
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="my-dashboard__subscription my-dashboard__subscription--inactive">
+            <p>You&apos;re on the free plan. Upgrade to unlock PDF downloads, calendar export, AI chatbot, and more.</p>
+            <button className="btn btn-primary btn-pill" onClick={() => navigate('/pricing')}>
+              View Plans
+            </button>
           </div>
         )}
       </div>

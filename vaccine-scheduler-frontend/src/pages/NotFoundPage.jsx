@@ -13,7 +13,7 @@ function NotFoundPage() {
             The page you're looking for doesn't exist or has been moved.
           </p>
           <Link
-            to="/"
+            to="/home"
             className="btn btn-primary"
             style={{ display: 'inline-block', textDecoration: 'none' }}
           >

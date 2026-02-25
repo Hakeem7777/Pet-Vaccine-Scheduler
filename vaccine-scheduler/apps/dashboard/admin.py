@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ContactSubmission, ReminderPreference, ReminderLog, TokenUsage
+from .models import ContactSubmission, LeadCapture, ReminderPreference, ReminderLog, TokenUsage
 
 
 @admin.register(ContactSubmission)
@@ -9,6 +9,14 @@ class ContactSubmissionAdmin(admin.ModelAdmin):
     list_filter = ['is_read', 'created_at']
     search_fields = ['name', 'email', 'subject']
     readonly_fields = ['name', 'email', 'subject', 'message', 'created_at']
+
+
+@admin.register(LeadCapture)
+class LeadCaptureAdmin(admin.ModelAdmin):
+    list_display = ['email', 'source', 'created_at']
+    list_filter = ['source', 'created_at']
+    search_fields = ['email']
+    readonly_fields = ['email', 'source', 'created_at']
 
 
 @admin.register(ReminderPreference)
