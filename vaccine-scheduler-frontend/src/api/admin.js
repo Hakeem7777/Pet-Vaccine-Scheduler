@@ -60,8 +60,8 @@ export async function replyToContact(id, replyMessage) {
   return response.data;
 }
 
-export async function getAdminGraphData() {
-  const response = await client.get('/admin-panel/graphs/');
+export async function getAdminGraphData(params = {}) {
+  const response = await client.get('/admin-panel/graphs/', { params });
   return response.data;
 }
 
@@ -70,8 +70,8 @@ export async function getAdminTokenUsage(params = {}) {
   return response.data;
 }
 
-export async function getAdminTokenUsageStats() {
-  const response = await client.get('/admin-panel/token-usage/stats/');
+export async function getAdminTokenUsageStats(params = {}) {
+  const response = await client.get('/admin-panel/token-usage/stats/', { params });
   return response.data;
 }
 
@@ -87,5 +87,23 @@ export async function sendAdminAIQuery(message, conversationHistory = [], model 
 
 export async function getAdminAIModels() {
   const response = await client.get('/admin-panel/ai-models/');
+  return response.data;
+}
+
+export async function getAdminChartData(chart, params = {}) {
+  const queryParams = { chart, ...params };
+  Object.keys(queryParams).forEach((k) => {
+    if (queryParams[k] == null) delete queryParams[k];
+  });
+  const response = await client.get('/admin-panel/graphs/', { params: queryParams });
+  return response.data;
+}
+
+export async function getAdminTokenChartData(chart, params = {}) {
+  const queryParams = { chart, ...params };
+  Object.keys(queryParams).forEach((k) => {
+    if (queryParams[k] == null) delete queryParams[k];
+  });
+  const response = await client.get('/admin-panel/token-usage/stats/', { params: queryParams });
   return response.data;
 }

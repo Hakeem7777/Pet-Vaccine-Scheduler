@@ -13,6 +13,7 @@ import {
   TokenUsageByUserChart,
   TokensByModelChart,
 } from '../components/admin/AdminCharts';
+import ChartCard from '../components/admin/ChartCard';
 import {
   ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -34,7 +35,7 @@ const TABS = [
   { key: 'ai-analytics', label: 'AI Analytics' },
 ];
 
-const AI_CHART_COLORS = ['#006D9C', '#2AB57F', '#FF9C3B', '#E53E3E', '#805AD5', '#DD6B20', '#319795', '#D53F8C'];
+const AI_CHART_COLORS = ['#006D9C', '#2AB57F', '#F4A261', '#E53E3E', '#805AD5', '#DD6B20', '#319795', '#D53F8C'];
 
 const AI_SUGGESTIONS = [
   'How many users are registered?',
@@ -44,6 +45,10 @@ const AI_SUGGESTIONS = [
   'What is the distribution of vaccine types?',
   'Which users have used the most AI tokens?',
 ];
+
+const GRAPH_CHARTS = ['user_registrations', 'vaccinations_over_time', 'vaccine_type_distribution', 'top_breeds', 'age_distribution'];
+const TOKEN_CHART_MAP = { token_over_time: 'over_time', token_per_user: 'per_user', per_model_over_time: 'per_model_over_time' };
+const PAGE_SIZE = 20;
 
 function SortableHeader({ label, field, currentOrdering, onSort }) {
   const isAsc = currentOrdering === field;
@@ -69,14 +74,11 @@ function SortableHeader({ label, field, currentOrdering, onSort }) {
 function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
-  const [graphData, setGraphData] = useState(null);
-  const [tokenStats, setTokenStats] = useState(null);
   const [users, setUsers] = useState(null);
   const [dogs, setDogs] = useState(null);
   const [vaccinations, setVaccinations] = useState(null);
   const [contacts, setContacts] = useState(null);
   const [tokenUsage, setTokenUsage] = useState(null);
-  const [modelTokenData, setModelTokenData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -88,10 +90,18 @@ function AdminDashboardPage() {
     contacts: {},
     tokens: {},
   });
+  // Per-chart data and loading state
+  const [chartData, setChartData] = useState({});
+  const [chartLoading, setChartLoading] = useState({});
+
   const [selectedContact, setSelectedContact] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
   const [replyStatus, setReplyStatus] = useState(null);
+
+  // Users tab kebab menu state
+  const [openKebabUserId, setOpenKebabUserId] = useState(null);
+  const kebabMenuRef = useRef(null);
 
   // AI Analytics state
   const [aiMessages, setAiMessages] = useState([]);
@@ -109,6 +119,77 @@ function AdminDashboardPage() {
     }).catch(() => {});
   }, []);
 
+  // Close kebab menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (kebabMenuRef.current && !kebabMenuRef.current.contains(e.target)) {
+        setOpenKebabUserId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Distribute bulk API results into per-chart state
+  function distributeChartData(graphResult, tokenResult) {
+    setChartData({
+      user_registrations: { data: graphResult.user_registrations, granularity: graphResult.user_registrations_granularity },
+      vaccinations_over_time: { data: graphResult.vaccinations_over_time, granularity: graphResult.vaccinations_granularity },
+      vaccine_type_distribution: { data: graphResult.vaccine_type_distribution },
+      top_breeds: { data: graphResult.top_breeds },
+      age_distribution: { data: graphResult.age_distribution },
+      token_over_time: { data: tokenResult.over_time, granularity: tokenResult.token_granularity },
+      token_per_user: { data: tokenResult.per_user },
+      per_model_over_time: { data: tokenResult.per_model_over_time, granularity: tokenResult.token_granularity },
+    });
+  }
+
+  // Per-chart filter change handler
+  const handleChartFilterChange = useCallback(async (chartKey, filterParams) => {
+    setChartLoading((prev) => ({ ...prev, [chartKey]: true }));
+    try {
+      const apiParams = {};
+      if (filterParams.date_from) {
+        apiParams.date_from = filterParams.date_from;
+        if (filterParams.date_to) apiParams.date_to = filterParams.date_to;
+      } else {
+        apiParams.range = filterParams.range;
+      }
+      if (filterParams.granularity && filterParams.granularity !== 'auto') {
+        apiParams.granularity = filterParams.granularity;
+      }
+
+      let result;
+      if (GRAPH_CHARTS.includes(chartKey)) {
+        result = await adminApi.getAdminChartData(chartKey, apiParams);
+        const granKey = chartKey === 'user_registrations' ? 'user_registrations_granularity'
+          : chartKey === 'vaccinations_over_time' ? 'vaccinations_granularity'
+          : null;
+        setChartData((prev) => ({
+          ...prev,
+          [chartKey]: {
+            data: result[chartKey],
+            ...(granKey ? { granularity: result[granKey] } : {}),
+          },
+        }));
+      } else if (TOKEN_CHART_MAP[chartKey]) {
+        const apiChartKey = TOKEN_CHART_MAP[chartKey];
+        result = await adminApi.getAdminTokenChartData(apiChartKey, apiParams);
+        setChartData((prev) => ({
+          ...prev,
+          [chartKey]: {
+            data: result[apiChartKey],
+            ...(result.token_granularity ? { granularity: result.token_granularity } : {}),
+          },
+        }));
+      }
+    } catch (err) {
+      console.error(`Failed to fetch ${chartKey} data:`, err);
+    } finally {
+      setChartLoading((prev) => ({ ...prev, [chartKey]: false }));
+    }
+  }, []);
+
   const fetchTabData = useCallback(async (tab, searchQuery = '', pageNum = 1, filterParams = {}, orderingParam = '') => {
     setLoading(true);
     try {
@@ -121,12 +202,11 @@ function AdminDashboardPage() {
         case 'overview': {
           const [statsData, graphResult, tokenResult] = await Promise.all([
             adminApi.getAdminStats(),
-            adminApi.getAdminGraphData(),
-            adminApi.getAdminTokenUsageStats(),
+            adminApi.getAdminGraphData({ range: '12m' }),
+            adminApi.getAdminTokenUsageStats({ range: '12m' }),
           ]);
           setStats(statsData);
-          setGraphData(graphResult);
-          setTokenStats(tokenResult);
+          distributeChartData(graphResult, tokenResult);
           break;
         }
         case 'users': {
@@ -155,8 +235,11 @@ function AdminDashboardPage() {
           break;
         }
         case 'model-tokens': {
-          const modelStats = await adminApi.getAdminTokenUsageStats();
-          setModelTokenData(modelStats.per_model_over_time || []);
+          const modelStats = await adminApi.getAdminTokenUsageStats({ range: '12m' });
+          setChartData((prev) => ({
+            ...prev,
+            per_model_over_time: { data: modelStats.per_model_over_time || [], granularity: modelStats.token_granularity || 'day' },
+          }));
           break;
         }
       }
@@ -310,38 +393,71 @@ function AdminDashboardPage() {
     );
   }
 
+  function renderUsersPagination(data, totalPages) {
+    if (!data) return null;
+    const hasNext = !!data.next;
+    const hasPrev = !!data.previous;
+    if (!hasNext && !hasPrev) return null;
+    return (
+      <div className="admin-users-pagination">
+        <span className="admin-users-pagination__info">Page {page} of {totalPages}</span>
+        <div className="admin-users-pagination__buttons">
+          <button className="btn btn-outline btn-sm admin-users-pagination__btn" disabled={!hasPrev} onClick={() => handlePageChange(page - 1)}>Previous</button>
+          <button className="btn btn-outline btn-sm admin-users-pagination__btn" disabled={!hasNext} onClick={() => handlePageChange(page + 1)}>Next</button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Filter Bars ──────────────────────────────────────────────────
 
-  function renderUserFilters() {
+  function renderUsersFilterBar() {
     const f = filters.users;
     return (
-      <div className="admin-filter-bar">
-        <div className="admin-filter-group">
-          <label>Role</label>
+      <div className="admin-users-filter-bar">
+        <div className="admin-users-filter-group">
+          <label className="admin-users-filter-label">Search</label>
+          <div className="admin-users-search-wrapper">
+            <svg className="admin-users-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className="admin-users-search-input"
+              placeholder="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(e); }}
+            />
+          </div>
+        </div>
+        <div className="admin-users-filter-group">
+          <label className="admin-users-filter-label">Role</label>
           <select className="admin-filter-select" value={f.is_staff ?? ''} onChange={(e) => handleFilterChange('users', 'is_staff', e.target.value)}>
             <option value="">All</option>
             <option value="true">Staff</option>
             <option value="false">Non-Staff</option>
           </select>
         </div>
-        <div className="admin-filter-group">
-          <label>Status</label>
+        <div className="admin-users-filter-group">
+          <label className="admin-users-filter-label">Status</label>
           <select className="admin-filter-select" value={f.is_active ?? ''} onChange={(e) => handleFilterChange('users', 'is_active', e.target.value)}>
             <option value="">All</option>
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
         </div>
-        <div className="admin-filter-group">
-          <label>Joined After</label>
+        <div className="admin-users-filter-group">
+          <label className="admin-users-filter-label">Joined After</label>
           <input type="date" className="admin-filter-input" value={f.date_joined_after || ''} onChange={(e) => handleFilterChange('users', 'date_joined_after', e.target.value)} />
         </div>
-        <div className="admin-filter-group">
-          <label>Joined Before</label>
+        <div className="admin-users-filter-group">
+          <label className="admin-users-filter-label">Joined Before</label>
           <input type="date" className="admin-filter-input" value={f.date_joined_before || ''} onChange={(e) => handleFilterChange('users', 'date_joined_before', e.target.value)} />
         </div>
         {Object.keys(f).length > 0 && (
-          <button className="btn btn-outline btn-sm" onClick={() => clearFilters('users')}>Clear</button>
+          <button className="btn btn-outline btn-sm" style={{ alignSelf: 'flex-end' }} onClick={() => clearFilters('users')}>Clear</button>
         )}
       </div>
     );
@@ -427,50 +543,82 @@ function AdminDashboardPage() {
       <div>
         <div className="admin-stats-grid">
           <div className="admin-stat-card">
+            <div className="admin-stat-card__icon">
+              <img src="/Images/generic_icons/profile-2user.svg" alt="" />
+            </div>
             <div className="admin-stat-card__number">{stats.total_users}</div>
             <div className="admin-stat-card__label">Total Users</div>
           </div>
           <div className="admin-stat-card">
+            <div className="admin-stat-card__icon">
+              <img src="/Images/generic_icons/dog-icon.svg" alt="" />
+            </div>
             <div className="admin-stat-card__number">{stats.total_dogs}</div>
             <div className="admin-stat-card__label">Total Dogs</div>
           </div>
           <div className="admin-stat-card">
+            <div className="admin-stat-card__icon">
+              <img src="/Images/generic_icons/syringe_icon.svg" alt="" />
+            </div>
             <div className="admin-stat-card__number">{stats.total_vaccinations}</div>
             <div className="admin-stat-card__label">Total Vaccinations</div>
           </div>
           <div className="admin-stat-card">
+            <div className="admin-stat-card__icon">
+              <img src="/Images/generic_icons/note-icon.svg" alt="" />
+            </div>
             <div className="admin-stat-card__number">{stats.total_contacts}</div>
             <div className="admin-stat-card__label">Contact Submissions</div>
           </div>
           <div className="admin-stat-card">
+            <div className="admin-stat-card__icon">
+              <img src="/Images/generic_icons/flash-circle.svg" alt="" />
+            </div>
             <div className="admin-stat-card__number">{stats.total_ai_tokens ? stats.total_ai_tokens.toLocaleString() : '0'}</div>
-            <div className="admin-stat-card__label">AI Tokens Used</div>
+            <div className="admin-stat-card__label">AI Token Used</div>
           </div>
           <div className="admin-stat-card">
+            <div className="admin-stat-card__icon">
+              <img src="/Images/generic_icons/bot-icon.svg" alt="" />
+            </div>
             <div className="admin-stat-card__number">{stats.total_ai_calls || 0}</div>
             <div className="admin-stat-card__label">AI Calls Made</div>
           </div>
         </div>
 
-        {graphData && (
-          <div className="admin-charts-grid">
-            <UserRegistrationsChart data={graphData.user_registrations} />
-            <VaccinationsOverTimeChart data={graphData.vaccinations_over_time} />
-            <DogAgeDistributionChart data={graphData.age_distribution} />
-            <VaccineTypeChart data={graphData.vaccine_type_distribution} />
-            <TopBreedsChart data={graphData.top_breeds} />
-          </div>
-        )}
+        <h3 className="admin-section__title">Charts</h3>
+        <div className="admin-charts-grid">
+          <ChartCard chartKey="user_registrations" showGranularity showNavigation onFilterChange={handleChartFilterChange} loading={chartLoading.user_registrations}>
+            <UserRegistrationsChart data={chartData.user_registrations?.data} granularity={chartData.user_registrations?.granularity} />
+          </ChartCard>
 
-        {tokenStats && (tokenStats.over_time?.length > 0 || tokenStats.per_user?.length > 0) && (
-          <>
-            <h3 className="admin-section__title">AI Token Usage Analytics</h3>
-            <div className="admin-charts-grid">
-              <TokenUsageOverTimeChart data={tokenStats.over_time} />
-              <TokenUsageByUserChart data={tokenStats.per_user} />
-            </div>
-          </>
-        )}
+          <ChartCard chartKey="vaccinations_over_time" showGranularity showNavigation onFilterChange={handleChartFilterChange} loading={chartLoading.vaccinations_over_time}>
+            <VaccinationsOverTimeChart data={chartData.vaccinations_over_time?.data} granularity={chartData.vaccinations_over_time?.granularity} />
+          </ChartCard>
+
+          <ChartCard chartKey="age_distribution" onFilterChange={handleChartFilterChange} loading={chartLoading.age_distribution}>
+            <DogAgeDistributionChart data={chartData.age_distribution?.data} />
+          </ChartCard>
+
+          <ChartCard chartKey="vaccine_type_distribution" showNavigation onFilterChange={handleChartFilterChange} loading={chartLoading.vaccine_type_distribution}>
+            <VaccineTypeChart data={chartData.vaccine_type_distribution?.data} />
+          </ChartCard>
+
+          <ChartCard chartKey="top_breeds" onFilterChange={handleChartFilterChange} loading={chartLoading.top_breeds}>
+            <TopBreedsChart data={chartData.top_breeds?.data} />
+          </ChartCard>
+        </div>
+
+        <h3 className="admin-section__title">AI Token Usage Analytics</h3>
+        <div className="admin-charts-grid">
+          <ChartCard chartKey="token_over_time" showGranularity showNavigation onFilterChange={handleChartFilterChange} loading={chartLoading.token_over_time}>
+            <TokenUsageOverTimeChart data={chartData.token_over_time?.data} granularity={chartData.token_over_time?.granularity} />
+          </ChartCard>
+
+          <ChartCard chartKey="token_per_user" showNavigation onFilterChange={handleChartFilterChange} loading={chartLoading.token_per_user}>
+            <TokenUsageByUserChart data={chartData.token_per_user?.data} />
+          </ChartCard>
+        </div>
 
         {stats.recent_registrations && stats.recent_registrations.length > 0 && (
           <div className="admin-section">
@@ -507,13 +655,32 @@ function AdminDashboardPage() {
 
   function renderUsers() {
     const results = users?.results || [];
+    const totalCount = users?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
     return (
-      <div>
-        <div className="admin-users-toolbar">
-          {renderSearchBar()}
-          <button className="btn btn-outline btn-sm admin-export-btn" onClick={handleExportCSV}>Export CSV</button>
+      <div className="admin-users-card">
+        {/* Header */}
+        <div className="admin-users-card__header">
+          <div className="admin-users-card__header-left">
+            <div className="admin-users-card__title-row">
+              <h2 className="admin-users-card__title">Total Users</h2>
+              <span className="admin-users-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'User' : 'Users'}
+              </span>
+            </div>
+            <p className="admin-users-card__subtitle">Keep the track of all the users</p>
+          </div>
+          <button className="admin-users-card__export-btn" onClick={handleExportCSV}>
+            <img src="/Images/generic_icons/export-icon.svg" alt="" />
+            Export CSV
+          </button>
         </div>
-        {renderUserFilters()}
+
+        {/* Filters */}
+        {renderUsersFilterBar()}
+
+        {/* Table */}
         {loading ? (
           <LoadingSpinner />
         ) : (
@@ -527,11 +694,11 @@ function AdminDashboardPage() {
                     <th>Clinic</th>
                     <th>Dogs</th>
                     <th>Vaccinations</th>
-                    <SortableHeader label="Tokens Used" field="total_tokens_used" currentOrdering={ordering} onSort={handleSort} />
+                    <SortableHeader label="Token Used" field="total_tokens_used" currentOrdering={ordering} onSort={handleSort} />
                     <th>Staff</th>
                     <th>Status</th>
                     <SortableHeader label="Joined" field="date_joined" currentOrdering={ordering} onSort={handleSort} />
-                    <th>Actions</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -545,7 +712,7 @@ function AdminDashboardPage() {
                         <td>{user.clinic_name || '-'}</td>
                         <td>{user.dog_count}</td>
                         <td>{user.vaccination_count}</td>
-                        <td>{(user.total_tokens_used || 0).toLocaleString()} / {user.ai_call_count || 0} calls</td>
+                        <td>{(user.total_tokens_used || 0).toLocaleString()}/{user.ai_call_count || 0} Calls</td>
                         <td>{user.is_staff ? 'Yes' : 'No'}</td>
                         <td>
                           <span className={`admin-badge ${user.is_active ? 'admin-badge--active' : 'admin-badge--blocked'}`}>
@@ -553,21 +720,42 @@ function AdminDashboardPage() {
                           </span>
                         </td>
                         <td>{new Date(user.date_joined).toLocaleDateString()}</td>
-                        <td className="admin-actions-cell">
+                        <td className="admin-kebab-cell">
                           <button
-                            className={`btn btn-sm ${user.is_active ? 'admin-block-btn' : 'admin-unblock-btn'}`}
-                            onClick={() => handleToggleUserActive(user.id, user.email, user.is_active)}
+                            className="admin-kebab-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenKebabUserId(openKebabUserId === user.id ? null : user.id);
+                            }}
+                            aria-label="User actions"
                           >
-                            {user.is_active ? 'Block' : 'Unblock'}
+                            &#8942;
                           </button>
-                          <button
-                            className="btn btn-sm admin-delete-btn"
-                            onClick={() => handleDeleteUser(user.id, user.email)}
-                            disabled={user.is_active}
-                            title={user.is_active ? 'Block user before deleting' : 'Delete user'}
-                          >
-                            Delete
-                          </button>
+                          {openKebabUserId === user.id && (
+                            <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                              <button
+                                className="admin-kebab-menu__item"
+                                onClick={() => {
+                                  setOpenKebabUserId(null);
+                                  handleToggleUserActive(user.id, user.email, user.is_active);
+                                }}
+                              >
+                                {user.is_active ? 'Block' : 'Unblock'}
+                              </button>
+                              <button
+                                className={`admin-kebab-menu__item admin-kebab-menu__item--danger`}
+                                onClick={() => {
+                                  if (user.is_active) return;
+                                  setOpenKebabUserId(null);
+                                  handleDeleteUser(user.id, user.email);
+                                }}
+                                disabled={user.is_active}
+                                title={user.is_active ? 'Block user before deleting' : 'Delete user'}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -575,7 +763,7 @@ function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-            {renderPagination(users)}
+            {renderUsersPagination(users, totalPages)}
           </>
         )}
       </div>
@@ -780,14 +968,17 @@ function AdminDashboardPage() {
 
   // ── Model Tokens ─────────────────────────────────────────────────
   function renderModelTokens() {
+    const mtData = chartData.per_model_over_time;
     return (
       <div>
         {loading ? (
           <LoadingSpinner />
-        ) : modelTokenData && modelTokenData.length > 0 ? (
-          <div className="admin-charts-grid">
-            <TokensByModelChart data={modelTokenData} />
-          </div>
+        ) : mtData && mtData.data && mtData.data.length > 0 ? (
+          <ChartCard chartKey="per_model_over_time" showGranularity showNavigation onFilterChange={handleChartFilterChange} loading={chartLoading.per_model_over_time}>
+            <div className="admin-charts-grid">
+              <TokensByModelChart data={mtData.data} granularity={mtData.granularity} />
+            </div>
+          </ChartCard>
         ) : (
           <p style={{ textAlign: 'center', color: 'var(--color-neutral-dark)', padding: '2rem' }}>No token usage data by model yet.</p>
         )}

@@ -6,8 +6,8 @@ import csv
 import io
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncMonth
+from django.db.models import Count, Max, Min, Sum
+from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
 from django.http import StreamingHttpResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -338,78 +338,189 @@ class AdminUserExportCSVView(ListAPIView):
 
 # ── Graph Data ────────────────────────────────────────────────────
 
+RANGE_PRESETS = {
+    '7d': datetime.timedelta(days=7),
+    '30d': datetime.timedelta(days=30),
+    '90d': datetime.timedelta(days=90),
+    '6m': datetime.timedelta(days=182),
+    '12m': datetime.timedelta(days=365),
+}
+
+GRANULARITY_MAP = {
+    'day': TruncDate,
+    'week': TruncWeek,
+    'month': TruncMonth,
+}
+
+
+def _pick_trunc(qs, date_field):
+    """Pick aggregation granularity based on the date span of the queryset.
+
+    Returns (TruncFunction, granularity_label) where granularity_label
+    is one of 'day', 'week', or 'month'.
+    """
+    bounds = qs.aggregate(d_min=Min(date_field), d_max=Max(date_field))
+    d_min, d_max = bounds['d_min'], bounds['d_max']
+    if d_min is None or d_max is None:
+        return TruncDate, 'day'
+    if hasattr(d_min, 'date'):
+        d_min = d_min.date()
+    if hasattr(d_max, 'date'):
+        d_max = d_max.date()
+    span = (d_max - d_min).days
+    if span > 90:
+        return TruncMonth, 'month'
+    if span > 14:
+        return TruncWeek, 'week'
+    return TruncDate, 'day'
+
+
+def _parse_range(request):
+    """Parse date range from query params. Returns (date_from, date_to).
+
+    Supports two modes:
+    1. Preset: ?range=7d|30d|90d|6m|12m|all  (backward compatible)
+    2. Explicit: ?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD  (for navigation)
+
+    Explicit params take precedence when provided.
+    date_to of None means "up to now".
+    """
+    explicit_from = request.query_params.get('date_from')
+    explicit_to = request.query_params.get('date_to')
+
+    if explicit_from:
+        date_from = timezone.make_aware(
+            datetime.datetime.strptime(explicit_from, '%Y-%m-%d')
+        )
+        date_to = None
+        if explicit_to:
+            date_to = timezone.make_aware(
+                datetime.datetime.strptime(explicit_to, '%Y-%m-%d')
+            ) + datetime.timedelta(days=1)  # inclusive end
+        return date_from, date_to
+
+    preset = request.query_params.get('range', '12m')
+    if preset == 'all':
+        return None, None
+    delta = RANGE_PRESETS.get(preset, RANGE_PRESETS['12m'])
+    return timezone.now() - delta, None
+
+
+def _resolve_granularity(request, qs, date_field):
+    """If ?granularity= is explicit, use it; otherwise auto-detect."""
+    gran = request.query_params.get('granularity', 'auto')
+    if gran in GRANULARITY_MAP:
+        return GRANULARITY_MAP[gran], gran
+    return _pick_trunc(qs, date_field)
+
+
 class AdminGraphDataView(APIView):
-    """Returns aggregated data for admin dashboard charts."""
+    """Returns aggregated data for admin dashboard charts.
+
+    Accepts optional ?chart= param to return only a specific chart's data.
+    Valid values: user_registrations, vaccinations_over_time,
+    vaccine_type_distribution, top_breeds, age_distribution.
+    When omitted, returns all chart data (backward compatible).
+    """
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        now = timezone.now()
-        twelve_months_ago = now - datetime.timedelta(days=365)
+        date_from, date_to = _parse_range(request)
+        chart = request.query_params.get('chart')
+        result = {}
 
-        # 1. User registrations over time (last 12 months)
-        user_registrations = list(
-            User.objects
-            .filter(date_joined__gte=twelve_months_ago)
-            .annotate(month=TruncMonth('date_joined'))
-            .values('month')
-            .annotate(count=Count('id'))
-            .order_by('month')
-        )
+        # 1. User registrations over time (time-filtered, adaptive)
+        if chart is None or chart == 'user_registrations':
+            users_qs = User.objects.all()
+            if date_from:
+                users_qs = users_qs.filter(date_joined__gte=date_from)
+            if date_to:
+                users_qs = users_qs.filter(date_joined__lt=date_to)
+            trunc_fn, reg_granularity = _resolve_granularity(request, users_qs, 'date_joined')
+            result['user_registrations'] = list(
+                users_qs
+                .annotate(date=trunc_fn('date_joined'))
+                .values('date')
+                .annotate(count=Count('id'))
+                .order_by('date')
+            )
+            result['user_registrations_granularity'] = reg_granularity
 
-        # 2. Vaccinations over time (last 12 months)
-        vaccinations_over_time = list(
-            VaccinationRecord.objects
-            .filter(date_administered__gte=twelve_months_ago.date())
-            .annotate(month=TruncMonth('date_administered'))
-            .values('month')
-            .annotate(count=Count('id'))
-            .order_by('month')
-        )
+        # 2. Vaccinations over time (time-filtered, adaptive)
+        if chart is None or chart == 'vaccinations_over_time':
+            vax_qs = VaccinationRecord.objects.all()
+            if date_from:
+                date_from_date = date_from.date() if hasattr(date_from, 'date') else date_from
+                vax_qs = vax_qs.filter(date_administered__gte=date_from_date)
+            if date_to:
+                date_to_date = date_to.date() if hasattr(date_to, 'date') else date_to
+                vax_qs = vax_qs.filter(date_administered__lt=date_to_date)
+            trunc_fn, vax_granularity = _resolve_granularity(request, vax_qs, 'date_administered')
+            result['vaccinations_over_time'] = list(
+                vax_qs
+                .annotate(date=trunc_fn('date_administered'))
+                .values('date')
+                .annotate(count=Count('id'))
+                .order_by('date')
+            )
+            result['vaccinations_granularity'] = vax_granularity
 
-        # 3. Vaccine type distribution
-        vaccine_type_distribution = list(
-            VaccinationRecord.objects
-            .values('vaccine__vaccine_type')
-            .annotate(count=Count('id'))
-            .order_by('-count')
-        )
+        # 3. Vaccine type distribution (time-filtered)
+        if chart is None or chart == 'vaccine_type_distribution':
+            vax_type_qs = VaccinationRecord.objects.all()
+            if date_from:
+                date_from_date = date_from.date() if hasattr(date_from, 'date') else date_from
+                vax_type_qs = vax_type_qs.filter(date_administered__gte=date_from_date)
+            if date_to:
+                date_to_date = date_to.date() if hasattr(date_to, 'date') else date_to
+                vax_type_qs = vax_type_qs.filter(date_administered__lt=date_to_date)
+            result['vaccine_type_distribution'] = list(
+                vax_type_qs
+                .values('vaccine__vaccine_type')
+                .annotate(count=Count('id'))
+                .order_by('-count')
+            )
 
-        # 4. Top 10 breeds
-        top_breeds = list(
-            Dog.objects
-            .exclude(breed='')
-            .values('breed')
-            .annotate(count=Count('id'))
-            .order_by('-count')[:10]
-        )
+        # 4. Top 10 breeds (optionally date-filtered by Dog.created_at)
+        if chart is None or chart == 'top_breeds':
+            breeds_qs = Dog.objects.exclude(breed='')
+            if date_from:
+                breeds_qs = breeds_qs.filter(created_at__gte=date_from)
+            if date_to:
+                breeds_qs = breeds_qs.filter(created_at__lt=date_to)
+            result['top_breeds'] = list(
+                breeds_qs
+                .values('breed')
+                .annotate(count=Count('id'))
+                .order_by('-count')[:10]
+            )
 
-        # 5. Dog age distribution
-        today = datetime.date.today()
-        dogs_birth_dates = Dog.objects.values_list('birth_date', flat=True)
-        age_counts = {'puppy': 0, 'adolescent': 0, 'adult': 0, 'senior': 0}
-        for bd in dogs_birth_dates:
-            weeks = (today - bd).days // 7
-            if weeks <= 16:
-                age_counts['puppy'] += 1
-            elif weeks <= 52:
-                age_counts['adolescent'] += 1
-            elif weeks <= 7 * 52:
-                age_counts['adult'] += 1
-            else:
-                age_counts['senior'] += 1
+        # 5. Dog age distribution (optionally date-filtered by Dog.created_at)
+        if chart is None or chart == 'age_distribution':
+            today = datetime.date.today()
+            dogs_qs = Dog.objects.all()
+            if date_from:
+                dogs_qs = dogs_qs.filter(created_at__gte=date_from)
+            if date_to:
+                dogs_qs = dogs_qs.filter(created_at__lt=date_to)
+            dogs_birth_dates = dogs_qs.values_list('birth_date', flat=True)
+            age_counts = {'puppy': 0, 'adolescent': 0, 'adult': 0, 'senior': 0}
+            for bd in dogs_birth_dates:
+                weeks = (today - bd).days // 7
+                if weeks <= 16:
+                    age_counts['puppy'] += 1
+                elif weeks <= 52:
+                    age_counts['adolescent'] += 1
+                elif weeks <= 7 * 52:
+                    age_counts['adult'] += 1
+                else:
+                    age_counts['senior'] += 1
+            result['age_distribution'] = [
+                {'classification': k, 'count': v}
+                for k, v in age_counts.items()
+            ]
 
-        age_distribution = [
-            {'classification': k, 'count': v}
-            for k, v in age_counts.items()
-        ]
-
-        return Response({
-            'user_registrations': user_registrations,
-            'vaccinations_over_time': vaccinations_over_time,
-            'vaccine_type_distribution': vaccine_type_distribution,
-            'top_breeds': top_breeds,
-            'age_distribution': age_distribution,
-        })
+        return Response(result)
 
 
 # ── Token Usage ───────────────────────────────────────────────────
@@ -429,74 +540,97 @@ class AdminTokenUsageListView(ListAPIView):
 
 
 class AdminTokenUsageStatsView(APIView):
-    """Aggregated token usage statistics for charts."""
+    """Aggregated token usage statistics for charts.
+
+    Accepts optional ?chart= param to return only a specific chart's data.
+    Valid values: over_time, per_user, per_model_over_time.
+    When omitted, returns all data (backward compatible).
+    """
     permission_classes = [IsAdminUser]
 
     def get(self, request):
+        date_from, date_to = _parse_range(request)
+        chart = request.query_params.get('chart')
+
+        base_qs = TokenUsage.objects.all()
+        if date_from:
+            base_qs = base_qs.filter(created_at__gte=date_from)
+        if date_to:
+            base_qs = base_qs.filter(created_at__lt=date_to)
+
+        result = {}
+
         # Per-user totals (top 10)
-        per_user = list(
-            TokenUsage.objects.values('user__email')
-            .annotate(
+        if chart is None or chart == 'per_user':
+            result['per_user'] = list(
+                base_qs.values('user__email')
+                .annotate(
+                    total_input=Sum('input_tokens'),
+                    total_output=Sum('output_tokens'),
+                    total_tokens=Sum('total_tokens'),
+                    call_count=Count('id'),
+                )
+                .order_by('-total_tokens')[:10]
+            )
+
+        # Per-endpoint totals (only in bulk mode)
+        if chart is None:
+            result['per_endpoint'] = list(
+                base_qs.values('endpoint')
+                .annotate(
+                    total_tokens=Sum('total_tokens'),
+                    call_count=Count('id'),
+                )
+                .order_by('-total_tokens')
+            )
+
+        # Pick granularity for token time-series
+        trunc_fn, token_granularity = _resolve_granularity(
+            request, base_qs, 'created_at',
+        )
+
+        # Usage over time (adaptive)
+        if chart is None or chart == 'over_time':
+            result['over_time'] = list(
+                base_qs
+                .annotate(date=trunc_fn('created_at'))
+                .values('date')
+                .annotate(
+                    total_tokens=Sum('total_tokens'),
+                    total_input=Sum('input_tokens'),
+                    total_output=Sum('output_tokens'),
+                    call_count=Count('id'),
+                )
+                .order_by('date')
+            )
+            result['token_granularity'] = token_granularity
+
+        # Per-model over time (adaptive)
+        if chart is None or chart == 'per_model_over_time':
+            result['per_model_over_time'] = list(
+                base_qs
+                .exclude(model_name='')
+                .annotate(date=trunc_fn('created_at'))
+                .values('date', 'model_name')
+                .annotate(
+                    input_tokens=Sum('input_tokens'),
+                    output_tokens=Sum('output_tokens'),
+                )
+                .order_by('date', 'model_name')
+            )
+            if 'token_granularity' not in result:
+                result['token_granularity'] = token_granularity
+
+        # Grand totals (only in bulk mode)
+        if chart is None:
+            result['totals'] = TokenUsage.objects.aggregate(
                 total_input=Sum('input_tokens'),
                 total_output=Sum('output_tokens'),
                 total_tokens=Sum('total_tokens'),
-                call_count=Count('id'),
+                total_calls=Count('id'),
             )
-            .order_by('-total_tokens')[:10]
-        )
 
-        # Per-endpoint totals
-        per_endpoint = list(
-            TokenUsage.objects.values('endpoint')
-            .annotate(
-                total_tokens=Sum('total_tokens'),
-                call_count=Count('id'),
-            )
-            .order_by('-total_tokens')
-        )
-
-        # Usage over time (by month)
-        over_time = list(
-            TokenUsage.objects
-            .annotate(month=TruncMonth('created_at'))
-            .values('month')
-            .annotate(
-                total_tokens=Sum('total_tokens'),
-                total_input=Sum('input_tokens'),
-                total_output=Sum('output_tokens'),
-                call_count=Count('id'),
-            )
-            .order_by('month')
-        )
-
-        # Per-model over time (by month)
-        per_model_over_time = list(
-            TokenUsage.objects
-            .exclude(model_name='')
-            .annotate(month=TruncMonth('created_at'))
-            .values('month', 'model_name')
-            .annotate(
-                input_tokens=Sum('input_tokens'),
-                output_tokens=Sum('output_tokens'),
-            )
-            .order_by('month', 'model_name')
-        )
-
-        # Grand totals
-        totals = TokenUsage.objects.aggregate(
-            total_input=Sum('input_tokens'),
-            total_output=Sum('output_tokens'),
-            total_tokens=Sum('total_tokens'),
-            total_calls=Count('id'),
-        )
-
-        return Response({
-            'totals': totals,
-            'per_user': per_user,
-            'per_endpoint': per_endpoint,
-            'over_time': over_time,
-            'per_model_over_time': per_model_over_time,
-        })
+        return Response(result)
 
 
 # ── AI Analytics ──────────────────────────────────────────────────
