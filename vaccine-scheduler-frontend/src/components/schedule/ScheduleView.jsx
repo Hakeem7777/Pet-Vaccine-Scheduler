@@ -5,8 +5,10 @@ import NoncoreSelector from './NoncoreSelector';
 import ScheduleCategory from './ScheduleCategory';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ExportModal from '../export/ExportModal';
+import { useAuth } from '../../context/AuthContext';
 
 function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded }) {
+  const { isPro } = useAuth();
   const [schedule, setSchedule] = useState(null);
   const [dogInfo, setDogInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,7 +95,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
     <div className="schedule-view">
       <div className="schedule-view__header">
         <h3>Vaccination Schedule</h3>
-        {hasVaccines && (
+        {hasVaccines && isPro && (
           <button
             className="btn btn-outline btn-sm"
             onClick={() => setIsExportModalOpen(true)}

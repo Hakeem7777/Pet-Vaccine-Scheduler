@@ -236,7 +236,7 @@ function DashboardPage() {
       {!isAuthenticated && guestDog && (
         <div className="guest-banner guest-banner--info">
           <p>
-            <strong>You're in guest mode.</strong> Sign up to save your data, add more dogs, and access all features.
+            <strong>You're in guest mode.</strong> Sign up to save your data, add more dogs, send email reminders and much more.
           </p>
           <button className="btn btn-primary btn-sm" onClick={() => navigate('/signup')}>
             Sign Up Free

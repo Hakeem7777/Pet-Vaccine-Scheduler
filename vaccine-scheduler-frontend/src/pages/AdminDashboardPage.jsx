@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import * as adminApi from '../api/admin';
+import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageTransition from '../components/common/PageTransition';
@@ -30,6 +33,8 @@ const TABS = [
   { key: 'dogs', label: 'Dogs' },
   { key: 'vaccinations', label: 'Vaccinations' },
   { key: 'contacts', label: 'Contacts' },
+  { key: 'blogs', label: 'Blogs' },
+  { key: 'ads', label: 'Ads' },
   { key: 'tokens', label: 'Token Usage' },
   { key: 'model-tokens', label: 'Model Tokens' },
   { key: 'ai-analytics', label: 'AI Analytics' },
@@ -72,6 +77,7 @@ function SortableHeader({ label, field, currentOrdering, onSort }) {
 }
 
 function AdminDashboardPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState(null);
@@ -79,6 +85,17 @@ function AdminDashboardPage() {
   const [vaccinations, setVaccinations] = useState(null);
   const [contacts, setContacts] = useState(null);
   const [tokenUsage, setTokenUsage] = useState(null);
+  const [blogs, setBlogs] = useState(null);
+  const [blogFormOpen, setBlogFormOpen] = useState(false);
+  const [blogFormData, setBlogFormData] = useState(null);
+  const [blogFormLoading, setBlogFormLoading] = useState(false);
+  const [openKebabBlogId, setOpenKebabBlogId] = useState(null);
+  const [adsList, setAdsList] = useState([]);
+  const [adFormOpen, setAdFormOpen] = useState(false);
+  const [adFormData, setAdFormData] = useState(null);
+  const [adFormLoading, setAdFormLoading] = useState(false);
+  const [openKebabAdId, setOpenKebabAdId] = useState(null);
+  const quillRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -88,6 +105,8 @@ function AdminDashboardPage() {
     dogs: {},
     vaccinations: {},
     contacts: {},
+    blogs: {},
+    ads: {},
     tokens: {},
   });
   // Per-chart data and loading state
@@ -126,6 +145,8 @@ function AdminDashboardPage() {
       if (kebabMenuRef.current && !kebabMenuRef.current.contains(e.target)) {
         setOpenKebabUserId(null);
         setOpenKebabDogId(null);
+        setOpenKebabBlogId(null);
+        setOpenKebabAdId(null);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -229,6 +250,16 @@ function AdminDashboardPage() {
         case 'contacts': {
           const contactsData = await adminApi.getAdminContacts(params);
           setContacts(contactsData);
+          break;
+        }
+        case 'blogs': {
+          const blogsData = await adminApi.getAdminBlogs(params);
+          setBlogs(blogsData);
+          break;
+        }
+        case 'ads': {
+          const adsData = await adminApi.getAdminAds(params);
+          setAdsList(adsData);
           break;
         }
         case 'tokens': {
@@ -1435,12 +1466,743 @@ function AdminDashboardPage() {
     );
   }
 
+  // ── Blog Handlers & Renderers ──────────────────────────────────
+
+  async function handleDeleteBlog(id, title) {
+    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
+    try {
+      await adminApi.deleteAdminBlog(id);
+      fetchTabData('blogs', search, page, filters.blogs || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to delete blog post.');
+    }
+  }
+
+  async function handleEditBlog(id) {
+    try {
+      const post = await adminApi.getAdminBlog(id);
+      setBlogFormData({
+        id: post.id,
+        title: post.title,
+        author_display_name: post.author_display_name || '',
+        excerpt: post.excerpt || '',
+        content: post.content || '',
+        status: post.status,
+        featured_image: null,
+        existing_image_url: post.featured_image_url,
+      });
+      setBlogFormOpen(true);
+    } catch {
+      alert('Failed to load blog post.');
+    }
+  }
+
+  function handleNewBlog() {
+    setBlogFormData({
+      title: '',
+      author_display_name: user?.username || '',
+      excerpt: '',
+      content: '',
+      status: 'draft',
+      featured_image: null,
+      existing_image_url: null,
+    });
+    setBlogFormOpen(true);
+  }
+
+  async function handleBlogFormSubmit(e) {
+    e.preventDefault();
+    setBlogFormLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', blogFormData.title);
+      formData.append('author_display_name', blogFormData.author_display_name);
+      formData.append('excerpt', blogFormData.excerpt);
+      formData.append('content', blogFormData.content);
+      formData.append('status', blogFormData.status);
+      if (blogFormData.featured_image instanceof File) {
+        formData.append('featured_image', blogFormData.featured_image);
+      }
+
+      if (blogFormData.id) {
+        await adminApi.updateAdminBlog(blogFormData.id, formData);
+      } else {
+        await adminApi.createAdminBlog(formData);
+      }
+      setBlogFormOpen(false);
+      setBlogFormData(null);
+      fetchTabData('blogs', search, 1, filters.blogs || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to save blog post.');
+    } finally {
+      setBlogFormLoading(false);
+    }
+  }
+
+  const quillModules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['blockquote', 'code-block'],
+        ['link', 'image', 'video'],
+        [{ align: [] }],
+        ['clean'],
+      ],
+      handlers: {
+        image: function () {
+          const input = document.createElement('input');
+          input.setAttribute('type', 'file');
+          input.setAttribute('accept', 'image/*');
+          input.click();
+          input.onchange = async () => {
+            const file = input.files[0];
+            if (file) {
+              try {
+                const result = await adminApi.uploadBlogMedia(file);
+                const quill = this.quill;
+                const range = quill.getSelection(true);
+                quill.insertEmbed(range.index, 'image', result.url);
+              } catch {
+                alert('Failed to upload image.');
+              }
+            }
+          };
+        },
+        video: function () {
+          const input = document.createElement('input');
+          input.setAttribute('type', 'file');
+          input.setAttribute('accept', 'video/*,audio/*');
+          input.click();
+          input.onchange = async () => {
+            const file = input.files[0];
+            if (file) {
+              try {
+                const result = await adminApi.uploadBlogMedia(file);
+                const quill = this.quill;
+                const range = quill.getSelection(true);
+                if (file.type.startsWith('audio/')) {
+                  quill.clipboard.dangerouslyPasteHTML(
+                    range.index,
+                    `<audio controls src="${result.url}"></audio>`
+                  );
+                } else {
+                  quill.insertEmbed(range.index, 'video', result.url);
+                }
+              } catch {
+                alert('Failed to upload media.');
+              }
+            }
+          };
+        },
+      },
+    },
+  }), []);
+
+  function renderBlogFilterBar() {
+    const f = filters.blogs || {};
+    return (
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Search</label>
+          <div className="admin-tab-search-wrapper">
+            <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              className="admin-tab-search"
+              type="text"
+              placeholder="Search blogs..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+            />
+          </div>
+        </div>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Status</label>
+          <select
+            className="admin-tab-filter-select"
+            value={f.status || ''}
+            onChange={(e) => handleFilterChange('blogs', 'status', e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
+        {Object.keys(f).length > 0 && (
+          <button className="admin-tab-filter-clear" onClick={() => clearFilters('blogs')}>
+            Clear Filters
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function renderBlogForm() {
+    const fd = blogFormData || { title: '', author_display_name: '', excerpt: '', content: '', status: 'draft', featured_image: null, existing_image_url: null };
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <button className="btn btn-outline btn-sm" onClick={() => { setBlogFormOpen(false); setBlogFormData(null); }}>
+              &larr; Back to List
+            </button>
+            <h2 className="admin-tab-card__title" style={{ marginLeft: '1rem' }}>
+              {fd.id ? 'Edit Post' : 'New Post'}
+            </h2>
+          </div>
+        </div>
+
+        <form className="blog-form" onSubmit={handleBlogFormSubmit}>
+          <div className="blog-form__field">
+            <label className="blog-form__label">Title</label>
+            <input
+              className="blog-form__input"
+              type="text"
+              value={fd.title}
+              onChange={(e) => setBlogFormData({ ...fd, title: e.target.value })}
+              required
+              placeholder="Enter blog post title..."
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Author Name</label>
+            <input
+              className="blog-form__input"
+              type="text"
+              value={fd.author_display_name}
+              onChange={(e) => setBlogFormData({ ...fd, author_display_name: e.target.value })}
+              placeholder="Display name for the author"
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Excerpt</label>
+            <textarea
+              className="blog-form__textarea"
+              value={fd.excerpt}
+              onChange={(e) => setBlogFormData({ ...fd, excerpt: e.target.value })}
+              placeholder="Short summary for listing cards..."
+              maxLength={500}
+              rows={3}
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Featured Image</label>
+            <input
+              className="blog-form__input"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setBlogFormData({ ...fd, featured_image: e.target.files[0] || null })}
+            />
+            {(fd.featured_image || fd.existing_image_url) && (
+              <img
+                className="blog-form__image-preview"
+                src={fd.featured_image instanceof File ? URL.createObjectURL(fd.featured_image) : fd.existing_image_url}
+                alt="Preview"
+              />
+            )}
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Status</label>
+            <select
+              className="blog-form__select"
+              value={fd.status}
+              onChange={(e) => setBlogFormData({ ...fd, status: e.target.value })}
+            >
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Content</label>
+            <ReactQuill
+              ref={quillRef}
+              theme="snow"
+              value={fd.content}
+              onChange={(value) => setBlogFormData((prev) => ({ ...prev, content: value }))}
+              modules={quillModules}
+              placeholder="Write your blog post content..."
+            />
+          </div>
+
+          <div className="blog-form__actions">
+            <button type="button" className="btn btn-outline" onClick={() => { setBlogFormOpen(false); setBlogFormData(null); }}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={blogFormLoading || !fd.title.trim()}>
+              {blogFormLoading ? 'Saving...' : (fd.id ? 'Update Post' : 'Create Post')}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  function renderBlogs() {
+    if (blogFormOpen) return renderBlogForm();
+
+    const results = blogs?.results || [];
+    const totalCount = blogs?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Blog Posts</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Post' : 'Posts'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Manage blog content</p>
+          </div>
+          <button className="btn btn-primary" onClick={handleNewBlog}>
+            + New Post
+          </button>
+        </div>
+
+        {renderBlogFilterBar()}
+
+        {loading ? <LoadingSpinner /> : (
+          <>
+            <div className="admin-table-container admin-table-container--blogs">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <SortableHeader label="Title" field="title" currentOrdering={ordering} onSort={handleSort} />
+                    <th>Status</th>
+                    <th>Author</th>
+                    <SortableHeader label="Published" field="published_at" currentOrdering={ordering} onSort={handleSort} />
+                    <SortableHeader label="Created" field="created_at" currentOrdering={ordering} onSort={handleSort} />
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.length === 0 ? (
+                    <tr><td colSpan="6" className="admin-table__empty">No blog posts found.</td></tr>
+                  ) : results.map((post) => (
+                    <tr key={post.id}>
+                      <td className="admin-table__title-cell">{post.title}</td>
+                      <td>
+                        <span className={`admin-badge ${post.status === 'published' ? 'admin-badge--active' : 'admin-badge--draft'}`}>
+                          {post.status === 'published' ? 'Published' : 'Draft'}
+                        </span>
+                      </td>
+                      <td>{post.author_email}</td>
+                      <td>{post.published_at ? new Date(post.published_at).toLocaleDateString() : '-'}</td>
+                      <td>{new Date(post.created_at).toLocaleDateString()}</td>
+                      <td className="admin-kebab-cell">
+                          <button
+                            className="admin-kebab-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenKebabBlogId(openKebabBlogId === post.id ? null : post.id);
+                            }}
+                            aria-label="Blog actions"
+                          >
+                            &#8942;
+                          </button>
+                          {openKebabBlogId === post.id && (
+                            <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                              <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabBlogId(null); handleEditBlog(post.id); }}>
+                                Edit
+                              </button>
+                              <button className="admin-kebab-menu__item admin-kebab-menu__item--danger" onClick={() => { setOpenKebabBlogId(null); handleDeleteBlog(post.id, post.title); }}>
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {renderTabPagination(blogs, totalPages)}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ── Ad Handlers & Renderers ─────────────────────────────────────
+
+  async function handleDeleteAd(id, title) {
+    if (!window.confirm(`Are you sure you want to delete ad "${title}"?`)) return;
+    try {
+      await adminApi.deleteAdminAd(id);
+      fetchTabData('ads', search, page, filters.ads || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to delete advertisement.');
+    }
+  }
+
+  async function handleEditAd(id) {
+    try {
+      const ad = await adminApi.getAdminAd(id);
+      setAdFormData({
+        id: ad.id,
+        title: ad.title,
+        link_url: ad.link_url || '',
+        position: ad.position,
+        is_active: ad.is_active,
+        start_date: ad.start_date ? ad.start_date.slice(0, 16) : '',
+        end_date: ad.end_date ? ad.end_date.slice(0, 16) : '',
+        order: ad.order || 0,
+        image: null,
+        existing_image_url: ad.image_url,
+      });
+      setAdFormOpen(true);
+    } catch {
+      alert('Failed to load advertisement.');
+    }
+  }
+
+  function handleNewAd() {
+    setAdFormData({
+      title: '',
+      link_url: '',
+      position: 'top',
+      is_active: true,
+      start_date: '',
+      end_date: '',
+      order: 0,
+      image: null,
+      existing_image_url: null,
+    });
+    setAdFormOpen(true);
+  }
+
+  async function handleAdFormSubmit(e) {
+    e.preventDefault();
+    setAdFormLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', adFormData.title);
+      formData.append('link_url', adFormData.link_url);
+      formData.append('position', adFormData.position);
+      formData.append('is_active', adFormData.is_active);
+      formData.append('order', adFormData.order);
+      if (adFormData.start_date) formData.append('start_date', new Date(adFormData.start_date).toISOString());
+      if (adFormData.end_date) formData.append('end_date', new Date(adFormData.end_date).toISOString());
+      if (adFormData.image instanceof File) {
+        formData.append('image', adFormData.image);
+      }
+
+      if (adFormData.id) {
+        await adminApi.updateAdminAd(adFormData.id, formData);
+      } else {
+        await adminApi.createAdminAd(formData);
+      }
+      setAdFormOpen(false);
+      setAdFormData(null);
+      fetchTabData('ads', search, 1, filters.ads || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to save advertisement.');
+    } finally {
+      setAdFormLoading(false);
+    }
+  }
+
+  function renderAdFilterBar() {
+    const f = filters.ads || {};
+    return (
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Search</label>
+          <div className="admin-tab-search-wrapper">
+            <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              className="admin-tab-search"
+              type="text"
+              placeholder="Search ads..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+            />
+          </div>
+        </div>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Position</label>
+          <select
+            className="admin-tab-filter-select"
+            value={f.position || ''}
+            onChange={(e) => handleFilterChange('ads', 'position', e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Status</label>
+          <select
+            className="admin-tab-filter-select"
+            value={f.is_active || ''}
+            onChange={(e) => handleFilterChange('ads', 'is_active', e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        {Object.keys(f).length > 0 && (
+          <button className="admin-tab-filter-clear" onClick={() => clearFilters('ads')}>
+            Clear Filters
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function renderAdForm() {
+    const fd = adFormData || { title: '', link_url: '', position: 'top', is_active: true, start_date: '', end_date: '', order: 0, image: null, existing_image_url: null };
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <button className="btn btn-outline btn-sm" onClick={() => { setAdFormOpen(false); setAdFormData(null); }}>
+              &larr; Back to List
+            </button>
+            <h2 className="admin-tab-card__title" style={{ marginLeft: '1rem' }}>
+              {fd.id ? 'Edit Advertisement' : 'New Advertisement'}
+            </h2>
+          </div>
+        </div>
+
+        <form className="blog-form" onSubmit={handleAdFormSubmit}>
+          <div className="blog-form__field">
+            <label className="blog-form__label">Title</label>
+            <input
+              className="blog-form__input"
+              type="text"
+              value={fd.title}
+              onChange={(e) => setAdFormData({ ...fd, title: e.target.value })}
+              required
+              placeholder="Ad title for identification..."
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Ad Image</label>
+            <input
+              className="blog-form__input"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setAdFormData({ ...fd, image: e.target.files[0] || null })}
+              required={!fd.id}
+            />
+            {(fd.image || fd.existing_image_url) && (
+              <img
+                className="blog-form__image-preview"
+                src={fd.image instanceof File ? URL.createObjectURL(fd.image) : fd.existing_image_url}
+                alt="Preview"
+              />
+            )}
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Link URL</label>
+            <input
+              className="blog-form__input"
+              type="url"
+              value={fd.link_url}
+              onChange={(e) => setAdFormData({ ...fd, link_url: e.target.value })}
+              placeholder="https://example.com"
+            />
+          </div>
+
+          <div className="blog-form__row">
+            <div className="blog-form__field">
+              <label className="blog-form__label">Position</label>
+              <select
+                className="blog-form__select"
+                value={fd.position}
+                onChange={(e) => setAdFormData({ ...fd, position: e.target.value })}
+              >
+                <option value="top">Top Banner</option>
+                <option value="bottom">Bottom Banner</option>
+                <option value="left">Left Sidebar</option>
+                <option value="right">Right Sidebar</option>
+              </select>
+            </div>
+
+            <div className="blog-form__field">
+              <label className="blog-form__label">Order</label>
+              <input
+                className="blog-form__input"
+                type="number"
+                min="0"
+                value={fd.order}
+                onChange={(e) => setAdFormData({ ...fd, order: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
+
+          <div className="blog-form__row">
+            <div className="blog-form__field">
+              <label className="blog-form__label">Start Date (optional)</label>
+              <input
+                className="blog-form__input"
+                type="datetime-local"
+                value={fd.start_date}
+                onChange={(e) => setAdFormData({ ...fd, start_date: e.target.value })}
+              />
+            </div>
+
+            <div className="blog-form__field">
+              <label className="blog-form__label">End Date (optional)</label>
+              <input
+                className="blog-form__input"
+                type="datetime-local"
+                value={fd.end_date}
+                onChange={(e) => setAdFormData({ ...fd, end_date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__checkbox-label">
+              <input
+                type="checkbox"
+                checked={fd.is_active}
+                onChange={(e) => setAdFormData({ ...fd, is_active: e.target.checked })}
+              />
+              Active
+            </label>
+          </div>
+
+          <div className="blog-form__actions">
+            <button type="button" className="btn btn-outline" onClick={() => { setAdFormOpen(false); setAdFormData(null); }}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={adFormLoading || !fd.title.trim()}>
+              {adFormLoading ? 'Saving...' : (fd.id ? 'Update Ad' : 'Create Ad')}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  function renderAds() {
+    if (adFormOpen) return renderAdForm();
+
+    const positionLabels = { top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' };
+
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Advertisements</h2>
+              <span className="admin-tab-card__count-badge">
+                {adsList.length} {adsList.length === 1 ? 'Ad' : 'Ads'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Manage ad placements across the site</p>
+          </div>
+          <button className="btn btn-primary" onClick={handleNewAd}>
+            + New Ad
+          </button>
+        </div>
+
+        {renderAdFilterBar()}
+
+        {loading ? <LoadingSpinner /> : (
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Title</th>
+                  <th>Position</th>
+                  <th>Status</th>
+                  <th>Order</th>
+                  <th>Date Range</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {adsList.length === 0 ? (
+                  <tr><td colSpan="7" className="admin-table__empty">No advertisements found.</td></tr>
+                ) : adsList.map((ad) => (
+                  <tr key={ad.id}>
+                    <td>
+                      {ad.image_url && (
+                        <img src={ad.image_url} alt={ad.title} style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 4 }} />
+                      )}
+                    </td>
+                    <td className="admin-table__title-cell">{ad.title}</td>
+                    <td>{positionLabels[ad.position] || ad.position}</td>
+                    <td>
+                      <span className={`admin-badge ${ad.is_active ? 'admin-badge--active' : 'admin-badge--draft'}`}>
+                        {ad.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>{ad.order}</td>
+                    <td>
+                      {ad.start_date || ad.end_date ? (
+                        <>
+                          {ad.start_date ? new Date(ad.start_date).toLocaleDateString() : 'No start'}
+                          {' - '}
+                          {ad.end_date ? new Date(ad.end_date).toLocaleDateString() : 'No end'}
+                        </>
+                      ) : 'Always'}
+                    </td>
+                    <td className="admin-kebab-cell">
+                      <button
+                        className="admin-kebab-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenKebabAdId(openKebabAdId === ad.id ? null : ad.id);
+                        }}
+                        aria-label="Ad actions"
+                      >
+                        &#8942;
+                      </button>
+                      {openKebabAdId === ad.id && (
+                        <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                          <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabAdId(null); handleEditAd(ad.id); }}>
+                            Edit
+                          </button>
+                          <button className="admin-kebab-menu__item admin-kebab-menu__item--danger" onClick={() => { setOpenKebabAdId(null); handleDeleteAd(ad.id, ad.title); }}>
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const tabRenderers = {
     overview: renderOverview,
     users: renderUsers,
     dogs: renderDogs,
     vaccinations: renderVaccinations,
     contacts: renderContacts,
+    blogs: renderBlogs,
+    ads: renderAds,
     tokens: renderTokenUsage,
     'model-tokens': renderModelTokens,
     'ai-analytics': renderAIAnalytics,

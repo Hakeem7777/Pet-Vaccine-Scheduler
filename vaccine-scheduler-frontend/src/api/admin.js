@@ -107,3 +107,76 @@ export async function getAdminTokenChartData(chart, params = {}) {
   const response = await client.get('/admin-panel/token-usage/stats/', { params: queryParams });
   return response.data;
 }
+
+// ── Blog Admin API ──────────────────────────────────────────────
+
+export async function getAdminBlogs(params = {}) {
+  const response = await client.get('/admin-panel/blogs/', { params });
+  return response.data;
+}
+
+export async function getAdminBlog(id) {
+  const response = await client.get(`/admin-panel/blogs/${id}/`);
+  return response.data;
+}
+
+export async function createAdminBlog(data) {
+  const isFormData = data instanceof FormData;
+  const response = await client.post('/admin-panel/blogs/', data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
+  return response.data;
+}
+
+export async function updateAdminBlog(id, data) {
+  const isFormData = data instanceof FormData;
+  const response = await client.put(`/admin-panel/blogs/${id}/`, data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
+  return response.data;
+}
+
+export async function deleteAdminBlog(id) {
+  await client.delete(`/admin-panel/blogs/${id}/`);
+}
+
+export async function uploadBlogMedia(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await client.post('/admin-panel/blogs/upload-media/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+// ── Advertisement Admin API ─────────────────────────────────────
+
+export async function getAdminAds(params = {}) {
+  const response = await client.get('/admin-panel/advertisements/', { params });
+  return response.data;
+}
+
+export async function getAdminAd(id) {
+  const response = await client.get(`/admin-panel/advertisements/${id}/`);
+  return response.data;
+}
+
+export async function createAdminAd(data) {
+  const isFormData = data instanceof FormData;
+  const response = await client.post('/admin-panel/advertisements/', data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
+  return response.data;
+}
+
+export async function updateAdminAd(id, data) {
+  const isFormData = data instanceof FormData;
+  const response = await client.put(`/admin-panel/advertisements/${id}/`, data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
+  return response.data;
+}
+
+export async function deleteAdminAd(id) {
+  await client.delete(`/admin-panel/advertisements/${id}/`);
+}

@@ -3,6 +3,7 @@ import useGuestStore from '../../store/useGuestStore';
 import GuestVaccinationForm from './GuestVaccinationForm';
 import Modal from '../common/Modal';
 import { formatDate } from '../../utils/dateUtils';
+import './VaccinationForm.css';
 
 function GuestVaccinationList({ onUpdate, refreshKey }) {
   const { vaccinations, addVaccination, deleteVaccination } = useGuestStore();
@@ -69,7 +70,14 @@ function GuestVaccinationList({ onUpdate, refreshKey }) {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add Vaccination Record"
+        title={
+          <span className="vax-modal-title">
+            <span className="vax-modal-title-icon">
+              <img src="/Images/generic_icons/syringe_icon.svg" alt="" width="20" height="20" />
+            </span>
+            Add Vaccination Record
+          </span>
+        }
       >
         <GuestVaccinationForm
           onSubmit={handleAdd}

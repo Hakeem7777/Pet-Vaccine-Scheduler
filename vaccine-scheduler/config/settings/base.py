@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'apps.email_service',
     'apps.dashboard',
     'apps.subscriptions',
+    'apps.blog',
+    'apps.advertisements',
 ]
 
 MIDDLEWARE = [
@@ -144,6 +146,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# File upload size limits (for blog media uploads)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+
 # Django REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -199,7 +205,7 @@ PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'sandbox')  # 'sandbox' or 'live'
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '')
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
 PAYPAL_WEBHOOK_ID = os.getenv('PAYPAL_WEBHOOK_ID', '')
-PAYPAL_PRO_ANNUAL_PLAN_ID = os.getenv('PAYPAL_PRO_ANNUAL_PLAN_ID', '')
+PAYPAL_PRO_MONTHLY_PLAN_ID = os.getenv('PAYPAL_PRO_MONTHLY_PLAN_ID', '')
 
 # Logging configuration
 LOGGING = {

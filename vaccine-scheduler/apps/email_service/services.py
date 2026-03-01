@@ -28,6 +28,10 @@ class EmailService:
 
         resend.api_key = self.api_key
 
+    def _get_admin_email(self):
+        """Get the admin notification email from environment."""
+        return os.environ.get('CONTACT_ADMIN_EMAIL')
+
     def send_schedule_email(
         self,
         to_emails: List[str],
@@ -602,11 +606,11 @@ PetVaxCalendar - Dog Vaccination Scheduler
         Returns:
             dict with success status and message
         """
-        admin_email = os.environ.get('CONTACT_ADMIN_EMAIL')
+        admin_email = self._get_admin_email()
         if not admin_email:
             return {
                 'success': False,
-                'message': "CONTACT_ADMIN_EMAIL not configured"
+                'message': "Admin notification email not configured (set CONTACT_ADMIN_EMAIL)"
             }
 
         html_content = f"""
@@ -702,6 +706,216 @@ Sent from PetVaxCalendar Contact Form
             return {
                 'success': True,
                 'message': "Admin notification sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
+    def send_subscription_notification(
+        self,
+        user_email: str,
+        username: str,
+        plan: str,
+        paypal_subscription_id: str,
+    ) -> dict:
+        """Send notification email to admin when a user subscribes."""
+        admin_email = self._get_admin_email()
+        if not admin_email:
+            return {
+                'success': False,
+                'message': "Admin notification email not configured (set CONTACT_ADMIN_EMAIL)"
+            }
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Subscription</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="background-color: #2AB57F; padding: 20px 40px;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 700;">
+                    New Subscription Activated
+                </h1>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 30px 40px;">
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">User:</strong>
+                            <span style="margin-left: 10px;">{username}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">Email:</strong>
+                            <a href="mailto:{user_email}" style="margin-left: 10px; color: #006D9C;">{user_email}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">Plan:</strong>
+                            <span style="margin-left: 10px;">{plan}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">PayPal ID:</strong>
+                            <span style="margin-left: 10px; font-family: monospace; font-size: 13px;">{paypal_subscription_id}</span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #333f48; padding: 20px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar Admin Notification<br>
+                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""NEW SUBSCRIPTION ACTIVATED
+{'=' * 40}
+
+User: {username}
+Email: {user_email}
+Plan: {plan}
+PayPal ID: {paypal_subscription_id}
+
+{'=' * 40}
+PetVaxCalendar Admin Notification
+{datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [admin_email],
+                "subject": f"[New Subscription] {username} - {plan}",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Subscription notification sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
+    def send_cancellation_notification(
+        self,
+        user_email: str,
+        username: str,
+        reason: str = '',
+    ) -> dict:
+        """Send notification email to admin when a user cancels their subscription."""
+        admin_email = self._get_admin_email()
+        if not admin_email:
+            return {
+                'success': False,
+                'message': "Admin notification email not configured (set CONTACT_ADMIN_EMAIL)"
+            }
+
+        reason_display = reason if reason else 'No reason provided'
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Cancelled</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="background-color: #E53E3E; padding: 20px 40px;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 700;">
+                    Subscription Cancelled
+                </h1>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 30px 40px;">
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">User:</strong>
+                            <span style="margin-left: 10px;">{username}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">Email:</strong>
+                            <a href="mailto:{user_email}" style="margin-left: 10px; color: #006D9C;">{user_email}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                            <strong style="color: #5f6b76;">Reason:</strong>
+                            <span style="margin-left: 10px;">{reason_display}</span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #333f48; padding: 20px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar Admin Notification<br>
+                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""SUBSCRIPTION CANCELLED
+{'=' * 40}
+
+User: {username}
+Email: {user_email}
+Reason: {reason_display}
+
+{'=' * 40}
+PetVaxCalendar Admin Notification
+{datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [admin_email],
+                "subject": f"[Cancellation] {username} cancelled Pro Care",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Cancellation notification sent successfully",
                 'id': response.get('id')
             }
         except Exception as e:

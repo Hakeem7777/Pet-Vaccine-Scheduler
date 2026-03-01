@@ -70,6 +70,7 @@ class SubscriptionInlineSerializer(serializers.Serializer):
     can_use_multi_pet = serializers.BooleanField()
     dog_limit = serializers.IntegerField(allow_null=True)
     has_ai_chat = serializers.BooleanField()
+    has_no_ads = serializers.BooleanField()
     current_period_start = serializers.DateTimeField()
     current_period_end = serializers.DateTimeField(allow_null=True)
     cancelled_at = serializers.DateTimeField(allow_null=True)

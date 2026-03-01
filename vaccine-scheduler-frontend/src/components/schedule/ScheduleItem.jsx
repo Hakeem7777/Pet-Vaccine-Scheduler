@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { formatDate, getToday } from '../../utils/dateUtils';
 import { addVaccination } from '../../api/vaccinations';
 import ExportModal from '../export/ExportModal';
+import { useAuth } from '../../context/AuthContext';
 
 function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded }) {
+  const { isPro } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -210,17 +212,19 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
 
           {/* Action buttons */}
           <div className="schedule-accordion__actions">
-            <button
-              className="btn btn-sm btn-outline"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExportModalOpen(true);
-              }}
-              type="button"
-            >
-              Export <img src="/Images/generic_icons/export-icon.svg" alt="" width="14" height="14" 
-              style={{marginLeft:"5px"}}/>
-            </button>
+            {isPro && (
+              <button
+                className="btn btn-sm btn-outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExportModalOpen(true);
+                }}
+                type="button"
+              >
+                Export <img src="/Images/generic_icons/export-icon.svg" alt="" width="14" height="14"
+                style={{marginLeft:"5px"}}/>
+              </button>
+            )}
             {!item.contraindicated && (
               <button
                 className="btn btn-sm btn-primary"

@@ -6,7 +6,6 @@ urlpatterns = [
     path('plans/', views.SubscriptionPlansView.as_view(), name='subscription-plans'),
     path('status/', views.SubscriptionStatusView.as_view(), name='subscription-status'),
     path('create/', views.CreateSubscriptionView.as_view(), name='subscription-create'),
-    path('create-one-time/', views.CreateOneTimePaymentView.as_view(), name='subscription-create-one-time'),
     path('cancel/', views.CancelSubscriptionView.as_view(), name='subscription-cancel'),
     path('webhook/', views.PayPalWebhookView.as_view(), name='paypal-webhook'),
 ]

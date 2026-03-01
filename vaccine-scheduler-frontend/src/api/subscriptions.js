@@ -10,11 +10,6 @@ export async function getSubscriptionStatus() {
   return response.data;
 }
 
-export async function createOneTimePayment(orderId) {
-  const response = await client.post('/subscriptions/create-one-time/', { order_id: orderId });
-  return response.data;
-}
-
 export async function createSubscription(data) {
   const response = await client.post('/subscriptions/create/', data);
   return response.data;

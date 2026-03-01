@@ -4,6 +4,7 @@ import VaccinationForm from './VaccinationForm';
 import Modal from '../common/Modal';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { formatDate } from '../../utils/dateUtils';
+import './VaccinationForm.css';
 
 function VaccinationList({ dogId, onUpdate, refreshKey }) {
   const [vaccinations, setVaccinations] = useState([]);
@@ -100,7 +101,14 @@ function VaccinationList({ dogId, onUpdate, refreshKey }) {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add Vaccination Record"
+        title={
+          <span className="vax-modal-title">
+            <span className="vax-modal-title-icon">
+              <img src="/Images/generic_icons/syringe_icon.svg" alt="" width="20" height="20" />
+            </span>
+            Add Vaccination Record
+          </span>
+        }
       >
         <VaccinationForm
           onSubmit={handleAdd}

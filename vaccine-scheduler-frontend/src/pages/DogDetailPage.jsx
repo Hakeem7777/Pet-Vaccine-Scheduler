@@ -231,7 +231,49 @@ function DogDetailPage() {
             </div>
           </div>
 
-          {/* Environment & Health tags below the grid
+        </div>
+
+        {/* Vaccination Progress Card */}
+        <div className="vaccination-progress-card">
+          <div className="vaccination-progress-header">
+            <h3>Vaccination Progress</h3>
+            <span className="vaccination-progress-percent">
+              {dog.vaccination_summary?.progress_percent ?? 0} %
+            </span>
+          </div>
+          <div className="vaccination-progress-details">
+            {dog.vaccination_summary?.next_upcoming && (
+              <p className="vaccination-progress-upcoming">
+                Upcoming Vaccine: {dog.vaccination_summary.next_upcoming.vaccine}
+              </p>
+            )}
+            <p className="vaccination-progress-count">
+              {dog.vaccination_summary?.overdue?.length > 0
+                ? `${dog.vaccination_summary.overdue.length} vaccine(s) overdue`
+                : 'All vaccines on track'}
+            </p>
+          </div>
+          <div className="vaccination-progress-bar-wrapper">
+            <div className="vaccination-progress-bar">
+              <div
+                className="vaccination-progress-fill"
+                style={{ width: `${dog.vaccination_summary?.progress_percent ?? 0}%` }}
+              />
+            </div>
+            <span className="vaccination-progress-bar-label">
+              {dog.vaccination_summary?.progress_percent ?? 0}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Environment & Health Card */}
+      {(dog.env_indoor_only || dog.env_dog_parks || dog.env_daycare_boarding || dog.env_travel_shows || dog.env_tick_exposure ||
+        dog.health_vaccine_reaction === 'yes' || dog.health_immune_condition === 'yes' || dog.health_immunosuppressive_meds === 'yes' ||
+        dog.health_pregnant_breeding === 'yes' || dog.health_prescription_meds === 'yes' || dog.health_chronic_condition === 'yes' ||
+        dog.medical_conditions?.length > 0 ||
+        (dog.medications && Object.keys(dog.medications).some((k) => dog.medications[k]?.length > 0))) && (
+        <div className="dog-health-card">
           {(dog.env_indoor_only || dog.env_dog_parks || dog.env_daycare_boarding || dog.env_travel_shows || dog.env_tick_exposure) && (
             <div className="dog-environment">
               <label>Environment</label>
@@ -243,7 +285,7 @@ function DogDetailPage() {
                 {dog.env_tick_exposure && <span className="env-tag">Tick exposure</span>}
               </div>
             </div>
-          )} */}
+          )}
 
           {(dog.health_vaccine_reaction === 'yes' ||
             dog.health_immune_condition === 'yes' ||
@@ -317,40 +359,7 @@ function DogDetailPage() {
             </div>
           )}
         </div>
-
-        {/* Vaccination Progress Card */}
-        <div className="vaccination-progress-card">
-          <div className="vaccination-progress-header">
-            <h3>Vaccination Progress</h3>
-            <span className="vaccination-progress-percent">
-              {dog.vaccination_summary?.progress_percent ?? 0} %
-            </span>
-          </div>
-          <div className="vaccination-progress-details">
-            {dog.vaccination_summary?.next_upcoming && (
-              <p className="vaccination-progress-upcoming">
-                Upcoming Vaccine: {dog.vaccination_summary.next_upcoming.vaccine}
-              </p>
-            )}
-            <p className="vaccination-progress-count">
-              {dog.vaccination_summary?.overdue?.length > 0
-                ? `${dog.vaccination_summary.overdue.length} vaccine(s) overdue`
-                : 'All vaccines on track'}
-            </p>
-          </div>
-          <div className="vaccination-progress-bar-wrapper">
-            <div className="vaccination-progress-bar">
-              <div
-                className="vaccination-progress-fill"
-                style={{ width: `${dog.vaccination_summary?.progress_percent ?? 0}%` }}
-              />
-            </div>
-            <span className="vaccination-progress-bar-label">
-              {dog.vaccination_summary?.progress_percent ?? 0}%
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
 
       <div className="dog-detail-content">
         <div className="schedule-section" data-tour="schedule-section">

@@ -5,12 +5,10 @@ from django.utils import timezone
 
 class Subscription(models.Model):
     PLAN_CHOICES = [
-        ('plan_unlock', 'Plan Unlock'),
-        ('pro', 'Pro'),
+        ('pro', 'Pro Care'),
     ]
     BILLING_CHOICES = [
-        ('one_time', 'One-Time'),
-        ('annual', 'Annual'),
+        ('monthly', 'Monthly'),
     ]
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -46,23 +44,19 @@ class Subscription(models.Model):
     def is_active(self):
         if self.status != 'active':
             return False
-        # One-time purchases never expire
-        if self.billing_cycle == 'one_time':
-            return True
-        # Annual subscriptions check period end
         if self.current_period_end and self.current_period_end < timezone.now():
             return False
         return True
 
     @property
     def is_paid(self):
-        """Whether the user has any paid plan (plan_unlock or pro)."""
+        """Whether the user has an active Pro Care plan."""
         return self.is_active
 
     @property
     def is_pro(self):
-        """Whether the user has the Pro annual subscription."""
-        return self.is_active and self.plan == 'pro'
+        """Whether the user has an active Pro Care plan."""
+        return self.is_active
 
     @property
     def can_export(self):
@@ -71,8 +65,8 @@ class Subscription(models.Model):
 
     @property
     def can_use_reminders(self):
-        """Automated email reminders - Pro only."""
-        return self.is_pro
+        """Automated email reminders."""
+        return self.is_active
 
     @property
     def can_use_multi_pet(self):
@@ -83,12 +77,17 @@ class Subscription(models.Model):
     def dog_limit(self):
         if not self.is_active:
             return 1  # Free tier
-        return None  # Both paid tiers: unlimited
+        return None  # Pro Care: unlimited
 
     @property
     def has_ai_chat(self):
-        """AI chatbot access - Pro only."""
-        return self.is_pro
+        """AI chatbot access."""
+        return self.is_active
+
+    @property
+    def has_no_ads(self):
+        """Ad-free experience."""
+        return self.is_active
 
 
 class PayPalWebhookEvent(models.Model):

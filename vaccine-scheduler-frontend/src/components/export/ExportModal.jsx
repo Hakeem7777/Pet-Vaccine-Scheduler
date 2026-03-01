@@ -149,6 +149,18 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
     onClose();
   }
 
+  function getActionButtonLabel() {
+    switch (activeTab) {
+      case 'apple':
+      case 'google':
+        return 'Download .ics file';
+      case 'pdf':
+        return 'Download PDF file';
+      default:
+        return null;
+    }
+  }
+
   function renderTabIcon(iconType) {
     switch (iconType) {
       case 'apple':
@@ -166,7 +178,7 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
         );
-            case 'pdf':
+      case 'pdf':
         return (
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
@@ -191,10 +203,10 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
           <div className="export-tab-content">
             <h4>Import to Apple Calendar</h4>
             <ol className="export-steps">
-              <li>Click the "Download" button above</li>
-              <li>Open the downloaded file</li>
+              <li>Click the &quot;Download&quot; button at the above</li>
+              <li>Open the downloaded .ics file</li>
               <li>Apple Calendar will prompt you to add the events</li>
-              <li>Click "Add" to confirm</li>
+              <li>Click &quot;Add&quot; to confirm</li>
             </ol>
           </div>
         );
@@ -207,7 +219,7 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
               <div className="export-step-item">
                 <div className="export-step-number">1</div>
                 <div className="export-step-content">
-                  <p>Click the "Download" button above. The .ics file will download automatically and Google Calendar will open.</p>
+                  <p>Click the &quot;Download&quot; button above. The .ics file will download automatically and Google Calendar will open.</p>
                   <div className="export-screenshot">
                     <img src="/exportSteps/Google/step 1.png" alt="Step 1: Click the download button" />
                   </div>
@@ -217,7 +229,7 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
               <div className="export-step-item">
                 <div className="export-step-number">2</div>
                 <div className="export-step-content">
-                  <p>Click "Select file from your computer" and select the downloaded .ics file</p>
+                  <p>Click &quot;Select file from your computer&quot; and select the downloaded .ics file</p>
                   <div className="export-screenshot">
                     <img src="/exportSteps/Google/step 2.png" alt="Step 2: Select file from computer" />
                   </div>
@@ -237,7 +249,7 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
               <div className="export-step-item">
                 <div className="export-step-number">4</div>
                 <div className="export-step-content">
-                  <p>Click "Import"</p>
+                  <p>Click &quot;Import&quot;</p>
                   <div className="export-screenshot">
                     <img src="/exportSteps/Google/step 4.png" alt="Step 4: Click Import" />
                   </div>
@@ -252,10 +264,9 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
           <div className="export-tab-content">
             <h4>Save as PDF</h4>
             <ol className="export-steps">
-              <li>Click the "Download" button above</li>
-              <li>Select "Save as PDF" as your printer/destination</li>
-              <li>Choose your save location</li>
-              <li>Click "Save" or "Print"</li>
+              <li>Click the &quot;Download PDF file&quot; button at the bottom</li>
+              <li>Select your preferred save location on your device.</li>
+              <li>Click &quot;Save&quot; to download the file.</li>
             </ol>
           </div>
         );
@@ -263,14 +274,14 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
       case 'email':
         return (
           <div className="export-tab-content">
-            <h4>Send {isSingleMode ? 'Vaccine Reminder' : 'Schedule'} via Email</h4>
+            <h4>Send Schedule via Email</h4>
             <p className="export-email-description">
               {isSingleMode ? (
-                <>Send a reminder for {dogName}'s {singleItem?.vaccine} vaccination to one or more email addresses.
+                <>Send a reminder for {dogName}&apos;s {singleItem?.vaccine} vaccination to one or more email addresses.
                 Recipients will receive the vaccine details along with a PDF attachment,
                 calendar invite (ICS file), and a Google Calendar link.</>
               ) : (
-                <>Send {dogName}'s vaccination schedule to one or more email addresses.
+                <>Send {dogName}&apos;s vaccination schedule to one or more email addresses.
                 Recipients will receive the schedule details along with a PDF attachment,
                 calendar invite (ICS file), and a Google Calendar link.</>
               )}
@@ -279,29 +290,32 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
             <form onSubmit={handleSendEmail}>
               <div className="email-list">
                 {emails.map((email, index) => (
-                  <div key={index} className="email-input-row">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => handleEmailChange(index, e.target.value)}
-                      placeholder="Enter email address"
-                      className="email-input"
-                      disabled={isEmailSending}
-                    />
-                    {emails.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveEmail(index)}
-                        className="email-remove-btn"
+                  <div key={index}>
+                    {index === 0 && <label className="email-field-label">Email</label>}
+                    <div className="email-input-row">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => handleEmailChange(index, e.target.value)}
+                        placeholder="Enter Email Address"
+                        className="email-input"
                         disabled={isEmailSending}
-                        aria-label="Remove email"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
-                    )}
+                      />
+                      {emails.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveEmail(index)}
+                          className="email-remove-btn"
+                          disabled={isEmailSending}
+                          aria-label="Remove email"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -313,17 +327,13 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
                   className="email-add-btn"
                   disabled={isEmailSending}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                  Add another email
+                  + Add another
                 </button>
               )}
 
               {emailError && <div className="email-error">{emailError}</div>}
 
-              <div className="export-action">
+              <div className="export-action export-action--right">
                 <button
                   type="submit"
                   className="btn btn-primary"
@@ -335,13 +345,7 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
                       Sending...
                     </>
                   ) : (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 2L11 13"></path>
-                        <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
-                      </svg>
-                      Send Email
-                    </>
+                    'Send Email'
                   )}
                 </button>
               </div>
@@ -354,20 +358,32 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
     }
   }
 
-  const headerActionButton = activeTab !== 'email' ? (
-    <button className="btn btn-primary" onClick={handleMainExport}>
-      <img src="/Images/generic_icons/export-icon.svg" alt="" width="16" height="16" />
-      Download
-    </button>
-  ) : null;
-
-  const modalTitle = isSingleMode
+  const titleText = isSingleMode
     ? `Export ${singleItem?.vaccine || 'Vaccine'}`
     : 'Export Vaccination Schedule';
 
+  const modalTitle = (
+    <span className="export-modal-title">
+      <span className="export-modal-title-icon">
+        <img src="/Images/generic_icons/export-icon.svg" alt="" width="20" height="20" />
+      </span>
+      {titleText}
+    </span>
+  );
+
+  const actionLabel = getActionButtonLabel();
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle} headerAction={headerActionButton}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
       <div className="export-modal">
+        {actionLabel && (
+          <div className="export-action-top">
+            <button className="btn btn-primary btn-pill" onClick={handleMainExport}>
+              {actionLabel}
+            </button>
+          </div>
+        )}
+
         <nav className="export-tabs">
           {TABS.map((tab) => (
             <button

@@ -31,9 +31,11 @@
 /* Pricing Cards */
 .pricing-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-lg);
   align-items: start;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .pricing-card {

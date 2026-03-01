@@ -90,10 +90,11 @@ export function AuthProvider({ children }) {
   const subscription = user?.subscription ?? null;
   const isPaid = subscription?.is_paid ?? false;
   const isPro = subscription?.is_pro ?? false;
-  const subscriptionPlan = isPaid ? subscription.plan : null; // 'plan_unlock' or 'pro'
+  const subscriptionPlan = isPaid ? 'pro' : null;
   const canExport = subscription?.can_export ?? false;
   const canUseReminders = subscription?.can_use_reminders ?? false;
   const hasAiChat = subscription?.has_ai_chat ?? false;
+  const hasNoAds = subscription?.has_no_ads ?? false;
   const dogLimit = isPaid ? subscription.dog_limit : 1; // null = unlimited for paid
 
   // Keep hasActiveSubscription as alias for isPaid (backward compat with Layout/Header)
@@ -115,6 +116,7 @@ export function AuthProvider({ children }) {
     canExport,
     canUseReminders,
     hasAiChat,
+    hasNoAds,
     hasActiveSubscription,
     dogLimit,
     // Methods

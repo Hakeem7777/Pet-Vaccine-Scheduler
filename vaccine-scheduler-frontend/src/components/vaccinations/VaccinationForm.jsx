@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getVaccines } from '../../api/vaccines';
 import { getToday } from '../../utils/dateUtils';
+import './VaccinationForm.css';
 
 function VaccinationForm({ onSubmit, onCancel, isLoading }) {
   const [vaccines, setVaccines] = useState([]);
@@ -55,91 +56,116 @@ function VaccinationForm({ onSubmit, onCancel, isLoading }) {
   }
 
   if (loadingVaccines) {
-    return <p>Loading vaccines...</p>;
+    return <div className="vax-form-loading">Loading vaccines...</div>;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="vaccination-form">
-      {errors.general && <div className="error-message">{errors.general}</div>}
+    <form onSubmit={handleSubmit} className="vax-form">
+      {errors.general && <div className="vax-error-general">{errors.general}</div>}
 
-      <div className="form-group">
-        <label htmlFor="vaccine_id">Vaccine *</label>
-        <select
-          id="vaccine_id"
-          name="vaccine_id"
-          value={formData.vaccine_id}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select vaccine...</option>
-          {vaccines.map((vaccine) => (
-            <option key={vaccine.vaccine_id} value={vaccine.vaccine_id}>
-              {vaccine.name} ({vaccine.type_display})
-            </option>
-          ))}
-        </select>
-        {errors.vaccine_id && <span className="field-error">{errors.vaccine_id}</span>}
-      </div>
+      <div className="vax-form-section">
+        <h4 className="vax-form-section-title">Required Information</h4>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="date_administered">Date Administered *</label>
-          <input
-            type="date"
-            id="date_administered"
-            name="date_administered"
-            value={formData.date_administered}
+        <div className="vax-field">
+          <label htmlFor="vaccine_id" className="vax-label">
+            Vaccine <span className="vax-required">*</span>
+          </label>
+          <select
+            id="vaccine_id"
+            name="vaccine_id"
+            value={formData.vaccine_id}
             onChange={handleChange}
-            max={getToday()}
             required
-          />
-          {errors.date_administered && (
-            <span className="field-error">{errors.date_administered}</span>
-          )}
+            className="vax-select"
+          >
+            <option value="">Select vaccine...</option>
+            {vaccines.map((vaccine) => (
+              <option key={vaccine.vaccine_id} value={vaccine.vaccine_id}>
+                {vaccine.name} ({vaccine.type_display})
+              </option>
+            ))}
+          </select>
+          {errors.vaccine_id && <span className="vax-field-error">{errors.vaccine_id}</span>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="dose_number">Dose Number</label>
+        <div className="vax-row">
+          <div className="vax-field">
+            <label htmlFor="date_administered" className="vax-label">
+              Date Administered <span className="vax-required">*</span>
+            </label>
+            <input
+              type="date"
+              id="date_administered"
+              name="date_administered"
+              value={formData.date_administered}
+              onChange={handleChange}
+              max={getToday()}
+              required
+              className="vax-input"
+            />
+            {errors.date_administered && (
+              <span className="vax-field-error">{errors.date_administered}</span>
+            )}
+          </div>
+
+          <div className="vax-field">
+            <label htmlFor="dose_number" className="vax-label">Dose Number</label>
+            <input
+              type="number"
+              id="dose_number"
+              name="dose_number"
+              value={formData.dose_number}
+              onChange={handleChange}
+              min="1"
+              className="vax-input"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="vax-form-section">
+        <h4 className="vax-form-section-title">Optional Details</h4>
+
+        <div className="vax-field">
+          <label htmlFor="administered_by" className="vax-label">Administered By</label>
           <input
-            type="number"
-            id="dose_number"
-            name="dose_number"
-            value={formData.dose_number}
+            type="text"
+            id="administered_by"
+            name="administered_by"
+            value={formData.administered_by}
             onChange={handleChange}
-            min="1"
+            placeholder="Veterinarian name"
+            className="vax-input"
+          />
+        </div>
+
+        <div className="vax-field">
+          <label htmlFor="notes" className="vax-label">Notes</label>
+          <textarea
+            id="notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            rows="3"
+            className="vax-textarea"
+            placeholder="Any additional notes..."
           />
         </div>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="administered_by">Administered By</label>
-        <input
-          type="text"
-          id="administered_by"
-          name="administered_by"
-          value={formData.administered_by}
-          onChange={handleChange}
-          placeholder="Veterinarian name"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="notes">Notes</label>
-        <textarea
-          id="notes"
-          name="notes"
-          value={formData.notes}
-          onChange={handleChange}
-          rows="3"
-        />
-      </div>
-
-      <div className="form-actions">
-        <button type="button" className="btn btn-outline" onClick={onCancel}>
+      <div className="vax-actions">
+        <button type="button" className="vax-btn-cancel" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Add Vaccination'}
+        <button type="submit" className="vax-btn-submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <span className="vax-btn-spinner"></span>
+              Saving...
+            </>
+          ) : (
+            'Add Vaccination'
+          )}
         </button>
       </div>
     </form>

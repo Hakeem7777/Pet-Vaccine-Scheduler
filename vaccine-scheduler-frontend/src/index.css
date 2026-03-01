@@ -292,6 +292,14 @@ a:hover {
   flex-shrink: 0;
 }
 
+.layout-body {
+  display: flex;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  flex: 1;
+}
+
 .main-content {
   flex: 1;
   padding: var(--spacing-xl);
@@ -1550,7 +1558,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1200;
 }
 
 .modal-content {
@@ -1615,7 +1623,12 @@ a:hover {
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--color-text-muted);
-  padding: var(--spacing-xs);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   transition: background-color 0.2s;
 }
@@ -2894,6 +2907,21 @@ a:hover {
   letter-spacing: 0.05em;
 }
 
+/* Environment & Health Card */
+.dog-health-card {
+  background: #FBFBFB;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.dog-health-card .dog-environment:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 /* Vaccination Progress Card */
 .vaccination-progress-card {
   background: white;
@@ -3117,17 +3145,14 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-md);
-  border-bottom: 2px solid var(--color-neutral-light);
-  padding-bottom: var(--spacing-sm);
-  flex-wrap: wrap;
   gap: var(--spacing-sm);
 }
 
 .schedule-view__header h3 {
-  margin: 0;
+  margin: 0 !important;
   color: #000000;
   border-bottom: none;
-  padding-bottom: 0;
+  padding-bottom: 0 !important;
   font-family: 'Urbanist', sans-serif;
   font-weight: 600;
   font-size: 20px;
@@ -3536,8 +3561,13 @@ a:hover {
 }
 
 .schedule-accordion__vaccine-name {
-  font-weight: 700;
-  font-size: 1rem;
+  font-family: "Urbanist", sans-serif;
+  font-weight: 600;              /* SemiBold */
+  font-size: 18px;
+  line-height: 27px;
+  letter-spacing: 0;
+  vertical-align: middle;
+
   color: var(--color-neutral-dark);
   flex: 1;
   min-width: 0;

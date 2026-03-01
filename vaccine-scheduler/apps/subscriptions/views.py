@@ -1,5 +1,6 @@
 import logging
 import json
+import os
 
 from dateutil import parser as date_parser
 from django.conf import settings
@@ -15,7 +16,6 @@ from .models import Subscription, PayPalWebhookEvent
 from .serializers import (
     SubscriptionSerializer,
     CreateSubscriptionSerializer,
-    CreateOneTimePaymentSerializer,
 )
 from . import paypal
 
@@ -44,10 +44,10 @@ class SubscriptionPlansView(APIView):
                     'No reminders',
                 ],
             },
-            'plan_unlock': {
-                'name': 'Plan Unlock',
+            'pro': {
+                'name': 'Pro Care Plan',
                 'price': '19.99',
-                'billing': 'one-time',
+                'billing': 'month',
                 'features': [
                     'Everything in Free',
                     'Printable PDF vaccine schedule',
@@ -55,22 +55,13 @@ class SubscriptionPlansView(APIView):
                     'Email delivery of your plan',
                     'Unlimited re-downloads',
                     'Multi-pet dashboard',
-                ],
-            },
-            'pro': {
-                'name': 'Pro Care Plan',
-                'price': '29.00',
-                'billing': 'year',
-                'features': [
-                    'Everything in Plan Unlock',
                     'Automated email reminders',
                     'Vaccine history storage',
-                    'Multi-pet profiles',
-                    'Yearly schedule regeneration',
+                    'Schedule regeneration',
                     'Priority updates when guidelines change',
                     'AI-powered vaccine assistant',
                 ],
-                'paypal_plan_id': getattr(settings, 'PAYPAL_PRO_ANNUAL_PLAN_ID', ''),
+                'paypal_plan_id': getattr(settings, 'PAYPAL_PRO_MONTHLY_PLAN_ID', ''),
             },
         }
         return Response(plans)
@@ -89,73 +80,9 @@ class SubscriptionStatusView(APIView):
             return Response(None)
 
 
-class CreateOneTimePaymentView(APIView):
-    """
-    Activate Plan Unlock after PayPal one-time payment approval.
-
-    Frontend creates a PayPal order, user approves, frontend captures,
-    then sends order_id here for verification and activation.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        serializer = CreateOneTimePaymentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        order_id = serializer.validated_data['order_id']
-
-        # Verify with PayPal
-        try:
-            order_data = paypal.get_order_details(order_id)
-        except Exception:
-            logger.exception("Failed to verify PayPal order %s", order_id)
-            return Response(
-                {'error': 'Could not verify payment with PayPal.'},
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
-
-        order_status = order_data.get('status', '').upper()
-        if order_status != 'COMPLETED':
-            return Response(
-                {'error': f'Payment is not completed (status: {order_status}).'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Verify amount
-        purchase_units = order_data.get('purchase_units', [])
-        if purchase_units:
-            amount = purchase_units[0].get('amount', {})
-            paid = amount.get('value', '0')
-            if float(paid) < 19.99:
-                return Response(
-                    {'error': 'Payment amount is incorrect.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        # Create or update subscription (upgrade from free to plan_unlock)
-        sub, created = Subscription.objects.update_or_create(
-            user=request.user,
-            defaults={
-                'plan': 'plan_unlock',
-                'billing_cycle': 'one_time',
-                'status': 'active',
-                'paypal_order_id': order_id,
-                'paypal_subscription_id': None,
-                'current_period_start': timezone.now(),
-                'current_period_end': None,  # Never expires
-                'cancelled_at': None,
-            },
-        )
-
-        return Response(
-            SubscriptionSerializer(sub).data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-
-
 class CreateSubscriptionView(APIView):
     """
-    Activate Pro subscription after PayPal approval.
+    Activate Pro Care subscription after PayPal approval.
 
     The frontend creates the subscription via PayPal JS SDK,
     then sends the subscription_id here for verification and activation.
@@ -193,12 +120,12 @@ class CreateSubscriptionView(APIView):
         period_start = date_parser.isoparse(start_time) if start_time else timezone.now()
         period_end = date_parser.isoparse(next_billing) if next_billing else None
 
-        # Create or update subscription (upgrade to pro)
+        # Create or update subscription
         sub, created = Subscription.objects.update_or_create(
             user=request.user,
             defaults={
                 'plan': 'pro',
-                'billing_cycle': 'annual',
+                'billing_cycle': 'monthly',
                 'status': 'active',
                 'paypal_subscription_id': paypal_sub_id,
                 'current_period_start': period_start,
@@ -207,6 +134,19 @@ class CreateSubscriptionView(APIView):
             },
         )
 
+        # Send admin notification (non-blocking)
+        try:
+            if os.environ.get('RESEND_API_KEY'):
+                from apps.email_service.services import EmailService
+                EmailService().send_subscription_notification(
+                    user_email=request.user.email,
+                    username=request.user.username,
+                    plan='Pro Care',
+                    paypal_subscription_id=paypal_sub_id,
+                )
+        except Exception:
+            logger.warning("Failed to send subscription admin notification for user %s", request.user.email)
+
         return Response(
             SubscriptionSerializer(sub).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
@@ -214,7 +154,7 @@ class CreateSubscriptionView(APIView):
 
 
 class CancelSubscriptionView(APIView):
-    """Cancel the current user's Pro subscription. Plan Unlock cannot be cancelled."""
+    """Cancel the current user's Pro Care subscription."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -232,12 +172,6 @@ class CancelSubscriptionView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if sub.billing_cycle == 'one_time':
-            return Response(
-                {'error': 'One-time purchases cannot be cancelled.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         # Cancel on PayPal
         reason = request.data.get('reason', 'Cancelled by user')
         try:
@@ -249,12 +183,23 @@ class CancelSubscriptionView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        # Downgrade to plan_unlock (they keep one-time features)
-        sub.plan = 'plan_unlock'
-        sub.billing_cycle = 'one_time'
+        # Downgrade to free
+        sub.status = 'cancelled'
         sub.cancelled_at = timezone.now()
         sub.paypal_subscription_id = None
-        sub.save(update_fields=['plan', 'billing_cycle', 'cancelled_at', 'paypal_subscription_id', 'updated_at'])
+        sub.save(update_fields=['status', 'cancelled_at', 'paypal_subscription_id', 'updated_at'])
+
+        # Send admin notification (non-blocking)
+        try:
+            if os.environ.get('RESEND_API_KEY'):
+                from apps.email_service.services import EmailService
+                EmailService().send_cancellation_notification(
+                    user_email=request.user.email,
+                    username=request.user.username,
+                    reason=reason,
+                )
+        except Exception:
+            logger.warning("Failed to send cancellation admin notification for user %s", request.user.email)
 
         return Response(SubscriptionSerializer(sub).data)
 
@@ -334,12 +279,10 @@ class PayPalWebhookView(APIView):
             sub.save(update_fields=['status', 'current_period_end', 'updated_at'])
 
         elif event_type == 'BILLING.SUBSCRIPTION.CANCELLED':
-            # Downgrade to plan_unlock instead of fully cancelling
-            sub.plan = 'plan_unlock'
-            sub.billing_cycle = 'one_time'
+            sub.status = 'cancelled'
             sub.cancelled_at = timezone.now()
             sub.paypal_subscription_id = None
-            sub.save(update_fields=['plan', 'billing_cycle', 'cancelled_at', 'paypal_subscription_id', 'updated_at'])
+            sub.save(update_fields=['status', 'cancelled_at', 'paypal_subscription_id', 'updated_at'])
 
         elif event_type == 'BILLING.SUBSCRIPTION.SUSPENDED':
             sub.status = 'suspended'

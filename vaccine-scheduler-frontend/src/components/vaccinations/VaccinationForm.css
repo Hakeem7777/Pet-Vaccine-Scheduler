@@ -1,0 +1,253 @@
+/* ==========================================
+   VACCINATION FORM - MODERN STYLE
+   Matches ExportModal design language
+   ========================================== */
+
+/* Modal Title with Icon (mirrors .export-modal-title pattern) */
+.vax-modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.vax-modal-title-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 109, 156, 0.1);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vax-modal-title-icon img {
+  filter: brightness(0) saturate(100%) invert(30%) sepia(80%) saturate(700%)
+    hue-rotate(165deg) brightness(90%) contrast(95%);
+}
+
+/* Form Container */
+.vax-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Section Headers */
+.vax-form-section {
+  margin-bottom: var(--spacing-sm);
+}
+
+.vax-form-section-title {
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--spacing-md) 0;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Form Fields */
+.vax-form .vax-field {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Labels */
+.vax-form .vax-label {
+  display: block;
+  font-family: 'Urbanist', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  color: #414651;
+  margin-bottom: var(--spacing-sm);
+}
+
+.vax-form .vax-label .vax-required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+/* Inputs, Selects, Textareas */
+.vax-form .vax-input,
+.vax-form .vax-select,
+.vax-form .vax-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background-color: white;
+  color: var(--color-neutral-dark);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.vax-form .vax-input::placeholder,
+.vax-form .vax-textarea::placeholder {
+  color: #9CA3AF;
+}
+
+.vax-form .vax-input:focus,
+.vax-form .vax-select:focus,
+.vax-form .vax-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 109, 156, 0.1);
+}
+
+/* Enhanced Select Dropdown */
+.vax-form .vax-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235F6B76' d='M6 8.825a.5.5 0 0 1-.354-.146l-4-4a.5.5 0 1 1 .708-.708L6 7.617l3.646-3.646a.5.5 0 1 1 .708.708l-4 4A.5.5 0 0 1 6 8.825z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 12px;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.vax-form .vax-select:disabled {
+  background-color: var(--color-neutral-light);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Textarea */
+.vax-form .vax-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Two-column row (Date + Dose) */
+.vax-form .vax-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+/* Error Messages */
+.vax-form .vax-error-general {
+  margin: 0 0 var(--spacing-md) 0;
+  padding: 0.75rem;
+  background: rgba(229, 62, 62, 0.1);
+  border: 1px solid rgba(229, 62, 62, 0.2);
+  border-radius: var(--radius);
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+
+.vax-form .vax-field-error {
+  display: block;
+  margin-top: var(--spacing-xs);
+  padding: 0.375rem 0.625rem;
+  background: rgba(229, 62, 62, 0.08);
+  border-radius: calc(var(--radius) / 2);
+  color: var(--color-danger);
+  font-size: 0.8rem;
+}
+
+/* Action Buttons */
+.vax-form .vax-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.vax-form .vax-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 22px;
+  border-radius: 10px;
+  border: 1px solid #D9D9D9;
+  background: transparent;
+  color: #252B37;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.vax-form .vax-btn-cancel:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.vax-form .vax-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 44px;
+  padding: 0 20px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 22px;
+  border-radius: 10px;
+  border: none;
+  background-color: var(--color-primary);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.vax-form .vax-btn-submit:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.vax-form .vax-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading State */
+.vax-form-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Spinner inside submit button */
+.vax-btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: vaxSpin 0.8s linear infinite;
+}
+
+@keyframes vaxSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .vax-form .vax-row {
+    grid-template-columns: 1fr;
+  }
+}

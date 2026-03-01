@@ -8,7 +8,7 @@ import useTourStore from '../../store/useTourStore';
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, isAuthenticated, isAdmin, isGuestMode, exitGuestMode, isPaid, subscriptionPlan } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin, isGuestMode, exitGuestMode, isPaid } = useAuth();
   const { guestDog, clearGuestData } = useGuestStore();
   const dogs = useDogStore((state) => state.dogs);
   const { startTour, isRunning } = useTourStore();
@@ -56,10 +56,10 @@ function Header() {
             disabled={isRunning}
             title="Take a guided tour"
           >
-            <svg className="tour-trigger-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="tour-trigger-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
+              <circle cx="12" cy="17" r="0.5" fill="currentColor" />
             </svg>
             <span>Tour</span>
           </button>
@@ -79,6 +79,9 @@ function Header() {
             Pricing
           </Link>
         )}
+        <Link to="/blogs" className="header-nav-link">
+          Blog
+        </Link>
         <Link to="/faq" className="header-nav-link" data-tour="faq-link">
           FAQs
         </Link>
@@ -90,8 +93,8 @@ function Header() {
               {user.first_name || user.username}
               {user.clinic_name && ` - ${user.clinic_name}`}
               {isPaid && (
-                <span className={`plan-badge plan-badge--${subscriptionPlan}`}>
-                  {subscriptionPlan === 'plan_unlock' ? 'Unlocked' : 'Pro'}
+                <span className="plan-badge plan-badge--pro">
+                  Pro
                 </span>
               )}
             </span>

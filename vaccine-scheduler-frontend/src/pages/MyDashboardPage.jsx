@@ -18,6 +18,9 @@ function MyDashboardPage() {
   // Subscription cancel state
   const [cancellingSubscription, setCancellingSubscription] = useState(false);
   const [subMsg, setSubMsg] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelConfirmText, setCancelConfirmText] = useState('');
 
   // Edit mode state
   const [editing, setEditing] = useState(false);
@@ -287,7 +290,7 @@ function MyDashboardPage() {
               <div className="my-dashboard__profile-card">
                 <span className="my-dashboard__profile-label">Billing</span>
                 <span className="my-dashboard__profile-value">
-                  {subscription?.billing_cycle === 'one_time' ? 'One-time purchase' : '$29/year'}
+                  {subscription?.billing_cycle === 'one_time' ? 'One-time purchase' : '$19.99/month'}
                 </span>
               </div>
               {isPro && (
@@ -323,19 +326,10 @@ function MyDashboardPage() {
               {isPro && (
                 <button
                   className="btn btn-outline btn-pill"
-                  onClick={async () => {
-                    if (!window.confirm('Cancel your Pro subscription? You\'ll keep Plan Unlock features (PDF, calendar, AI chat) but lose reminders and history storage.')) return;
-                    setCancellingSubscription(true);
-                    setSubMsg(null);
-                    try {
-                      await subscriptionsApi.cancelSubscription('Cancelled from dashboard');
-                      await refreshUser();
-                      setSubMsg({ type: 'success', text: 'Pro subscription cancelled. You\'ve been downgraded to Plan Unlock.' });
-                    } catch {
-                      setSubMsg({ type: 'error', text: 'Failed to cancel subscription. Please try again.' });
-                    } finally {
-                      setCancellingSubscription(false);
-                    }
+                  onClick={() => {
+                    setCancelReason('');
+                    setCancelConfirmText('');
+                    setShowCancelModal(true);
                   }}
                   disabled={cancellingSubscription}
                 >
@@ -355,10 +349,84 @@ function MyDashboardPage() {
       </div>
 
       {/* Vaccination Reminders */}
-      <div className="my-dashboard__section">
-        <h3 className="my-dashboard__section-title">Vaccination Reminders</h3>
-        <ReminderSettings />
-      </div>
+      {isPro && (
+        <div className="my-dashboard__section">
+          <h3 className="my-dashboard__section-title">Vaccination Reminders</h3>
+          <ReminderSettings />
+        </div>
+      )}
+
+      {/* Cancel Subscription Modal */}
+      {showCancelModal && (
+        <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
+          <div className="modal-content cancel-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="cancel-modal__title">Cancel Your Subscription</h3>
+            <p className="cancel-modal__warning">
+              You will lose access to PDF downloads, calendar export, reminders, AI assistant, and multi-pet dashboard.
+            </p>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (cancelConfirmText !== 'Cancel My Subscription') return;
+                setCancellingSubscription(true);
+                setSubMsg(null);
+                try {
+                  await subscriptionsApi.cancelSubscription(cancelReason || 'No reason provided');
+                  await refreshUser();
+                  setShowCancelModal(false);
+                  setSubMsg({ type: 'success', text: 'Your subscription has been cancelled.' });
+                } catch {
+                  setSubMsg({ type: 'error', text: 'Failed to cancel subscription. Please try again.' });
+                } finally {
+                  setCancellingSubscription(false);
+                }
+              }}
+            >
+              <div className="form-group">
+                <label htmlFor="cancel-reason">Why are you cancelling? (optional)</label>
+                <textarea
+                  id="cancel-reason"
+                  className="input cancel-modal__textarea"
+                  rows={3}
+                  placeholder="Let us know how we can improve..."
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="cancel-confirm">
+                  Type <strong>Cancel My Subscription</strong> to confirm
+                </label>
+                <input
+                  id="cancel-confirm"
+                  type="text"
+                  className="input"
+                  placeholder="Cancel My Subscription"
+                  value={cancelConfirmText}
+                  onChange={(e) => setCancelConfirmText(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="my-dashboard__modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowCancelModal(false)}
+                >
+                  Keep Subscription
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-danger"
+                  disabled={cancelConfirmText !== 'Cancel My Subscription' || cancellingSubscription}
+                >
+                  {cancellingSubscription ? 'Cancelling...' : 'Cancel Subscription'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Password Change Modal */}
       {showPasswordModal && (

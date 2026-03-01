@@ -4,24 +4,20 @@ import './UpgradePrompt.css';
 
 function UpgradePrompt({ feature, currentLimit, onClose }) {
   const navigate = useNavigate();
-  const { isAuthenticated, hasActiveSubscription, subscriptionPlan } = useAuth();
+  const { isAuthenticated, hasActiveSubscription } = useAuth();
 
   const messages = {
     dogs: {
       title: 'Dog Limit Reached',
-      description: hasActiveSubscription
-        ? `Your ${subscriptionPlan === 'basic' ? 'Basic' : ''} plan allows up to ${currentLimit} dogs. Upgrade to Premium for unlimited dogs.`
-        : 'Create a free account and subscribe to add more dogs.',
+      description: 'Subscribe to Pro Care to add unlimited dogs and unlock all features.',
     },
     ai: {
       title: 'AI Chatbot',
-      description: hasActiveSubscription
-        ? 'You\'ve reached your daily AI message limit. Upgrade for more messages.'
-        : 'Subscribe to access the AI-powered vaccine assistant.',
+      description: 'Subscribe to Pro Care to access the AI-powered vaccine assistant.',
     },
     default: {
       title: 'Upgrade Required',
-      description: 'This feature requires an active subscription.',
+      description: 'Subscribe to Pro Care to unlock this feature.',
     },
   };
 
@@ -44,7 +40,7 @@ function UpgradePrompt({ feature, currentLimit, onClose }) {
         )}
         {isAuthenticated ? (
           <button className="btn btn-primary" onClick={() => navigate('/pricing')}>
-            {hasActiveSubscription ? 'Upgrade Plan' : 'View Plans'}
+            View Plans
           </button>
         ) : (
           <button className="btn btn-primary" onClick={() => navigate('/signup')}>

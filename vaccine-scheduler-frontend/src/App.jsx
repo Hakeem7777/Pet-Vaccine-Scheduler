@@ -21,6 +21,8 @@ import PrivacyPage from './pages/PrivacyPage';
 import ContactPage from './pages/ContactPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import BlogsPage from './pages/BlogsPage';
+import BlogDetailPage from './pages/BlogDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const paypalOptions = {
@@ -72,6 +74,10 @@ function App() {
 
             {/* Pricing page - public, with header/footer */}
             <Route path="/pricing" element={<PricingPage />} />
+
+            {/* Blog pages - public, with header/footer */}
+            <Route path="/blogs" element={<BlogsPage />} />
+            <Route path="/blogs/:slug" element={<BlogDetailPage />} />
 
             {/* Personal dashboard - requires authentication */}
             <Route element={<ProtectedRoute />}>

@@ -39,25 +39,7 @@ def _auth_headers():
     }
 
 
-# --- One-Time Orders (Plan Unlock) ---
-
-def capture_order(order_id):
-    """Capture a PayPal order after buyer approval (one-time payment)."""
-    url = f"{_get_base_url()}/v2/checkout/orders/{order_id}/capture"
-    response = requests.post(url, headers=_auth_headers(), timeout=30)
-    response.raise_for_status()
-    return response.json()
-
-
-def get_order_details(order_id):
-    """Fetch order details from PayPal."""
-    url = f"{_get_base_url()}/v2/checkout/orders/{order_id}"
-    response = requests.get(url, headers=_auth_headers(), timeout=30)
-    response.raise_for_status()
-    return response.json()
-
-
-# --- Subscriptions (Pro Plan) ---
+# --- Subscriptions (Pro Care Plan) ---
 
 def get_subscription_details(subscription_id):
     """Fetch subscription details from PayPal."""
