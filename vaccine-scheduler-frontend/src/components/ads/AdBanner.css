@@ -29,8 +29,8 @@
 .ad-banner--top,
 .ad-banner--bottom {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-neutral-light);
+  padding: 0;
+  background: transparent;
 }
 
 .ad-banner__container--horizontal {
@@ -50,13 +50,19 @@
 
 .ad-banner--left,
 .ad-banner--right {
+  position: fixed;
+  top: 88px;
   width: 160px;
-  min-width: 160px;
-  flex-shrink: 0;
   padding: var(--spacing-md) var(--spacing-sm);
-  align-self: flex-start;
-  position: sticky;
-  top: 88px; /* below header (72px) + some spacing */
+  z-index: 100;
+}
+
+.ad-banner--left {
+  left: 0;
+}
+
+.ad-banner--right {
+  right: 0;
 }
 
 .ad-banner__container--vertical {

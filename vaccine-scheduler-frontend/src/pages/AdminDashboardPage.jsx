@@ -1611,7 +1611,7 @@ function AdminDashboardPage() {
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
-              className="admin-tab-search"
+              className="admin-tab-search-input"
               type="text"
               placeholder="Search blogs..."
               value={search}
@@ -1623,7 +1623,7 @@ function AdminDashboardPage() {
         <div className="admin-tab-filter-group">
           <label className="admin-tab-filter-label">Status</label>
           <select
-            className="admin-tab-filter-select"
+            className="admin-filter-select"
             value={f.status || ''}
             onChange={(e) => handleFilterChange('blogs', 'status', e.target.value)}
           >
@@ -1924,7 +1924,7 @@ function AdminDashboardPage() {
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
-              className="admin-tab-search"
+              className="admin-tab-search-input"
               type="text"
               placeholder="Search ads..."
               value={search}
@@ -1936,7 +1936,7 @@ function AdminDashboardPage() {
         <div className="admin-tab-filter-group">
           <label className="admin-tab-filter-label">Position</label>
           <select
-            className="admin-tab-filter-select"
+            className="admin-filter-select"
             value={f.position || ''}
             onChange={(e) => handleFilterChange('ads', 'position', e.target.value)}
           >
@@ -1950,7 +1950,7 @@ function AdminDashboardPage() {
         <div className="admin-tab-filter-group">
           <label className="admin-tab-filter-label">Status</label>
           <select
-            className="admin-tab-filter-select"
+            className="admin-filter-select"
             value={f.is_active || ''}
             onChange={(e) => handleFilterChange('ads', 'is_active', e.target.value)}
           >
@@ -2123,7 +2123,7 @@ function AdminDashboardPage() {
         {renderAdFilterBar()}
 
         {loading ? <LoadingSpinner /> : (
-          <div className="admin-table-container">
+          <div className="admin-table-container admin-table-container--blogs">
             <table className="admin-table">
               <thead>
                 <tr>

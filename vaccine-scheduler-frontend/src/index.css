@@ -292,14 +292,6 @@ a:hover {
   flex-shrink: 0;
 }
 
-.layout-body {
-  display: flex;
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  flex: 1;
-}
-
 .main-content {
   flex: 1;
   padding: var(--spacing-xl);

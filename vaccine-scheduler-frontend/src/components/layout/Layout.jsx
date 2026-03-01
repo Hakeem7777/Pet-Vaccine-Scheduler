@@ -26,14 +26,12 @@ function Layout() {
     <div className="app-layout">
       <Header />
       {!hasNoAds && <AdBanner ads={ads} position="top" />}
-      <div className="layout-body">
-        {!hasNoAds && <AdBanner ads={ads} position="left" />}
-        <main className="main-content">
-          <Outlet />
-        </main>
-        {!hasNoAds && <AdBanner ads={ads} position="right" />}
-      </div>
+      <main className="main-content">
+        <Outlet />
+      </main>
       {!hasNoAds && <AdBanner ads={ads} position="bottom" />}
+      {!hasNoAds && <AdBanner ads={ads} position="left" />}
+      {!hasNoAds && <AdBanner ads={ads} position="right" />}
       <Footer />
       {hasAiChat && (
         <>
