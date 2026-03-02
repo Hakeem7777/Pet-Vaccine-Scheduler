@@ -35,6 +35,7 @@ const TABS = [
   { key: 'contacts', label: 'Contacts' },
   { key: 'blogs', label: 'Blogs' },
   { key: 'ads', label: 'Ads' },
+  { key: 'promo-codes', label: 'Promo Codes' },
   { key: 'tokens', label: 'Token Usage' },
   { key: 'model-tokens', label: 'Model Tokens' },
   { key: 'ai-analytics', label: 'AI Analytics' },
@@ -95,6 +96,13 @@ function AdminDashboardPage() {
   const [adFormData, setAdFormData] = useState(null);
   const [adFormLoading, setAdFormLoading] = useState(false);
   const [openKebabAdId, setOpenKebabAdId] = useState(null);
+  const [promoCodes, setPromoCodes] = useState(null);
+  const [promoFormOpen, setPromoFormOpen] = useState(false);
+  const [promoFormData, setPromoFormData] = useState(null);
+  const [promoFormLoading, setPromoFormLoading] = useState(false);
+  const [openKebabPromoId, setOpenKebabPromoId] = useState(null);
+  const [promoRedemptions, setPromoRedemptions] = useState(null);
+  const [promoRedemptionsOpen, setPromoRedemptionsOpen] = useState(false);
   const quillRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -107,6 +115,7 @@ function AdminDashboardPage() {
     contacts: {},
     blogs: {},
     ads: {},
+    'promo-codes': {},
     tokens: {},
   });
   // Per-chart data and loading state
@@ -147,6 +156,7 @@ function AdminDashboardPage() {
         setOpenKebabDogId(null);
         setOpenKebabBlogId(null);
         setOpenKebabAdId(null);
+        setOpenKebabPromoId(null);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -260,6 +270,11 @@ function AdminDashboardPage() {
         case 'ads': {
           const adsData = await adminApi.getAdminAds(params);
           setAdsList(adsData);
+          break;
+        }
+        case 'promo-codes': {
+          const promoData = await adminApi.getAdminPromoCodes(params);
+          setPromoCodes(promoData);
           break;
         }
         case 'tokens': {
@@ -1836,6 +1851,345 @@ function AdminDashboardPage() {
 
   // ── Ad Handlers & Renderers ─────────────────────────────────────
 
+  // ── Promo Code Handlers ──────────────────────────────────────────
+
+  function handleNewPromo() {
+    setPromoFormData({
+      code: '',
+      duration_days: 30,
+      max_uses: '',
+      is_active: true,
+      expires_at: '',
+    });
+    setPromoFormOpen(true);
+  }
+
+  async function handleEditPromo(id) {
+    try {
+      const promo = await adminApi.getAdminPromoCode(id);
+      setPromoFormData({
+        id: promo.id,
+        code: promo.code,
+        duration_days: promo.duration_days,
+        max_uses: promo.max_uses ?? '',
+        is_active: promo.is_active,
+        expires_at: promo.expires_at ? promo.expires_at.slice(0, 16) : '',
+      });
+      setPromoFormOpen(true);
+    } catch {
+      alert('Failed to load promo code.');
+    }
+  }
+
+  async function handleDeletePromo(id, code) {
+    if (!window.confirm(`Are you sure you want to delete promo code "${code}"?`)) return;
+    try {
+      await adminApi.deleteAdminPromoCode(id);
+      fetchTabData('promo-codes', search, page, filters['promo-codes'] || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to delete promo code.');
+    }
+  }
+
+  async function handleViewRedemptions(id) {
+    try {
+      const data = await adminApi.getAdminPromoCodeRedemptions(id);
+      setPromoRedemptions(data);
+      setPromoRedemptionsOpen(true);
+    } catch {
+      alert('Failed to load redemptions.');
+    }
+  }
+
+  async function handlePromoFormSubmit(e) {
+    e.preventDefault();
+    setPromoFormLoading(true);
+    try {
+      const payload = {
+        code: promoFormData.code,
+        duration_days: parseInt(promoFormData.duration_days) || 1,
+        max_uses: promoFormData.max_uses !== '' ? parseInt(promoFormData.max_uses) : null,
+        is_active: promoFormData.is_active,
+        expires_at: promoFormData.expires_at ? new Date(promoFormData.expires_at).toISOString() : null,
+      };
+
+      if (promoFormData.id) {
+        await adminApi.updateAdminPromoCode(promoFormData.id, payload);
+      } else {
+        await adminApi.createAdminPromoCode(payload);
+      }
+      setPromoFormOpen(false);
+      setPromoFormData(null);
+      fetchTabData('promo-codes', search, 1, filters['promo-codes'] || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || err.response?.data?.code?.[0] || 'Failed to save promo code.');
+    } finally {
+      setPromoFormLoading(false);
+    }
+  }
+
+  function renderPromoFilterBar() {
+    const f = filters['promo-codes'] || {};
+    return (
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Search</label>
+          <div className="admin-tab-search-wrapper">
+            <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              className="admin-tab-search-input"
+              type="text"
+              placeholder="Search promo codes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+            />
+          </div>
+        </div>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Status</label>
+          <select
+            className="admin-filter-select"
+            value={f.is_active || ''}
+            onChange={(e) => handleFilterChange('promo-codes', 'is_active', e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        {Object.keys(f).length > 0 && (
+          <button className="admin-tab-filter-clear" onClick={() => clearFilters('promo-codes')}>
+            Clear Filters
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function renderPromoForm() {
+    const fd = promoFormData || { code: '', duration_days: 30, max_uses: '', is_active: true, expires_at: '' };
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <button className="btn btn-outline btn-sm" onClick={() => { setPromoFormOpen(false); setPromoFormData(null); }}>
+              &larr; Back to List
+            </button>
+            <h2 className="admin-tab-card__title" style={{ marginLeft: '1rem' }}>
+              {fd.id ? 'Edit Promo Code' : 'New Promo Code'}
+            </h2>
+          </div>
+        </div>
+
+        <form className="blog-form" onSubmit={handlePromoFormSubmit}>
+          <div className="blog-form__field">
+            <label className="blog-form__label">Code</label>
+            <input
+              className="blog-form__input"
+              type="text"
+              value={fd.code}
+              onChange={(e) => setPromoFormData({ ...fd, code: e.target.value.toUpperCase() })}
+              required
+              placeholder="e.g. FREEMONTH"
+              style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            />
+          </div>
+
+          <div className="blog-form__row">
+            <div className="blog-form__field">
+              <label className="blog-form__label">Free subscription duration (days)</label>
+              <input
+                className="blog-form__input"
+                type="number"
+                min="1"
+                value={fd.duration_days}
+                onChange={(e) => setPromoFormData({ ...fd, duration_days: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="blog-form__field">
+              <label className="blog-form__label">Max uses</label>
+              <input
+                className="blog-form__input"
+                type="number"
+                min="1"
+                value={fd.max_uses}
+                onChange={(e) => setPromoFormData({ ...fd, max_uses: e.target.value })}
+                placeholder="Leave blank for unlimited"
+              />
+            </div>
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Code expiration date (optional)</label>
+            <input
+              className="blog-form__input"
+              type="datetime-local"
+              value={fd.expires_at}
+              onChange={(e) => setPromoFormData({ ...fd, expires_at: e.target.value })}
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__checkbox-label">
+              <input
+                type="checkbox"
+                checked={fd.is_active}
+                onChange={(e) => setPromoFormData({ ...fd, is_active: e.target.checked })}
+              />
+              Active
+            </label>
+          </div>
+
+          <div className="blog-form__actions">
+            <button type="button" className="btn btn-outline" onClick={() => { setPromoFormOpen(false); setPromoFormData(null); }}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={promoFormLoading || !fd.code.trim()}>
+              {promoFormLoading ? 'Saving...' : (fd.id ? 'Update Promo Code' : 'Create Promo Code')}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  function renderPromoCodes() {
+    if (promoFormOpen) return renderPromoForm();
+
+    const results = promoCodes?.results || [];
+    const totalCount = promoCodes?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Promo Codes</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Code' : 'Codes'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Create and manage promo codes for free subscriptions</p>
+          </div>
+          <button className="btn btn-primary" onClick={handleNewPromo}>
+            + New Promo Code
+          </button>
+        </div>
+
+        {renderPromoFilterBar()}
+
+        {loading ? <LoadingSpinner /> : (
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <SortableHeader label="Code" field="code" currentOrdering={ordering} onSort={handleSort} />
+                  <SortableHeader label="Duration (days)" field="duration_days" currentOrdering={ordering} onSort={handleSort} />
+                  <th>Max Uses</th>
+                  <SortableHeader label="Times Used" field="times_used" currentOrdering={ordering} onSort={handleSort} />
+                  <th>Status</th>
+                  <th>Expires</th>
+                  <SortableHeader label="Created" field="created_at" currentOrdering={ordering} onSort={handleSort} />
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.length === 0 ? (
+                  <tr><td colSpan="8" className="admin-table__empty">No promo codes found.</td></tr>
+                ) : results.map((promo) => (
+                  <tr key={promo.id}>
+                    <td style={{ fontWeight: 600, fontFamily: 'monospace', letterSpacing: '0.05em' }}>{promo.code}</td>
+                    <td>{promo.duration_days}</td>
+                    <td>{promo.max_uses ?? 'Unlimited'}</td>
+                    <td>{promo.times_used}</td>
+                    <td>
+                      <span className={`admin-badge ${promo.is_active && promo.is_valid ? 'admin-badge--active' : 'admin-badge--draft'}`}>
+                        {!promo.is_active ? 'Inactive' : !promo.is_valid ? 'Expired/Full' : 'Active'}
+                      </span>
+                    </td>
+                    <td>{promo.expires_at ? new Date(promo.expires_at).toLocaleDateString() : 'Never'}</td>
+                    <td>{new Date(promo.created_at).toLocaleDateString()}</td>
+                    <td className="admin-kebab-cell">
+                      <button
+                        className="admin-kebab-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenKebabPromoId(openKebabPromoId === promo.id ? null : promo.id);
+                        }}
+                        aria-label="Promo code actions"
+                      >
+                        &#8942;
+                      </button>
+                      {openKebabPromoId === promo.id && (
+                        <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                          <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabPromoId(null); handleEditPromo(promo.id); }}>
+                            Edit
+                          </button>
+                          <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabPromoId(null); handleViewRedemptions(promo.id); }}>
+                            View Redemptions
+                          </button>
+                          <button className="admin-kebab-menu__item admin-kebab-menu__item--danger" onClick={() => { setOpenKebabPromoId(null); handleDeletePromo(promo.id, promo.code); }}>
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {promoCodes && totalPages > 1 && (
+              <div className="admin-tab-pagination">
+                <span className="admin-tab-pagination__info">Page {page} of {totalPages}</span>
+                <div className="admin-tab-pagination__buttons">
+                  <button className="btn btn-outline btn-sm admin-tab-pagination__btn" disabled={page <= 1} onClick={() => handlePageChange(page - 1)}>Previous</button>
+                  <button className="btn btn-outline btn-sm admin-tab-pagination__btn" disabled={page >= totalPages} onClick={() => handlePageChange(page + 1)}>Next</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Redemptions Modal */}
+        <Modal isOpen={promoRedemptionsOpen} onClose={() => { setPromoRedemptionsOpen(false); setPromoRedemptions(null); }} title={`Redemptions for ${promoRedemptions?.code || ''}`}>
+          {promoRedemptions && (
+            <div>
+              {promoRedemptions.results.length === 0 ? (
+                <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem' }}>No redemptions yet.</p>
+              ) : (
+                <table className="admin-table" style={{ fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr>
+                      <th>User Email</th>
+                      <th>Username</th>
+                      <th>Redeemed At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {promoRedemptions.results.map((r) => (
+                      <tr key={r.id}>
+                        <td>{r.user_email}</td>
+                        <td>{r.user_username}</td>
+                        <td>{new Date(r.redeemed_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </Modal>
+      </div>
+    );
+  }
+
   async function handleDeleteAd(id, title) {
     if (!window.confirm(`Are you sure you want to delete ad "${title}"?`)) return;
     try {
@@ -2203,6 +2557,7 @@ function AdminDashboardPage() {
     contacts: renderContacts,
     blogs: renderBlogs,
     ads: renderAds,
+    'promo-codes': renderPromoCodes,
     tokens: renderTokenUsage,
     'model-tokens': renderModelTokens,
     'ai-analytics': renderAIAnalytics,

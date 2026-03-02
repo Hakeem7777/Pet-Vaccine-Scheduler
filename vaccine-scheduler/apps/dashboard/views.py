@@ -22,6 +22,7 @@ from rest_framework.views import APIView
 logger = logging.getLogger(__name__)
 
 from apps.patients.models import Dog
+from apps.subscriptions.models import PromoCode, PromoCodeRedemption
 from apps.vaccinations.models import VaccinationRecord
 from .filters import (
     AdminContactFilter,
@@ -34,6 +35,8 @@ from .models import ContactSubmission, LeadCapture, ReminderPreference, TokenUsa
 from .permissions import IsAdminUser
 from .serializers import (
     AdminDogSerializer,
+    AdminPromoCodeRedemptionSerializer,
+    AdminPromoCodeSerializer,
     AdminUserSerializer,
     AdminVaccinationRecordSerializer,
     ContactSubmissionSerializer,
@@ -717,4 +720,102 @@ class AdminAIModelsView(APIView):
         return Response({
             'models': AVAILABLE_MODELS,
             'default': ANALYTICS_MODEL,
+        })
+
+
+# ── Promo Codes ──────────────────────────────────────────────────
+
+class AdminPromoCodeListCreateView(APIView):
+    """List all promo codes (with search/filter/pagination) or create a new one."""
+    permission_classes = [IsAdminUser]
+
+    PAGE_SIZE = 20
+
+    def get(self, request):
+        qs = PromoCode.objects.all()
+
+        # Search
+        search = request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(code__icontains=search)
+
+        # Filter by active status
+        is_active = request.query_params.get('is_active')
+        if is_active is not None:
+            qs = qs.filter(is_active=is_active.lower() == 'true')
+
+        # Ordering
+        ordering = request.query_params.get('ordering', '-created_at')
+        allowed_ordering = ['created_at', '-created_at', 'code', '-code', 'times_used', '-times_used', 'duration_days', '-duration_days']
+        if ordering in allowed_ordering:
+            qs = qs.order_by(ordering)
+
+        # Pagination
+        total = qs.count()
+        page = int(request.query_params.get('page', 1))
+        start = (page - 1) * self.PAGE_SIZE
+        end = start + self.PAGE_SIZE
+        results = qs[start:end]
+
+        serializer = AdminPromoCodeSerializer(results, many=True)
+        return Response({
+            'count': total,
+            'results': serializer.data,
+        })
+
+    def post(self, request):
+        serializer = AdminPromoCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class AdminPromoCodeDetailView(APIView):
+    """Get, update, or delete a single promo code."""
+    permission_classes = [IsAdminUser]
+
+    def _get_object(self, pk):
+        try:
+            return PromoCode.objects.get(pk=pk)
+        except PromoCode.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        promo = self._get_object(pk)
+        if not promo:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AdminPromoCodeSerializer(promo).data)
+
+    def put(self, request, pk):
+        promo = self._get_object(pk)
+        if not promo:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AdminPromoCodeSerializer(promo, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        promo = self._get_object(pk)
+        if not promo:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        promo.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminPromoCodeRedemptionsView(APIView):
+    """List redemptions for a specific promo code."""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, pk):
+        try:
+            promo = PromoCode.objects.get(pk=pk)
+        except PromoCode.DoesNotExist:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        redemptions = promo.redemptions.select_related('user').all()
+        serializer = AdminPromoCodeRedemptionSerializer(redemptions, many=True)
+        return Response({
+            'code': promo.code,
+            'results': serializer.data,
         })

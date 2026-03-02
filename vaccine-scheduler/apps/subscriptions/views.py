@@ -2,8 +2,11 @@ import logging
 import json
 import os
 
+from datetime import timedelta
+
 from dateutil import parser as date_parser
 from django.conf import settings
+from django.db import models
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -12,10 +15,11 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Subscription, PayPalWebhookEvent
+from .models import Subscription, PayPalWebhookEvent, PromoCode, PromoCodeRedemption
 from .serializers import (
     SubscriptionSerializer,
     CreateSubscriptionSerializer,
+    RedeemPromoCodeSerializer,
 )
 from . import paypal
 
@@ -146,6 +150,93 @@ class CreateSubscriptionView(APIView):
                 )
         except Exception:
             logger.warning("Failed to send subscription admin notification for user %s", request.user.email)
+
+        return Response(
+            SubscriptionSerializer(sub).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+class RedeemPromoCodeView(APIView):
+    """Redeem a promo code to get a free Pro Care subscription."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = RedeemPromoCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        code_value = serializer.validated_data['code'].strip().upper()
+
+        # Look up the promo code
+        try:
+            promo = PromoCode.objects.get(code__iexact=code_value)
+        except PromoCode.DoesNotExist:
+            return Response(
+                {'error': 'Invalid promo code.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check code is active
+        if not promo.is_active:
+            return Response(
+                {'error': 'This promo code is no longer active.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check code hasn't expired
+        if promo.expires_at and promo.expires_at < timezone.now():
+            return Response(
+                {'error': 'This promo code has expired.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check max uses
+        if promo.max_uses is not None and promo.times_used >= promo.max_uses:
+            return Response(
+                {'error': 'This promo code has reached its usage limit.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check user doesn't already have an active subscription
+        try:
+            existing_sub = request.user.subscription
+            if existing_sub.is_active:
+                return Response(
+                    {'error': 'You already have an active subscription.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except Subscription.DoesNotExist:
+            pass
+
+        # Check user hasn't already redeemed this code
+        if PromoCodeRedemption.objects.filter(promo_code=promo, user=request.user).exists():
+            return Response(
+                {'error': 'You have already redeemed this promo code.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Activate subscription
+        now = timezone.now()
+        period_end = now + timedelta(days=promo.duration_days)
+
+        sub, created = Subscription.objects.update_or_create(
+            user=request.user,
+            defaults={
+                'plan': 'pro',
+                'billing_cycle': 'monthly',
+                'status': 'active',
+                'paypal_subscription_id': None,
+                'paypal_order_id': None,
+                'current_period_start': now,
+                'current_period_end': period_end,
+                'cancelled_at': None,
+            },
+        )
+
+        # Record redemption and increment counter
+        PromoCodeRedemption.objects.create(promo_code=promo, user=request.user)
+        promo.times_used = models.F('times_used') + 1
+        promo.save(update_fields=['times_used', 'updated_at'])
 
         return Response(
             SubscriptionSerializer(sub).data,

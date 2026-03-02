@@ -30,3 +30,8 @@ class CreateSubscriptionSerializer(serializers.Serializer):
     subscription_id = serializers.CharField(
         help_text="PayPal subscription ID returned after user approval"
     )
+
+
+class RedeemPromoCodeSerializer(serializers.Serializer):
+    """For redeeming a promo code to get a free subscription."""
+    code = serializers.CharField(max_length=50)

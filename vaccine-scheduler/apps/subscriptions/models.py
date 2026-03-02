@@ -90,6 +90,52 @@ class Subscription(models.Model):
         return self.is_active
 
 
+class PromoCode(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    duration_days = models.PositiveIntegerField(help_text="Number of days the free subscription lasts")
+    max_uses = models.PositiveIntegerField(null=True, blank=True, help_text="Leave blank for unlimited uses")
+    times_used = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="When the code itself expires")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'promo_codes'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.code} ({self.duration_days} days)"
+
+    @property
+    def is_valid(self):
+        if not self.is_active:
+            return False
+        if self.expires_at and self.expires_at < timezone.now():
+            return False
+        if self.max_uses is not None and self.times_used >= self.max_uses:
+            return False
+        return True
+
+
+class PromoCodeRedemption(models.Model):
+    promo_code = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name='redemptions')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='promo_redemptions',
+    )
+    redeemed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'promo_code_redemptions'
+        unique_together = ('promo_code', 'user')
+        ordering = ['-redeemed_at']
+
+    def __str__(self):
+        return f"{self.user.email} redeemed {self.promo_code.code}"
+
+
 class PayPalWebhookEvent(models.Model):
     event_id = models.CharField(max_length=255, unique=True)
     event_type = models.CharField(max_length=255)

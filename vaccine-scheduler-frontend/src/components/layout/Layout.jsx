@@ -10,28 +10,29 @@ import ChatWindow from '../chat/ChatWindow';
 import GuidedTour from '../tour/GuidedTour';
 
 function Layout() {
-  const { hasAiChat, hasNoAds, isLoading } = useAuth();
+  const { hasAiChat, hasNoAds, isAdmin, isLoading } = useAuth();
   const [ads, setAds] = useState([]);
+  const hideAds = hasNoAds || isAdmin;
 
   useEffect(() => {
     if (isLoading) return;
-    if (!hasNoAds) {
+    if (!hideAds) {
       getActiveAds()
         .then(setAds)
         .catch(() => setAds([]));
     }
-  }, [isLoading, hasNoAds]);
+  }, [isLoading, hideAds]);
 
   return (
     <div className="app-layout">
       <Header />
-      {!hasNoAds && <AdBanner ads={ads} position="top" />}
+      {!hideAds && <AdBanner ads={ads} position="top" />}
       <main className="main-content">
         <Outlet />
       </main>
-      {!hasNoAds && <AdBanner ads={ads} position="bottom" />}
-      {!hasNoAds && <AdBanner ads={ads} position="left" />}
-      {!hasNoAds && <AdBanner ads={ads} position="right" />}
+      {!hideAds && <AdBanner ads={ads} position="bottom" />}
+      {!hideAds && <AdBanner ads={ads} position="left" />}
+      {!hideAds && <AdBanner ads={ads} position="right" />}
       <Footer />
       {hasAiChat && (
         <>

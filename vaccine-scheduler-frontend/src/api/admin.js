@@ -180,3 +180,34 @@ export async function updateAdminAd(id, data) {
 export async function deleteAdminAd(id) {
   await client.delete(`/admin-panel/advertisements/${id}/`);
 }
+
+// ── Promo Code Admin API ────────────────────────────────────────
+
+export async function getAdminPromoCodes(params = {}) {
+  const response = await client.get('/admin-panel/promo-codes/', { params });
+  return response.data;
+}
+
+export async function getAdminPromoCode(id) {
+  const response = await client.get(`/admin-panel/promo-codes/${id}/`);
+  return response.data;
+}
+
+export async function createAdminPromoCode(data) {
+  const response = await client.post('/admin-panel/promo-codes/', data);
+  return response.data;
+}
+
+export async function updateAdminPromoCode(id, data) {
+  const response = await client.put(`/admin-panel/promo-codes/${id}/`, data);
+  return response.data;
+}
+
+export async function deleteAdminPromoCode(id) {
+  await client.delete(`/admin-panel/promo-codes/${id}/`);
+}
+
+export async function getAdminPromoCodeRedemptions(id) {
+  const response = await client.get(`/admin-panel/promo-codes/${id}/redemptions/`);
+  return response.data;
+}

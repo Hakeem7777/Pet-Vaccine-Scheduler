@@ -7,5 +7,6 @@ urlpatterns = [
     path('status/', views.SubscriptionStatusView.as_view(), name='subscription-status'),
     path('create/', views.CreateSubscriptionView.as_view(), name='subscription-create'),
     path('cancel/', views.CancelSubscriptionView.as_view(), name='subscription-cancel'),
+    path('redeem-promo/', views.RedeemPromoCodeView.as_view(), name='redeem-promo'),
     path('webhook/', views.PayPalWebhookView.as_view(), name='paypal-webhook'),
 ]

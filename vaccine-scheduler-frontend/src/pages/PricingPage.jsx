@@ -29,6 +29,13 @@ function PricingPage() {
   const [processingPlan, setProcessingPlan] = useState(null);
   const [{ isPending: isPayPalPending }] = usePayPalScriptReducer();
 
+  // Promo code state
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState(null);
+  const [promoSuccess, setPromoSuccess] = useState(null);
+
   useEffect(() => {
     loadPlans();
   }, []);
@@ -58,6 +65,27 @@ function PricingPage() {
       setError('Failed to activate your subscription. Please contact support.');
     } finally {
       setProcessingPlan(null);
+    }
+  }
+
+  async function handlePromoRedeem(e) {
+    e.preventDefault();
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoError(null);
+    setPromoSuccess(null);
+    try {
+      await subscriptionsApi.redeemPromoCode(promoCode.trim());
+      await refreshUser();
+      setPromoSuccess('Promo code redeemed! You now have Pro Care access.');
+      setPromoCode('');
+      setTimeout(() => navigate('/home'), 2000);
+    } catch (err) {
+      setPromoError(
+        err.response?.data?.error || 'Failed to redeem promo code. Please try again.'
+      );
+    } finally {
+      setPromoLoading(false);
     }
   }
 
@@ -192,6 +220,58 @@ function PricingPage() {
             </div>
           </div>
         </div>
+
+        {/* Promo Code Section */}
+        {isAuthenticated && !isPaid && (
+          <div className="pricing-promo">
+            {!promoOpen ? (
+              <button
+                className="pricing-promo__toggle"
+                onClick={() => setPromoOpen(true)}
+              >
+                Have a promo code?
+              </button>
+            ) : (
+              <div className="pricing-promo__form-wrapper">
+                <h3 className="pricing-promo__title">Redeem Promo Code</h3>
+                {promoSuccess && (
+                  <div className="pricing-promo__success">{promoSuccess}</div>
+                )}
+                {promoError && (
+                  <div className="pricing-promo__error">{promoError}</div>
+                )}
+                <form className="pricing-promo__form" onSubmit={handlePromoRedeem}>
+                  <input
+                    type="text"
+                    className="pricing-promo__input"
+                    placeholder="Enter promo code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    disabled={promoLoading}
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-primary pricing-promo__btn"
+                    disabled={promoLoading || !promoCode.trim()}
+                  >
+                    {promoLoading ? 'Redeeming...' : 'Redeem'}
+                  </button>
+                </form>
+                <button
+                  className="pricing-promo__cancel"
+                  onClick={() => {
+                    setPromoOpen(false);
+                    setPromoError(null);
+                    setPromoSuccess(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Comparison Table */}
         <div className="pricing-comparison">

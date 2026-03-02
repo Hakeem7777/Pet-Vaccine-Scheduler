@@ -19,3 +19,8 @@ export async function cancelSubscription(reason) {
   const response = await client.post('/subscriptions/cancel/', { reason });
   return response.data;
 }
+
+export async function redeemPromoCode(code) {
+  const response = await client.post('/subscriptions/redeem-promo/', { code });
+  return response.data;
+}

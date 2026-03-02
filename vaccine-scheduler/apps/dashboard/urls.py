@@ -19,6 +19,9 @@ from .views import (
     AdminTokenUsageStatsView,
     AdminAIAnalyticsView,
     AdminAIModelsView,
+    AdminPromoCodeListCreateView,
+    AdminPromoCodeDetailView,
+    AdminPromoCodeRedemptionsView,
 )
 
 app_name = 'dashboard'
@@ -45,4 +48,9 @@ urlpatterns = [
     path('admin-panel/token-usage/stats/', AdminTokenUsageStatsView.as_view(), name='admin-token-usage-stats'),
     path('admin-panel/ai-analytics/', AdminAIAnalyticsView.as_view(), name='admin-ai-analytics'),
     path('admin-panel/ai-models/', AdminAIModelsView.as_view(), name='admin-ai-models'),
+
+    # Promo codes
+    path('admin-panel/promo-codes/', AdminPromoCodeListCreateView.as_view(), name='admin-promo-codes'),
+    path('admin-panel/promo-codes/<int:pk>/', AdminPromoCodeDetailView.as_view(), name='admin-promo-code-detail'),
+    path('admin-panel/promo-codes/<int:pk>/redemptions/', AdminPromoCodeRedemptionsView.as_view(), name='admin-promo-code-redemptions'),
 ]

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from apps.patients.models import Dog
+from apps.subscriptions.models import PromoCode, PromoCodeRedemption
 from apps.vaccinations.models import VaccinationRecord
 from .models import ContactSubmission, ReminderPreference, TokenUsage
 
@@ -144,3 +145,29 @@ class ReminderPreferenceSerializer(serializers.ModelSerializer):
         if value not in available_timezones():
             raise serializers.ValidationError(f'Invalid timezone: {value}')
         return value
+
+
+class AdminPromoCodeSerializer(serializers.ModelSerializer):
+    redemption_count = serializers.IntegerField(source='times_used', read_only=True)
+    is_valid = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = PromoCode
+        fields = [
+            'id', 'code', 'duration_days', 'max_uses', 'times_used',
+            'is_active', 'is_valid', 'expires_at', 'redemption_count',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'times_used', 'created_at', 'updated_at']
+
+    def validate_code(self, value):
+        return value.strip().upper()
+
+
+class AdminPromoCodeRedemptionSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    user_username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = PromoCodeRedemption
+        fields = ['id', 'user_email', 'user_username', 'redeemed_at']
