@@ -18,7 +18,9 @@ RUN npm ci --only=production=false
 COPY vaccine-scheduler-frontend/ ./
 
 # Build the frontend with production API URL (relative path for same-origin)
+ARG VITE_PAYPAL_CLIENT_ID
 ENV VITE_API_BASE_URL=/api
+ENV VITE_PAYPAL_CLIENT_ID=${VITE_PAYPAL_CLIENT_ID}
 RUN npm run build
 
 # ============================================

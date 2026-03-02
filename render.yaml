@@ -67,6 +67,10 @@ services:
       - key: GUNICORN_TIMEOUT
         value: "120"
 
+      # PayPal (set live client ID in Render dashboard)
+      - key: VITE_PAYPAL_CLIENT_ID
+        sync: false  # Must be set manually in dashboard
+
       # Python settings
       - key: PYTHONUNBUFFERED
         value: "1"
