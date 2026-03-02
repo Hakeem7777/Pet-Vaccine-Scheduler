@@ -9,4 +9,5 @@ urlpatterns = [
     path('cancel/', views.CancelSubscriptionView.as_view(), name='subscription-cancel'),
     path('redeem-promo/', views.RedeemPromoCodeView.as_view(), name='redeem-promo'),
     path('webhook/', views.PayPalWebhookView.as_view(), name='paypal-webhook'),
+    path('pdf-export/record/', views.RecordPdfExportView.as_view(), name='pdf-export-record'),
 ]

@@ -3,6 +3,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 
+from apps.storage.validators import validate_image_file, validate_media_file
+
 
 class BlogPost(models.Model):
     STATUS_CHOICES = [
@@ -22,6 +24,7 @@ class BlogPost(models.Model):
         upload_to='blog/featured/',
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -68,7 +71,7 @@ class BlogPost(models.Model):
 
 
 class BlogMedia(models.Model):
-    file = models.FileField(upload_to='blog/media/')
+    file = models.FileField(upload_to='blog/media/', validators=[validate_media_file])
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

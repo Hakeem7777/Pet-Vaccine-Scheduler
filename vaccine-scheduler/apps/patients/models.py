@@ -5,6 +5,8 @@ import datetime
 from django.conf import settings
 from django.db import models
 
+from apps.storage.validators import validate_image_file
+
 
 class Dog(models.Model):
     """
@@ -65,7 +67,8 @@ class Dog(models.Model):
         upload_to='dogs/images/',
         null=True,
         blank=True,
-        help_text="Photo of the dog"
+        help_text="Photo of the dog",
+        validators=[validate_image_file],
     )
 
     # Living environment flags (for risk assessment)

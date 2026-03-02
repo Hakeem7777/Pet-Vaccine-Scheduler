@@ -44,3 +44,7 @@ reportlab>=4.0.0
 
 # Image processing
 Pillow>=10.0
+
+# Cloud storage (Cloudflare R2)
+django-storages[s3]>=1.14
+boto3>=1.34

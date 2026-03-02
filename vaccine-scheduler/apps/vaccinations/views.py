@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.patients.models import Dog
+from apps.patients.views import get_visible_dogs_queryset
 from .models import Vaccine, VaccinationRecord
 from .serializers import (
     VaccineSerializer,
@@ -53,10 +54,10 @@ class VaccinationRecordViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_dog(self) -> Dog:
-        """Get the dog and verify ownership."""
+        """Get the dog and verify ownership and visibility."""
         dog_id = self.kwargs.get('dog_id')
         return get_object_or_404(
-            Dog.objects.filter(owner=self.request.user),
+            get_visible_dogs_queryset(self.request.user),
             pk=dog_id
         )
 
@@ -116,9 +117,9 @@ class ScheduleView(APIView):
             "generated_at": "2025-12-08T10:30:00Z"
         }
         """
-        # Verify dog ownership
+        # Verify dog ownership and visibility
         dog = get_object_or_404(
-            Dog.objects.filter(owner=request.user),
+            get_visible_dogs_queryset(request.user),
             pk=dog_id
         )
 
@@ -178,7 +179,7 @@ class HistoryAnalysisView(APIView):
         }
         """
         dog = get_object_or_404(
-            Dog.objects.filter(owner=request.user),
+            get_visible_dogs_queryset(request.user),
             pk=dog_id
         )
 

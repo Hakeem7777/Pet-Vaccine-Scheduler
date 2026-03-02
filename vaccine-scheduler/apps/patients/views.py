@@ -9,6 +9,27 @@ from .models import Dog
 from .serializers import DogSerializer, DogCreateSerializer, DogDetailSerializer
 
 
+def get_visible_dogs_queryset(user):
+    """
+    Return dogs visible to this user based on subscription status.
+    Active subscription: all dogs. Free/cancelled/expired: newest dog only.
+    Dogs are never deleted, just filtered from API responses.
+    """
+    all_dogs = Dog.objects.filter(owner=user)
+
+    has_active_sub = False
+    try:
+        has_active_sub = user.subscription.is_active
+    except Exception:
+        pass
+
+    if has_active_sub:
+        return all_dogs
+
+    newest_dog_id = all_dogs.order_by('-created_at').values('id')[:1]
+    return all_dogs.filter(id__in=newest_dog_id)
+
+
 class DogViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing dogs (patients).
@@ -24,8 +45,8 @@ class DogViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Filter dogs to only show those owned by the current user."""
-        return Dog.objects.filter(owner=self.request.user).prefetch_related(
+        """Filter dogs to only show those visible to the current user."""
+        return get_visible_dogs_queryset(self.request.user).prefetch_related(
             'vaccination_records', 'vaccination_records__vaccine'
         )
 

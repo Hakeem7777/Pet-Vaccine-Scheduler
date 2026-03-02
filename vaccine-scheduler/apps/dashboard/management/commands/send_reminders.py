@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.dashboard.models import ReminderPreference, ReminderLog
-from apps.patients.models import Dog
+from apps.patients.views import get_visible_dogs_queryset
 from apps.vaccinations.services import scheduler_service
 
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ class Command(BaseCommand):
             if user_local_hour != pref.preferred_hour:
                 continue
 
-            dogs = Dog.objects.filter(owner=user)
+            dogs = get_visible_dogs_queryset(user)
 
             if not dogs.exists():
                 continue

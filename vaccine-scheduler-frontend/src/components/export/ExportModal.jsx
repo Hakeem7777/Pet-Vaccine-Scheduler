@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Modal from '../common/Modal';
 import { exportAllToICS, exportToGoogleCalendar, exportSingleToICS, generateGoogleCalendarUrl } from '../../utils/calendarExport';
 import { sendScheduleEmail } from '../../api/email';
+import { recordPdfExport } from '../../api/subscriptions';
+import { useAuth } from '../../context/AuthContext';
 import './ExportModal.css';
 
 const ALL_TABS = [
@@ -29,12 +31,15 @@ const SINGLE_TABS = [
  * @param {object} singleItem - Optional: single vaccine item to export (excludes PDF tab)
  */
 function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem = null }) {
+  const { isPro, canExportPdf, refreshUser } = useAuth();
   const isSingleMode = singleItem !== null;
   const TABS = isSingleMode ? SINGLE_TABS : ALL_TABS;
   const [activeTab, setActiveTab] = useState('apple');
   const [emails, setEmails] = useState(['']);
   const [emailError, setEmailError] = useState('');
   const [isEmailSending, setIsEmailSending] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
 
   function handleExportICS() {
     if (isSingleMode) {
@@ -53,13 +58,27 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
     }
   }
 
-  function handleExportPDF() {
-    // PDF export only available for full schedule
+  async function handleExportPDF() {
     if (isSingleMode) return;
-    onClose();
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    setPdfError(null);
+    setPdfExporting(true);
+
+    try {
+      await recordPdfExport();
+      onClose();
+      refreshUser();
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    } catch (error) {
+      if (error.response?.status === 403) {
+        setPdfError('You\u2019ve used your free PDF export. Upgrade to Pro Care for unlimited exports.');
+      } else {
+        setPdfError('Failed to export PDF. Please try again.');
+      }
+    } finally {
+      setPdfExporting(false);
+    }
   }
 
   function handleMainExport() {
@@ -146,6 +165,7 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
   function handleClose() {
     setEmails(['']);
     setEmailError('');
+    setPdfError(null);
     onClose();
   }
 
@@ -263,6 +283,15 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
         return (
           <div className="export-tab-content">
             <h4>Save as PDF</h4>
+            {!isPro && (
+              <p className="export-pdf-notice" style={{ color: canExportPdf ? 'var(--color-secondary)' : 'var(--color-muted)', marginBottom: 'var(--spacing-sm)', fontSize: '0.9rem' }}>
+                {canExportPdf
+                  ? 'You have 1 free PDF export. This will use it.'
+                  : <>You\u2019ve used your free PDF export. <a href="/pricing">Upgrade to Pro Care</a> for unlimited exports.</>
+                }
+              </p>
+            )}
+            {pdfError && <p style={{ color: 'var(--color-danger)', marginBottom: 'var(--spacing-sm)', fontSize: '0.9rem' }}>{pdfError}</p>}
             <ol className="export-steps">
               <li>Click the &quot;Download PDF file&quot; button at the bottom</li>
               <li>Select your preferred save location on your device.</li>
@@ -372,14 +401,19 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
   );
 
   const actionLabel = getActionButtonLabel();
+  const isPdfDisabled = activeTab === 'pdf' && (!canExportPdf && !isPro);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
       <div className="export-modal">
         {actionLabel && (
           <div className="export-action-top">
-            <button className="btn btn-primary btn-pill" onClick={handleMainExport}>
-              {actionLabel}
+            <button
+              className="btn btn-primary btn-pill"
+              onClick={handleMainExport}
+              disabled={isPdfDisabled || pdfExporting}
+            >
+              {pdfExporting && activeTab === 'pdf' ? 'Exporting...' : actionLabel}
             </button>
           </div>
         )}

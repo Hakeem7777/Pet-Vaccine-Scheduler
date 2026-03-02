@@ -24,3 +24,8 @@ export async function redeemPromoCode(code) {
   const response = await client.post('/subscriptions/redeem-promo/', { code });
   return response.data;
 }
+
+export async function recordPdfExport() {
+  const response = await client.post('/subscriptions/pdf-export/record/');
+  return response.data;
+}

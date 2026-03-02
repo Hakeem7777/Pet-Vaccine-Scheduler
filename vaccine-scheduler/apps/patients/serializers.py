@@ -118,12 +118,12 @@ class DogCreateSerializer(serializers.ModelSerializer):
     def validate_image(self, value):
         """Validate image file size and type."""
         if value:
-            max_size = 100 * 1024 * 1024  # 100MB
-            if value.size > max_size:
-                raise serializers.ValidationError("Image file size cannot exceed 100MB.")
-            allowed_types = ['image/jpeg', 'image/png']
-            if hasattr(value, 'content_type') and value.content_type not in allowed_types:
-                raise serializers.ValidationError("Only PNG and JPG images are allowed.")
+            from apps.storage.validators import validate_image_file
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_image_file(value)
+            except DjangoValidationError as e:
+                raise serializers.ValidationError(e.message)
         return value
 
     def to_internal_value(self, data):

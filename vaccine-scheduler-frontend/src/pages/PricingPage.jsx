@@ -140,7 +140,7 @@ function PricingPage() {
               <li className="pricing-feature">{CHECK_ICON} On-screen timeline view</li>
               <li className="pricing-feature">{CHECK_ICON} Core &amp; lifestyle recommendations</li>
               <li className="pricing-feature">{CHECK_ICON} Plain-language explanations</li>
-              <li className="pricing-feature pricing-feature--disabled">{X_ICON} No PDF download</li>
+              <li className="pricing-feature">{CHECK_ICON} 1 free PDF export</li>
               <li className="pricing-feature pricing-feature--disabled">{X_ICON} No calendar export</li>
               <li className="pricing-feature pricing-feature--disabled">{X_ICON} No reminders</li>
               <li className="pricing-feature pricing-feature--disabled">{X_ICON} No AI assistant</li>
@@ -308,7 +308,7 @@ function PricingPage() {
                 </tr>
                 <tr>
                   <td>PDF exports</td>
-                  <td>0</td>
+                  <td>1</td>
                   <td className="pricing-table--highlight">Unlimited</td>
                 </tr>
                 <tr>

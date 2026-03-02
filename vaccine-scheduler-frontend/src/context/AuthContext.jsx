@@ -97,6 +97,11 @@ export function AuthProvider({ children }) {
   const hasNoAds = subscription?.has_no_ads ?? false;
   const dogLimit = isPaid ? subscription.dog_limit : 1; // null = unlimited for paid
 
+  // PDF export: free authenticated users get 1, Pro gets unlimited, guests get 0
+  const FREE_PDF_LIMIT = 1;
+  const pdfExportsUsed = user?.pdf_exports_used ?? 0;
+  const canExportPdf = !!user && !isGuestMode && (isPro || pdfExportsUsed < FREE_PDF_LIMIT);
+
   // Keep hasActiveSubscription as alias for isPaid (backward compat with Layout/Header)
   const hasActiveSubscription = isPaid;
 
@@ -119,6 +124,8 @@ export function AuthProvider({ children }) {
     hasNoAds,
     hasActiveSubscription,
     dogLimit,
+    canExportPdf,
+    pdfExportsUsed,
     // Methods
     login,
     register,

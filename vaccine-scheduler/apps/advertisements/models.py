@@ -1,5 +1,7 @@
 from django.db import models
 
+from apps.storage.validators import validate_image_file
+
 
 class Advertisement(models.Model):
     POSITION_CHOICES = [
@@ -10,7 +12,7 @@ class Advertisement(models.Model):
     ]
 
     title = models.CharField(max_length=255, help_text='Admin label for identification')
-    image = models.ImageField(upload_to='ads/')
+    image = models.ImageField(upload_to='ads/', validators=[validate_image_file])
     link_url = models.URLField(blank=True, help_text='URL to open when ad is clicked')
     position = models.CharField(max_length=10, choices=POSITION_CHOICES)
     is_active = models.BooleanField(default=True)

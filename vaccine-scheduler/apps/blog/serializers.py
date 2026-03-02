@@ -1,5 +1,31 @@
+import re
+
+from django.core.files.storage import default_storage
 from rest_framework import serializers
+
+from apps.storage import get_file_url
 from .models import BlogPost, BlogMedia
+
+# Pattern to match /media/blog/media/... URLs in HTML content
+_MEDIA_URL_RE = re.compile(r'(?:https?://[^/]+)?/media/(blog/media/[^\s"\'<>]+)')
+
+
+def _rewrite_content_media_urls(html):
+    """
+    Replace /media/blog/media/... references in HTML with fresh storage URLs.
+    For R2 this produces signed URLs; for local storage it's a no-op passthrough.
+    """
+    if not html:
+        return html
+
+    def _replace(match):
+        relative_path = match.group(1)
+        try:
+            return default_storage.url(relative_path)
+        except Exception:
+            return match.group(0)
+
+    return _MEDIA_URL_RE.sub(_replace, html)
 
 
 class BlogPostAdminSerializer(serializers.ModelSerializer):
@@ -17,12 +43,12 @@ class BlogPostAdminSerializer(serializers.ModelSerializer):
         read_only_fields = ['slug', 'author', 'published_at', 'created_at', 'updated_at']
 
     def get_featured_image_url(self, obj):
-        if obj.featured_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.featured_image.url)
-            return obj.featured_image.url
-        return None
+        return get_file_url(obj.featured_image, self.context.get('request'))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['content'] = _rewrite_content_media_urls(data.get('content'))
+        return data
 
 
 class BlogPostListSerializer(serializers.ModelSerializer):
@@ -37,12 +63,7 @@ class BlogPostListSerializer(serializers.ModelSerializer):
         ]
 
     def get_featured_image_url(self, obj):
-        if obj.featured_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.featured_image.url)
-            return obj.featured_image.url
-        return None
+        return get_file_url(obj.featured_image, self.context.get('request'))
 
 
 class BlogPostPublicSerializer(serializers.ModelSerializer):
@@ -64,12 +85,12 @@ class BlogPostPublicSerializer(serializers.ModelSerializer):
         return obj.author.username
 
     def get_featured_image_url(self, obj):
-        if obj.featured_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.featured_image.url)
-            return obj.featured_image.url
-        return None
+        return get_file_url(obj.featured_image, self.context.get('request'))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['content'] = _rewrite_content_media_urls(data.get('content'))
+        return data
 
 
 class BlogPostPublicListSerializer(serializers.ModelSerializer):
@@ -91,12 +112,7 @@ class BlogPostPublicListSerializer(serializers.ModelSerializer):
         return obj.author.username
 
     def get_featured_image_url(self, obj):
-        if obj.featured_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.featured_image.url)
-            return obj.featured_image.url
-        return None
+        return get_file_url(obj.featured_image, self.context.get('request'))
 
 
 class BlogMediaSerializer(serializers.ModelSerializer):
@@ -108,7 +124,4 @@ class BlogMediaSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
     def get_url(self, obj):
-        request = self.context.get('request')
-        if request:
-            return request.build_absolute_uri(obj.file.url)
-        return obj.file.url
+        return get_file_url(obj.file, self.context.get('request'))

@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.contrib.auth import get_user_model
 from .models import Subscription, PayPalWebhookEvent, PromoCode, PromoCodeRedemption
 from .serializers import (
     SubscriptionSerializer,
@@ -41,9 +42,9 @@ class SubscriptionPlansView(APIView):
                     'On-screen timeline view',
                     'Core & lifestyle vaccine recommendations',
                     'Plain-language explanations',
+                    '1 free PDF export',
                 ],
                 'limitations': [
-                    'No PDF download',
                     'No calendar export',
                     'No reminders',
                 ],
@@ -263,16 +264,17 @@ class CancelSubscriptionView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Cancel on PayPal
+        # Cancel on PayPal (skip for promo-code subscriptions with no PayPal ID)
         reason = request.data.get('reason', 'Cancelled by user')
-        try:
-            paypal.cancel_subscription(sub.paypal_subscription_id, reason)
-        except Exception:
-            logger.exception("Failed to cancel PayPal subscription %s", sub.paypal_subscription_id)
-            return Response(
-                {'error': 'Could not cancel subscription with PayPal.'},
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
+        if sub.paypal_subscription_id:
+            try:
+                paypal.cancel_subscription(sub.paypal_subscription_id, reason)
+            except Exception:
+                logger.exception("Failed to cancel PayPal subscription %s", sub.paypal_subscription_id)
+                return Response(
+                    {'error': 'Could not cancel subscription with PayPal.'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
 
         # Downgrade to free
         sub.status = 'cancelled'
@@ -390,3 +392,52 @@ class PayPalWebhookView(APIView):
                 sub.current_period_end = date_parser.isoparse(next_billing)
                 sub.status = 'active'
                 sub.save(update_fields=['status', 'current_period_end', 'updated_at'])
+
+
+class RecordPdfExportView(APIView):
+    """Record a PDF export. Free users get 1; Pro users get unlimited."""
+    permission_classes = [IsAuthenticated]
+
+    FREE_PDF_LIMIT = 1
+
+    def post(self, request):
+        user = request.user
+        User = get_user_model()
+
+        is_pro = False
+        try:
+            is_pro = user.subscription.is_pro
+        except Subscription.DoesNotExist:
+            pass
+
+        if is_pro:
+            User.objects.filter(pk=user.pk).update(
+                pdf_exports_used=models.F('pdf_exports_used') + 1
+            )
+            user.refresh_from_db(fields=['pdf_exports_used'])
+            return Response({
+                'allowed': True,
+                'pdf_exports_used': user.pdf_exports_used,
+                'pdf_export_limit': None,
+            })
+
+        # Free user: atomic check-and-increment to prevent race conditions
+        updated = User.objects.filter(
+            pk=user.pk,
+            pdf_exports_used__lt=self.FREE_PDF_LIMIT,
+        ).update(pdf_exports_used=models.F('pdf_exports_used') + 1)
+
+        if updated == 0:
+            user.refresh_from_db(fields=['pdf_exports_used'])
+            return Response({
+                'allowed': False,
+                'pdf_exports_used': user.pdf_exports_used,
+                'pdf_export_limit': self.FREE_PDF_LIMIT,
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        user.refresh_from_db(fields=['pdf_exports_used'])
+        return Response({
+            'allowed': True,
+            'pdf_exports_used': user.pdf_exports_used,
+            'pdf_export_limit': self.FREE_PDF_LIMIT,
+        })

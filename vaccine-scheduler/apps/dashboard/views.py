@@ -22,6 +22,7 @@ from rest_framework.views import APIView
 logger = logging.getLogger(__name__)
 
 from apps.patients.models import Dog
+from apps.patients.views import get_visible_dogs_queryset
 from apps.subscriptions.models import PromoCode, PromoCodeRedemption
 from apps.vaccinations.models import VaccinationRecord
 from .filters import (
@@ -56,17 +57,18 @@ class ClientDashboardView(APIView):
 
     def get(self, request):
         user = request.user
-        dogs = Dog.objects.filter(owner=user).prefetch_related('vaccination_records')
+        dogs = get_visible_dogs_queryset(user).prefetch_related('vaccination_records')
+        visible_dog_ids = dogs.values_list('id', flat=True)
         recent_vaccinations = (
             VaccinationRecord.objects
-            .filter(dog__owner=user)
+            .filter(dog__id__in=visible_dog_ids)
             .select_related('dog', 'vaccine')
             .order_by('-date_administered')[:5]
         )
 
         return Response({
             'dog_count': dogs.count(),
-            'vaccination_count': VaccinationRecord.objects.filter(dog__owner=user).count(),
+            'vaccination_count': VaccinationRecord.objects.filter(dog__id__in=visible_dog_ids).count(),
             'dogs_summary': DashboardDogSummarySerializer(dogs, many=True).data,
             'recent_vaccinations': DashboardRecentVaccinationSerializer(recent_vaccinations, many=True).data,
         })

@@ -103,34 +103,18 @@ class AdminBlogMediaUploadView(APIView):
     permission_classes = [IsAdminUser]
     parser_classes = [MultiPartParser, FormParser]
 
-    ALLOWED_TYPES = {
-        'image': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-        'video': ['video/mp4', 'video/webm', 'video/ogg'],
-        'audio': ['audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/mp3'],
-    }
-    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
-
     def post(self, request):
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        from apps.storage.validators import validate_media_file
+
         file = request.FILES.get('file')
         if not file:
             return Response({'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if file.size > self.MAX_FILE_SIZE:
-            return Response(
-                {'error': 'File too large. Maximum size is 50MB.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        content_type = file.content_type
-        all_allowed = []
-        for types in self.ALLOWED_TYPES.values():
-            all_allowed.extend(types)
-
-        if content_type not in all_allowed:
-            return Response(
-                {'error': f'Unsupported file type: {content_type}'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        try:
+            validate_media_file(file)
+        except DjangoValidationError as e:
+            return Response({'error': e.message}, status=status.HTTP_400_BAD_REQUEST)
 
         media = BlogMedia.objects.create(file=file, uploaded_by=request.user)
         serializer = BlogMediaSerializer(media, context={'request': request})

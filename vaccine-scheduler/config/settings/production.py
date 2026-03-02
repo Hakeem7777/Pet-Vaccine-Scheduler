@@ -77,7 +77,9 @@ MIDDLEWARE.append('config.middleware.PermissionsPolicyMiddleware')
 # Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES["staticfiles"] = {
+    "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+}
 
 # Frontend build directory (React SPA)
 FRONTEND_BUILD_DIR = BASE_DIR / 'frontend_build'

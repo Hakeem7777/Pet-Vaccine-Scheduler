@@ -35,6 +35,7 @@ class User(AbstractUser):
     )
     has_seen_dashboard_tour = models.BooleanField(default=False)
     has_seen_schedule_tour = models.BooleanField(default=False)
+    pdf_exports_used = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

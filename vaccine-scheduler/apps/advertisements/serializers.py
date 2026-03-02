@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from apps.storage import get_file_url
 from .models import Advertisement
 
 
@@ -15,12 +17,7 @@ class AdvertisementAdminSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def get_image_url(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
+        return get_file_url(obj.image, self.context.get('request'))
 
 
 class AdvertisementPublicSerializer(serializers.ModelSerializer):
@@ -31,9 +28,4 @@ class AdvertisementPublicSerializer(serializers.ModelSerializer):
         fields = ['id', 'image_url', 'link_url', 'position']
 
     def get_image_url(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
+        return get_file_url(obj.image, self.context.get('request'))

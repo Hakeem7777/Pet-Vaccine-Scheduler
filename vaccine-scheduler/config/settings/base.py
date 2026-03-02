@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'apps.subscriptions',
     'apps.blog',
     'apps.advertisements',
+    'apps.storage',
 ]
 
 MIDDLEWARE = [
@@ -146,9 +147,35 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# File upload size limits (for blog media uploads)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+# File upload size limits (50MB images, 100MB videos)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+
+# Cloudflare R2 Storage Configuration
+R2_ACCESS_KEY_ID = os.getenv('R2_ACCESS_KEY_ID', '')
+R2_SECRET_ACCESS_KEY = os.getenv('R2_SECRET_ACCESS_KEY', '')
+R2_BUCKET_NAME = os.getenv('R2_BUCKET_NAME', '')
+R2_ENDPOINT_URL = os.getenv('R2_ENDPOINT_URL', '')
+R2_SIGNED_URL_EXPIRY = int(os.getenv('R2_SIGNED_URL_EXPIRY', '600'))
+
+if R2_ACCESS_KEY_ID and R2_ENDPOINT_URL:
+    STORAGES = {
+        "default": {
+            "BACKEND": "apps.storage.backends.R2MediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
 # Django REST Framework configuration
 REST_FRAMEWORK = {

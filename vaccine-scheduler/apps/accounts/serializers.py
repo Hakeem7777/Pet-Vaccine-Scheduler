@@ -88,8 +88,9 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'clinic_name', 'phone', 'is_staff', 'date_joined', 'created_at', 'updated_at',
             'has_seen_dashboard_tour', 'has_seen_schedule_tour', 'subscription',
+            'pdf_exports_used',
         ]
-        read_only_fields = ['id', 'date_joined', 'created_at', 'updated_at', 'is_staff', 'subscription']
+        read_only_fields = ['id', 'date_joined', 'created_at', 'updated_at', 'is_staff', 'subscription', 'pdf_exports_used']
 
     def get_subscription(self, obj):
         try:
