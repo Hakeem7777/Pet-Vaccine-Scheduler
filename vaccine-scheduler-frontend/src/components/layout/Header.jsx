@@ -82,6 +82,9 @@ function Header() {
         <Link to="/blogs" className="header-nav-link">
           Blog
         </Link>
+        <Link to="/help" className="header-nav-link">
+          Help
+        </Link>
         <Link to="/faq" className="header-nav-link" data-tour="faq-link">
           FAQs
         </Link>

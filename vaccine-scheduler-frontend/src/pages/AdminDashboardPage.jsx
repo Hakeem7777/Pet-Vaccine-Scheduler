@@ -35,6 +35,7 @@ const TABS = [
   { key: 'contacts', label: 'Contacts' },
   { key: 'blogs', label: 'Blogs' },
   { key: 'ads', label: 'Ads' },
+  { key: 'help-videos', label: 'Help Videos' },
   { key: 'promo-codes', label: 'Promo Codes' },
   { key: 'tokens', label: 'Token Usage' },
   { key: 'model-tokens', label: 'Model Tokens' },
@@ -55,6 +56,18 @@ const AI_SUGGESTIONS = [
 const GRAPH_CHARTS = ['user_registrations', 'vaccinations_over_time', 'vaccine_type_distribution', 'top_breeds', 'age_distribution'];
 const TOKEN_CHART_MAP = { token_over_time: 'over_time', token_per_user: 'per_user', per_model_over_time: 'per_model_over_time' };
 const PAGE_SIZE = 20;
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024;  // 50 MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
+
+function validateFileSize(file, maxSize) {
+  if (!file) return true;
+  if (file.size > maxSize) {
+    const maxMB = maxSize / (1024 * 1024);
+    alert(`File "${file.name}" is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed size is ${maxMB} MB.`);
+    return false;
+  }
+  return true;
+}
 
 function SortableHeader({ label, field, currentOrdering, onSort }) {
   const isAsc = currentOrdering === field;
@@ -96,6 +109,11 @@ function AdminDashboardPage() {
   const [adFormData, setAdFormData] = useState(null);
   const [adFormLoading, setAdFormLoading] = useState(false);
   const [openKebabAdId, setOpenKebabAdId] = useState(null);
+  const [helpVideos, setHelpVideos] = useState(null);
+  const [helpVideoFormOpen, setHelpVideoFormOpen] = useState(false);
+  const [helpVideoFormData, setHelpVideoFormData] = useState(null);
+  const [helpVideoFormLoading, setHelpVideoFormLoading] = useState(false);
+  const [openKebabHelpVideoId, setOpenKebabHelpVideoId] = useState(null);
   const [promoCodes, setPromoCodes] = useState(null);
   const [promoFormOpen, setPromoFormOpen] = useState(false);
   const [promoFormData, setPromoFormData] = useState(null);
@@ -115,6 +133,7 @@ function AdminDashboardPage() {
     contacts: {},
     blogs: {},
     ads: {},
+    'help-videos': {},
     'promo-codes': {},
     tokens: {},
   });
@@ -156,6 +175,7 @@ function AdminDashboardPage() {
         setOpenKebabDogId(null);
         setOpenKebabBlogId(null);
         setOpenKebabAdId(null);
+        setOpenKebabHelpVideoId(null);
         setOpenKebabPromoId(null);
       }
     }
@@ -270,6 +290,11 @@ function AdminDashboardPage() {
         case 'ads': {
           const adsData = await adminApi.getAdminAds(params);
           setAdsList(adsData);
+          break;
+        }
+        case 'help-videos': {
+          const helpData = await adminApi.getAdminHelpVideos(params);
+          setHelpVideos(helpData);
           break;
         }
         case 'promo-codes': {
@@ -1574,6 +1599,7 @@ function AdminDashboardPage() {
           input.onchange = async () => {
             const file = input.files[0];
             if (file) {
+              if (!validateFileSize(file, MAX_IMAGE_SIZE)) return;
               try {
                 const result = await adminApi.uploadBlogMedia(file);
                 const quill = this.quill;
@@ -1593,6 +1619,7 @@ function AdminDashboardPage() {
           input.onchange = async () => {
             const file = input.files[0];
             if (file) {
+              if (!validateFileSize(file, MAX_VIDEO_SIZE)) return;
               try {
                 const result = await adminApi.uploadBlogMedia(file);
                 const quill = this.quill;
@@ -1713,7 +1740,11 @@ function AdminDashboardPage() {
               className="blog-form__input"
               type="file"
               accept="image/*"
-              onChange={(e) => setBlogFormData({ ...fd, featured_image: e.target.files[0] || null })}
+              onChange={(e) => {
+                const file = e.target.files[0] || null;
+                if (file && !validateFileSize(file, MAX_IMAGE_SIZE)) { e.target.value = ''; return; }
+                setBlogFormData({ ...fd, featured_image: file });
+              }}
             />
             {(fd.featured_image || fd.existing_image_url) && (
               <img
@@ -1850,6 +1881,343 @@ function AdminDashboardPage() {
   }
 
   // ── Ad Handlers & Renderers ─────────────────────────────────────
+
+  // ── Help Video Handlers & Renderers ───────────────────────────────
+
+  async function handleDeleteHelpVideo(id, title) {
+    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
+    try {
+      await adminApi.deleteAdminHelpVideo(id);
+      fetchTabData('help-videos', search, page, filters['help-videos'] || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to delete help video.');
+    }
+  }
+
+  async function handleEditHelpVideo(id) {
+    try {
+      const video = await adminApi.getAdminHelpVideo(id);
+      setHelpVideoFormData({
+        id: video.id,
+        title: video.title,
+        description: video.description || '',
+        video_url: video.video_url || '',
+        video_file: null,
+        existing_video_file_url: video.video_file_url,
+        thumbnail: null,
+        existing_thumbnail_url: video.thumbnail_url,
+        status: video.status,
+        ordering: video.ordering ?? 0,
+      });
+      setHelpVideoFormOpen(true);
+    } catch {
+      alert('Failed to load help video.');
+    }
+  }
+
+  function handleNewHelpVideo() {
+    setHelpVideoFormData({
+      title: '',
+      description: '',
+      video_url: '',
+      video_file: null,
+      existing_video_file_url: null,
+      thumbnail: null,
+      existing_thumbnail_url: null,
+      status: 'draft',
+      ordering: 0,
+    });
+    setHelpVideoFormOpen(true);
+  }
+
+  async function handleHelpVideoFormSubmit(e) {
+    e.preventDefault();
+    setHelpVideoFormLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', helpVideoFormData.title);
+      formData.append('description', helpVideoFormData.description);
+      formData.append('video_url', helpVideoFormData.video_url);
+      formData.append('status', helpVideoFormData.status);
+      formData.append('ordering', helpVideoFormData.ordering);
+      if (helpVideoFormData.video_file instanceof File) {
+        formData.append('video_file', helpVideoFormData.video_file);
+      }
+      if (helpVideoFormData.thumbnail instanceof File) {
+        formData.append('thumbnail', helpVideoFormData.thumbnail);
+      }
+
+      if (helpVideoFormData.id) {
+        await adminApi.updateAdminHelpVideo(helpVideoFormData.id, formData);
+      } else {
+        await adminApi.createAdminHelpVideo(formData);
+      }
+      setHelpVideoFormOpen(false);
+      setHelpVideoFormData(null);
+      fetchTabData('help-videos', search, 1, filters['help-videos'] || {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to save help video.');
+    } finally {
+      setHelpVideoFormLoading(false);
+    }
+  }
+
+  function renderHelpVideoFilterBar() {
+    const f = filters['help-videos'] || {};
+    return (
+      <div className="admin-tab-filter-bar">
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Search</label>
+          <div className="admin-tab-search-wrapper">
+            <svg className="admin-tab-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              className="admin-tab-search-input"
+              type="text"
+              placeholder="Search help videos..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+            />
+          </div>
+        </div>
+        <div className="admin-tab-filter-group">
+          <label className="admin-tab-filter-label">Status</label>
+          <select
+            className="admin-filter-select"
+            value={f.status || ''}
+            onChange={(e) => handleFilterChange('help-videos', 'status', e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
+        {Object.keys(f).length > 0 && (
+          <button className="admin-tab-filter-clear" onClick={() => clearFilters('help-videos')}>
+            Clear Filters
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function renderHelpVideoForm() {
+    const fd = helpVideoFormData || { title: '', description: '', video_url: '', video_file: null, existing_video_file_url: null, thumbnail: null, existing_thumbnail_url: null, status: 'draft', ordering: 0 };
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <button className="btn btn-outline btn-sm" onClick={() => { setHelpVideoFormOpen(false); setHelpVideoFormData(null); }}>
+              &larr; Back to List
+            </button>
+            <h2 className="admin-tab-card__title" style={{ marginLeft: '1rem' }}>
+              {fd.id ? 'Edit Help Video' : 'New Help Video'}
+            </h2>
+          </div>
+        </div>
+
+        <form className="blog-form" onSubmit={handleHelpVideoFormSubmit}>
+          <div className="blog-form__field">
+            <label className="blog-form__label">Title</label>
+            <input
+              className="blog-form__input"
+              type="text"
+              value={fd.title}
+              onChange={(e) => setHelpVideoFormData({ ...fd, title: e.target.value })}
+              required
+              placeholder="Enter video title..."
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Description</label>
+            <textarea
+              className="blog-form__textarea"
+              value={fd.description}
+              onChange={(e) => setHelpVideoFormData({ ...fd, description: e.target.value })}
+              placeholder="Short summary for listing cards..."
+              maxLength={500}
+              rows={3}
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Video File</label>
+            <input
+              className="blog-form__input"
+              type="file"
+              accept="video/*"
+              onChange={(e) => {
+                const file = e.target.files[0] || null;
+                if (file && !validateFileSize(file, MAX_VIDEO_SIZE)) { e.target.value = ''; return; }
+                setHelpVideoFormData({ ...fd, video_file: file });
+              }}
+            />
+            {fd.existing_video_file_url && !fd.video_file && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Current video file uploaded. Upload a new file to replace it.</p>
+            )}
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Video URL (YouTube or external)</label>
+            <input
+              className="blog-form__input"
+              type="url"
+              value={fd.video_url}
+              onChange={(e) => setHelpVideoFormData({ ...fd, video_url: e.target.value })}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Thumbnail</label>
+            <input
+              className="blog-form__input"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0] || null;
+                if (file && !validateFileSize(file, MAX_IMAGE_SIZE)) { e.target.value = ''; return; }
+                setHelpVideoFormData({ ...fd, thumbnail: file });
+              }}
+            />
+            {(fd.thumbnail || fd.existing_thumbnail_url) && (
+              <img
+                className="blog-form__image-preview"
+                src={fd.thumbnail instanceof File ? URL.createObjectURL(fd.thumbnail) : fd.existing_thumbnail_url}
+                alt="Thumbnail preview"
+              />
+            )}
+          </div>
+
+          <div className="blog-form__row">
+            <div className="blog-form__field" style={{ flex: 1 }}>
+              <label className="blog-form__label">Status</label>
+              <select
+                className="blog-form__select"
+                value={fd.status}
+                onChange={(e) => setHelpVideoFormData({ ...fd, status: e.target.value })}
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+            <div className="blog-form__field" style={{ flex: 1 }}>
+              <label className="blog-form__label">Display Order</label>
+              <input
+                className="blog-form__input"
+                type="number"
+                min="0"
+                value={fd.ordering}
+                onChange={(e) => setHelpVideoFormData({ ...fd, ordering: parseInt(e.target.value, 10) || 0 })}
+              />
+            </div>
+          </div>
+
+          <div className="blog-form__actions">
+            <button type="button" className="btn btn-outline" onClick={() => { setHelpVideoFormOpen(false); setHelpVideoFormData(null); }}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={helpVideoFormLoading || !fd.title.trim()}>
+              {helpVideoFormLoading ? 'Saving...' : (fd.id ? 'Update Video' : 'Create Video')}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  function renderHelpVideos() {
+    if (helpVideoFormOpen) return renderHelpVideoForm();
+
+    const results = helpVideos?.results || [];
+    const totalCount = helpVideos?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Help Videos</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Video' : 'Videos'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Manage tutorial videos</p>
+          </div>
+          <button className="btn btn-primary" onClick={handleNewHelpVideo}>
+            + New Video
+          </button>
+        </div>
+
+        {renderHelpVideoFilterBar()}
+
+        {loading ? <LoadingSpinner /> : (
+          <>
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <SortableHeader label="Title" field="title" currentOrdering={ordering} onSort={handleSort} />
+                    <th>Status</th>
+                    <th>Source</th>
+                    <th>Order</th>
+                    <SortableHeader label="Published" field="published_at" currentOrdering={ordering} onSort={handleSort} />
+                    <SortableHeader label="Created" field="created_at" currentOrdering={ordering} onSort={handleSort} />
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.length === 0 ? (
+                    <tr><td colSpan="7" className="admin-table__empty">No help videos found.</td></tr>
+                  ) : results.map((video) => (
+                    <tr key={video.id}>
+                      <td className="admin-table__title-cell">{video.title}</td>
+                      <td>
+                        <span className={`admin-badge ${video.status === 'published' ? 'admin-badge--active' : 'admin-badge--draft'}`}>
+                          {video.status === 'published' ? 'Published' : 'Draft'}
+                        </span>
+                      </td>
+                      <td>{video.has_video_file ? 'File' : ''}{video.has_video_file && video.video_url ? ' + ' : ''}{video.video_url ? 'URL' : ''}{!video.has_video_file && !video.video_url ? '-' : ''}</td>
+                      <td>{video.ordering}</td>
+                      <td>{video.published_at ? new Date(video.published_at).toLocaleDateString() : '-'}</td>
+                      <td>{new Date(video.created_at).toLocaleDateString()}</td>
+                      <td className="admin-kebab-cell">
+                          <button
+                            className="admin-kebab-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenKebabHelpVideoId(openKebabHelpVideoId === video.id ? null : video.id);
+                            }}
+                            aria-label="Help video actions"
+                          >
+                            &#8942;
+                          </button>
+                          {openKebabHelpVideoId === video.id && (
+                            <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                              <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabHelpVideoId(null); handleEditHelpVideo(video.id); }}>
+                                Edit
+                              </button>
+                              <button className="admin-kebab-menu__item admin-kebab-menu__item--danger" onClick={() => { setOpenKebabHelpVideoId(null); handleDeleteHelpVideo(video.id, video.title); }}>
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {renderTabPagination(helpVideos, totalPages)}
+          </>
+        )}
+      </div>
+    );
+  }
 
   // ── Promo Code Handlers ──────────────────────────────────────────
 
@@ -2356,7 +2724,11 @@ function AdminDashboardPage() {
               className="blog-form__input"
               type="file"
               accept="image/*"
-              onChange={(e) => setAdFormData({ ...fd, image: e.target.files[0] || null })}
+              onChange={(e) => {
+                const file = e.target.files[0] || null;
+                if (file && !validateFileSize(file, MAX_IMAGE_SIZE)) { e.target.value = ''; return; }
+                setAdFormData({ ...fd, image: file });
+              }}
               required={!fd.id}
             />
             {(fd.image || fd.existing_image_url) && (
@@ -2557,6 +2929,7 @@ function AdminDashboardPage() {
     contacts: renderContacts,
     blogs: renderBlogs,
     ads: renderAds,
+    'help-videos': renderHelpVideos,
     'promo-codes': renderPromoCodes,
     tokens: renderTokenUsage,
     'model-tokens': renderModelTokens,

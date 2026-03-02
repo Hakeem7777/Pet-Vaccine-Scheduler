@@ -211,3 +211,35 @@ export async function getAdminPromoCodeRedemptions(id) {
   const response = await client.get(`/admin-panel/promo-codes/${id}/redemptions/`);
   return response.data;
 }
+
+// ── Help Video Admin API ──────────────────────────────────────
+
+export async function getAdminHelpVideos(params = {}) {
+  const response = await client.get('/admin-panel/help-videos/', { params });
+  return response.data;
+}
+
+export async function getAdminHelpVideo(id) {
+  const response = await client.get(`/admin-panel/help-videos/${id}/`);
+  return response.data;
+}
+
+export async function createAdminHelpVideo(data) {
+  const isFormData = data instanceof FormData;
+  const response = await client.post('/admin-panel/help-videos/', data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
+  return response.data;
+}
+
+export async function updateAdminHelpVideo(id, data) {
+  const isFormData = data instanceof FormData;
+  const response = await client.put(`/admin-panel/help-videos/${id}/`, data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
+  return response.data;
+}
+
+export async function deleteAdminHelpVideo(id) {
+  await client.delete(`/admin-panel/help-videos/${id}/`);
+}

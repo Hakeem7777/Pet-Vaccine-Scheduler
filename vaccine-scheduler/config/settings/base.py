@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'apps.blog',
     'apps.advertisements',
     'apps.storage',
+    'apps.help_videos',
 ]
 
 MIDDLEWARE = [

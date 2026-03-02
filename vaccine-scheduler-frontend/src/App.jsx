@@ -23,6 +23,8 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import BlogsPage from './pages/BlogsPage';
 import BlogDetailPage from './pages/BlogDetailPage';
+import HelpPage from './pages/HelpPage';
+import HelpVideoDetailPage from './pages/HelpVideoDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const paypalOptions = {
@@ -78,6 +80,10 @@ function App() {
             {/* Blog pages - public, with header/footer */}
             <Route path="/blogs" element={<BlogsPage />} />
             <Route path="/blogs/:slug" element={<BlogDetailPage />} />
+
+            {/* Help video pages - public, with header/footer */}
+            <Route path="/help" element={<HelpPage />} />
+            <Route path="/help/:slug" element={<HelpVideoDetailPage />} />
 
             {/* Personal dashboard - requires authentication */}
             <Route element={<ProtectedRoute />}>

@@ -1,0 +1,221 @@
+/* ── Help Videos Listing Page ─────────────────────────────────── */
+
+.help-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.help-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xxl);
+}
+
+.help-header h1 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  color: var(--color-text-main);
+  margin-bottom: var(--spacing-sm);
+}
+
+.help-header p {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.help-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.help-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.help-card__thumbnail {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.help-card__thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.help-card__thumbnail-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  opacity: 0.15;
+}
+
+.help-card__play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.help-card__play-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: #fff;
+  margin-left: 3px;
+}
+
+.help-card__body {
+  padding: var(--spacing-lg);
+}
+
+.help-card__title {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 var(--spacing-sm);
+  color: var(--color-text-main);
+}
+
+.help-card__description {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0 0 var(--spacing-md);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.help-card__meta {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.help-pagination {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.help-empty {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+}
+
+/* ── Help Video Detail Page ──────────────────────────────────── */
+
+.help-detail-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.help-detail__back {
+  display: inline-block;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: var(--spacing-lg);
+}
+
+.help-detail__back:hover {
+  text-decoration: underline;
+}
+
+.help-detail__video-container {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-xl);
+  background: #000;
+}
+
+.help-detail__video-container video {
+  width: 100%;
+  display: block;
+}
+
+.help-detail__video-container iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  display: block;
+}
+
+.help-detail__title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin: 0 0 var(--spacing-md);
+  line-height: 1.3;
+}
+
+.help-detail__meta {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.help-detail__description {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--color-text-main);
+}
+
+.help-detail__error {
+  text-align: center;
+  padding: var(--spacing-xxl);
+}
+
+.help-detail__error p {
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+  font-size: 1.1rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .help-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .help-detail__title {
+    font-size: 1.5rem;
+  }
+}
