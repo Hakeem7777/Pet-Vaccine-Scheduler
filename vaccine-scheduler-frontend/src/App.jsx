@@ -26,6 +26,9 @@ import BlogDetailPage from './pages/BlogDetailPage';
 import HelpPage from './pages/HelpPage';
 import HelpVideoDetailPage from './pages/HelpVideoDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
+import LandingPageB2C from './pages/LandingPageB2C';
+import LandingPageB2B from './pages/LandingPageB2B';
+import ScrollToTop from './components/common/ScrollToTop';
 
 const paypalOptions = {
   'client-id': import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
@@ -38,71 +41,73 @@ function App() {
 
   return (
     <ErrorBoundary>
-    <PayPalScriptProvider options={paypalOptions}>
-    <AuthProvider>
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          {/* Redirect bare "/" to "/home" */}
-          <Route path="/" element={<Navigate to="/home" replace />} />
+      <PayPalScriptProvider options={paypalOptions}>
+        <AuthProvider>
+          <ScrollToTop />
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {/* Landing pages */}
+              <Route path="/" element={<LandingPageB2C />} />
+              <Route path="/for-clinics" element={<LandingPageB2B />} />
 
-          {/* Auth routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<RegisterPage />} />
-          <Route path="/register" element={<Navigate to="/signup" replace />} />
-          <Route path="/verify-otp" element={<VerifyOTPPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+              {/* Auth routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<RegisterPage />} />
+              <Route path="/register" element={<Navigate to="/signup" replace />} />
+              <Route path="/verify-otp" element={<VerifyOTPPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* FAQ page - public, standalone */}
-          <Route path="/faq" element={<FAQPage />} />
+              {/* FAQ page - public, standalone */}
+              <Route path="/faq" element={<FAQPage />} />
 
-          {/* Legal pages - public, standalone */}
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
+              {/* Legal pages - public, standalone */}
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
 
-          {/* Contact page - public, standalone */}
-          <Route path="/contact" element={<ContactPage />} />
+              {/* Contact page - public, standalone */}
+              <Route path="/contact" element={<ContactPage />} />
 
-          {/* Main app routes - Dashboard is public, detail page is protected */}
-          <Route
-            element={
-              <ChatProvider>
-                <Layout />
-              </ChatProvider>
-            }
-          >
-            {/* Home is accessible to everyone (guest + authenticated) */}
-            <Route path="/home" element={<DashboardPage />} />
+              {/* Main app routes - Dashboard is public, detail page is protected */}
+              <Route
+                element={
+                  <ChatProvider>
+                    <Layout />
+                  </ChatProvider>
+                }
+              >
+                {/* Home is accessible to everyone (guest + authenticated) */}
+                <Route path="/home" element={<DashboardPage />} />
 
-            {/* Pricing page - public, with header/footer */}
-            <Route path="/pricing" element={<PricingPage />} />
+                {/* Pricing page - public, with header/footer */}
+                <Route path="/pricing" element={<PricingPage />} />
 
-            {/* Blog pages - public, with header/footer */}
-            <Route path="/blogs" element={<BlogsPage />} />
-            <Route path="/blogs/:slug" element={<BlogDetailPage />} />
+                {/* Blog pages - public, with header/footer */}
+                <Route path="/blogs" element={<BlogsPage />} />
+                <Route path="/blogs/:slug" element={<BlogDetailPage />} />
 
-            {/* Help video pages - public, with header/footer */}
-            <Route path="/help" element={<HelpPage />} />
-            <Route path="/help/:slug" element={<HelpVideoDetailPage />} />
+                {/* Help video pages - public, with header/footer */}
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/help/:slug" element={<HelpVideoDetailPage />} />
 
-            {/* Personal dashboard - requires authentication */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<MyDashboardPage />} />
-              <Route path="/dogs/:dogId" element={<DogDetailPage />} />
-            </Route>
+                {/* Personal dashboard - requires authentication */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/dashboard" element={<MyDashboardPage />} />
+                  <Route path="/dogs/:dogId" element={<DogDetailPage />} />
+                </Route>
 
-            {/* Admin panel - only accessible to staff users */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin-panel" element={<AdminDashboardPage />} />
-            </Route>
-          </Route>
+                {/* Admin panel - only accessible to staff users */}
+                <Route element={<AdminRoute />}>
+                  <Route path="/admin-panel" element={<AdminDashboardPage />} />
+                </Route>
+              </Route>
 
-          {/* 404 catch-all */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AnimatePresence>
-    </AuthProvider>
-    </PayPalScriptProvider>
+              {/* 404 catch-all */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </AnimatePresence>
+        </AuthProvider>
+      </PayPalScriptProvider>
     </ErrorBoundary>
   );
 }

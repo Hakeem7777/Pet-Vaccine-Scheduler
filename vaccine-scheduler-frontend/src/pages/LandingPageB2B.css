@@ -1,0 +1,423 @@
+.b2b-landing {
+    font-family: var(--font-body);
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+}
+
+.b2b-header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.98);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.b2b-badge {
+    font-size: 0.8rem;
+    background: var(--color-primary);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    vertical-align: middle;
+    margin-left: 8px;
+    font-weight: 500;
+}
+
+/* Hero Section */
+.b2b-hero-section {
+    position: relative;
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    padding-top: 72px;
+}
+
+.b2b-hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(10, 40, 60, 0.7), rgba(10, 40, 60, 0.9)), url('https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&q=80');
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+.b2b-hero-content {
+    max-width: 900px;
+    padding: 0 5%;
+    color: white;
+}
+
+.b2b-hero-content h1 {
+    font-size: 4rem;
+    color: var(--color-neutral-dark);
+    margin-bottom: 24px;
+}
+
+.b2b-hero-sub {
+    font-size: 1.25rem;
+    color: var(--color-neutral-dark);
+    margin-bottom: 40px;
+}
+
+.b2b-hero-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.justify-center {
+    justify-content: center !important;
+}
+
+/* Problem Section - Split Screen */
+.b2b-problem-section {
+    background-color: white;
+    padding: 0;
+}
+
+.b2b-split-container {
+    display: flex;
+    min-height: 100vh;
+    align-items: flex-start;
+    position: relative;
+}
+
+.b2b-problem-left {
+    flex: 1;
+    padding: 100px 5%;
+    background: var(--color-neutral-light);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: sticky;
+    top: 72px;
+    height: calc(100vh - 72px);
+}
+
+.section-title {
+    font-size: 2.5rem;
+    color: var(--color-neutral-dark);
+    margin-bottom: 20px;
+}
+
+.section-desc {
+    font-size: 1.2rem;
+    color: var(--color-text-muted);
+}
+
+.b2b-problem-right {
+    flex: 1;
+    padding: 100px 5%;
+}
+
+.b2b-problem-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+}
+
+.b2b-problem-point {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+}
+
+.b2b-icon-box {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+/* Solution Card Stacking */
+.b2b-solution-section {
+    padding: 120px 5%;
+    background: var(--color-primary-dark);
+    color: white;
+}
+
+.b2b-solution-header .section-title {
+    color: white;
+}
+
+.b2b-solution-header .section-desc {
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 700px;
+    margin: 0 auto 80px;
+}
+
+.b2b-cards-container {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    height: 600px;
+    /* Space for stacking */
+}
+
+.b2b-solution-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    color: var(--color-neutral-dark);
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.b2b-solution-card h4 {
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.card-1 {
+    z-index: 1;
+}
+
+.card-2 {
+    z-index: 2;
+    margin-top: 15px;
+}
+
+.card-3 {
+    z-index: 3;
+    margin-top: 30px;
+}
+
+.card-4 {
+    z-index: 4;
+    margin-top: 45px;
+}
+
+/* How It Works */
+.b2b-how-it-works {
+    padding: 100px 5%;
+    background: white;
+}
+
+.b2b-subtext {
+    font-size: 1.2rem;
+    color: var(--color-text-muted);
+    margin-bottom: 60px;
+}
+
+.b2b-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+
+.b2b-step {
+    text-align: center;
+    padding: 30px;
+}
+
+.step-circle {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 109, 156, 0.1);
+    color: var(--color-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto 20px;
+}
+
+/* Benefits Section */
+.b2b-benefits-section {
+    padding: 100px 5%;
+    background: var(--color-neutral-light);
+}
+
+.b2b-benefits-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.b2b-benefit-item {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 50px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+}
+
+.b-icon {
+    font-size: 1.5rem;
+}
+
+.b2b-benefit-item p {
+    margin: 0;
+}
+
+/* Trust Section */
+.b2b-trust-section {
+    padding: 80px 5%;
+    background: white;
+}
+
+.trust-features {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 30px 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+/* FAQ */
+.b2b-faq-section {
+    padding: 100px 5%;
+    background: var(--color-neutral-light);
+}
+
+.b2b-faq-list {
+    max-width: 800px;
+    margin: 40px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.faq-accordion-item {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.faq-accordion-item:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.faq-accordion-header {
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: white;
+}
+
+.faq-accordion-header h4 {
+    color: var(--color-primary);
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 600;
+    padding-right: 20px;
+}
+
+.faq-icon {
+    font-size: 1.5rem;
+    color: white;
+    background-color: var(--color-primary);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.faq-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+    background: #fafafa;
+    padding: 0 24px;
+}
+
+.faq-accordion-content p {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.faq-accordion-item.active .faq-accordion-content {
+    max-height: 400px;
+    padding: 0 24px 24px 24px;
+}
+
+.faq-accordion-item.active .faq-accordion-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* CTA Footer */
+.b2b-cta-footer {
+    padding: 120px 5%;
+    background: var(--color-primary);
+    color: white;
+    text-align: center;
+}
+
+.b2b-cta-footer h2 {
+    color: white;
+    font-size: 3rem;
+    margin-bottom: 40px;
+}
+
+/* Mobile Media Queries */
+@media (max-width: 767px) {
+    .b2b-hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .b2b-hero-actions {
+        flex-direction: column;
+    }
+
+    .b2b-split-container {
+        flex-direction: column;
+    }
+
+    .b2b-problem-left {
+        padding: 60px 5% 40px;
+    }
+
+    .b2b-problem-right {
+        padding: 0 5% 60px;
+    }
+
+    .b2b-cards-container {
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .b2b-solution-card {
+        position: static;
+    }
+
+    .b2b-steps-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .trust-features {
+        flex-direction: column;
+        gap: 20px;
+    }
+}
