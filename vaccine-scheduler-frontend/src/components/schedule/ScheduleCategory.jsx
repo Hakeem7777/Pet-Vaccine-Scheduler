@@ -1,9 +1,15 @@
 import ScheduleItem from './ScheduleItem';
 
-function ScheduleCategory({ title, items, type, dogId, dogName, dogInfo, onVaccinationAdded }) {
+function ScheduleCategory({ title, items, type, dogId, dogName, dogInfo, onVaccinationAdded, markFirstAsTourTarget = false }) {
   if (!items || items.length === 0) {
     return null;
   }
+
+  // Find the first non-contraindicated item index for the tour target,
+  // since contraindicated items don't have a "Mark as Done" button
+  const tourTargetIndex = markFirstAsTourTarget
+    ? items.findIndex(item => !item.contraindicated)
+    : -1;
 
   return (
     <div className={`schedule-category schedule-category--${type}`}>
@@ -20,6 +26,7 @@ function ScheduleCategory({ title, items, type, dogId, dogName, dogInfo, onVacci
             dogName={dogName}
             dogInfo={dogInfo}
             onVaccinationAdded={onVaccinationAdded}
+            isTourTarget={index === tourTargetIndex}
           />
         ))}
       </div>

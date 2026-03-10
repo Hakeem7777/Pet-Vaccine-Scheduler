@@ -6,7 +6,7 @@ import useTourStore from '../../store/useTourStore';
 import useDogStore from '../../store/useDogStore';
 import { patchProfile } from '../../api/auth';
 import TourTooltip from './TourTooltip';
-import { DASHBOARD_TOUR_STEPS, DOG_DETAIL_TOUR_STEPS } from './TourSteps';
+import { getDashboardTourSteps, getDogDetailTourSteps } from './TourSteps';
 import './GuidedTour.css';
 
 // Tour controller component - syncs our store with reactour
@@ -110,7 +110,7 @@ function CustomContentComponent(props) {
 // Main GuidedTour component
 function GuidedTour() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isPro, canExportPdf, hasAiChat } = useAuth();
   const { currentTour } = useTourStore();
 
   // Determine which steps to use based on current route
@@ -120,11 +120,11 @@ function GuidedTour() {
 
     // Always use dog detail steps when on a dog detail page
     if (isDogDetail) {
-      return DOG_DETAIL_TOUR_STEPS;
+      return getDogDetailTourSteps({ isPro, canExportPdf, hasAiChat });
     }
     // Use dashboard steps for dashboard or any other page
-    return DASHBOARD_TOUR_STEPS;
-  }, [location.pathname]);
+    return getDashboardTourSteps({ hasAiChat });
+  }, [location.pathname, isPro, canExportPdf, hasAiChat]);
 
   const steps = getSteps();
 

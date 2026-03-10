@@ -5,7 +5,7 @@ import { addVaccination } from '../../api/vaccinations';
 import ExportModal from '../export/ExportModal';
 import { useAuth } from '../../context/AuthContext';
 
-function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded }) {
+function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded, isTourTarget = false }) {
   const { isPro } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +59,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
     : 'schedule-accordion__info-widget--caution';
 
   return (
-    <div className={`schedule-accordion schedule-accordion--${type}`} data-tour="schedule-item">
+    <div className={`schedule-accordion schedule-accordion--${type}`} data-tour={isTourTarget ? "schedule-item" : undefined}>
       {/* Header row: vaccine name + warning icon + chevron */}
       <div
         className="schedule-accordion__header"
@@ -230,7 +230,7 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded 
                 className="btn btn-sm btn-primary"
                 onClick={handleMarkAsDone}
                 disabled={isSubmitting}
-                data-tour="mark-done-btn"
+                data-tour={isTourTarget ? "mark-done-btn" : undefined}
               >
                 {isSubmitting ? 'Saving...' : <><span>Mark as Done</span> <img src="/Images/generic_icons/tick-circle.svg" alt="" width="14" height="14" 
               style={{marginLeft:"5px"}}/></>}

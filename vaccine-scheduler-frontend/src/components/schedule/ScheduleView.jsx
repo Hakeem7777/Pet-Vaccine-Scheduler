@@ -91,6 +91,16 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
 
   const hasVaccines = filteredSchedule && !hasNoVaccines;
 
+  // Find the first category that has a non-contraindicated item for the tour target,
+  // since contraindicated items don't have a "Mark as Done" button
+  const hasNonContraindicated = (items) => items.some(item => !item.contraindicated);
+  const firstNonEmptyCategory = filteredSchedule
+    ? filteredSchedule.overdue.length > 0 && hasNonContraindicated(filteredSchedule.overdue) ? 'overdue'
+      : filteredSchedule.upcoming.length > 0 && hasNonContraindicated(filteredSchedule.upcoming) ? 'upcoming'
+      : filteredSchedule.future.length > 0 && hasNonContraindicated(filteredSchedule.future) ? 'future'
+      : null
+    : null;
+
   return (
     <div className="schedule-view">
       <div className="schedule-view__header">
@@ -185,6 +195,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
             dogName={dogName}
             dogInfo={dogInfo}
             onVaccinationAdded={handleVaccinationAdded}
+            markFirstAsTourTarget={firstNonEmptyCategory === 'overdue'}
           />
           <ScheduleCategory
             title="Upcoming (Next 30 Days)"
@@ -194,6 +205,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
             dogName={dogName}
             dogInfo={dogInfo}
             onVaccinationAdded={handleVaccinationAdded}
+            markFirstAsTourTarget={firstNonEmptyCategory === 'upcoming'}
           />
           <ScheduleCategory
             title="Future"
@@ -203,6 +215,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
             dogName={dogName}
             dogInfo={dogInfo}
             onVaccinationAdded={handleVaccinationAdded}
+            markFirstAsTourTarget={firstNonEmptyCategory === 'future'}
           />
         </motion.div>
       )}
