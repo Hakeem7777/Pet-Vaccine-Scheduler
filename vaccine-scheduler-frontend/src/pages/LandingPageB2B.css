@@ -42,16 +42,37 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: linear-gradient(rgba(10, 40, 60, 0.7), rgba(10, 40, 60, 0.9)), url('https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&q=80');
-    background-size: cover;
-    background-position: center;
     z-index: -1;
+    overflow: hidden;
+}
+
+.b2b-hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.b2b-hero-bg::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(10, 40, 60, 0.7), rgba(10, 40, 60, 0.9));
+    z-index: 1;
 }
 
 .b2b-hero-content {
-    max-width: 900px;
+    max-width: 1440px;
+    width: 100%;
     padding: 0 5%;
+    margin: 0 auto;
     color: white;
+    position: relative;
+    z-index: 2;
 }
 
 .b2b-hero-content h1 {
@@ -210,21 +231,50 @@
     margin-bottom: 60px;
 }
 
+.b2b-steps-wrapper {
+    position: relative;
+}
+
+.b2b-progress-line-bg {
+    position: absolute;
+    top: 60px;
+    left: 12.5%;
+    width: 75%;
+    height: 4px;
+    background: rgba(0, 109, 156, 0.1);
+    z-index: 0;
+    transform: translateY(-50%);
+}
+
+.b2b-progress-line {
+    position: absolute;
+    top: 60px;
+    left: 12.5%;
+    width: 0%;
+    height: 4px;
+    background: var(--color-primary);
+    z-index: 1;
+    transform: translateY(-50%);
+}
+
 .b2b-steps-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 30px;
+    position: relative;
+    z-index: 2;
 }
 
 .b2b-step {
     text-align: center;
-    padding: 30px;
+    padding: 30px 20px;
 }
 
 .step-circle {
     width: 60px;
     height: 60px;
-    background: rgba(0, 109, 156, 0.1);
+    background: white;
+    border: 3px solid #e6f0f5;
     color: var(--color-primary);
     border-radius: 50%;
     display: flex;
@@ -233,6 +283,8 @@
     font-size: 1.5rem;
     font-weight: bold;
     margin: 0 auto 20px;
+    position: relative;
+    z-index: 2;
 }
 
 /* Benefits Section */
@@ -379,6 +431,23 @@
     margin-bottom: 40px;
 }
 
+/* Section CTA */
+.section-cta {
+    text-align: center;
+    margin-top: 48px;
+}
+
+.btn-white {
+    background-color: white;
+    color: var(--color-primary);
+    border: none;
+}
+
+.btn-white:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--color-primary-dark);
+}
+
 /* Mobile Media Queries */
 @media (max-width: 767px) {
     .b2b-hero-content h1 {
@@ -414,6 +483,11 @@
 
     .b2b-steps-grid {
         grid-template-columns: 1fr;
+    }
+
+    .b2b-progress-line-bg,
+    .b2b-progress-line {
+        display: none;
     }
 
     .trust-features {

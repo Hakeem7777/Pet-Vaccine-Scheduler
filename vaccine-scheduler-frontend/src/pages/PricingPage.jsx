@@ -60,7 +60,14 @@ function PricingPage() {
         subscription_id: data.subscriptionID,
       });
       await refreshUser();
-      navigate('/home');
+      navigate('/subscription-confirmation', {
+        state: {
+          plan: 'Pro Care Plan',
+          price: '$19.99',
+          billingCycle: 'monthly',
+          isPromo: false,
+        },
+      });
     } catch {
       setError('Failed to activate your subscription. Please contact support.');
     } finally {
@@ -77,9 +84,16 @@ function PricingPage() {
     try {
       await subscriptionsApi.redeemPromoCode(promoCode.trim());
       await refreshUser();
-      setPromoSuccess('Promo code redeemed! You now have Pro Care access.');
+      setPromoSuccess('Promo code redeemed! Redirecting...');
       setPromoCode('');
-      setTimeout(() => navigate('/home'), 2000);
+      setTimeout(() => navigate('/subscription-confirmation', {
+        state: {
+          plan: 'Pro Care Plan',
+          price: 'Free',
+          billingCycle: 'promo',
+          isPromo: true,
+        },
+      }), 1500);
     } catch (err) {
       setPromoError(
         err.response?.data?.error || 'Failed to redeem promo code. Please try again.'
@@ -140,8 +154,7 @@ function PricingPage() {
               <li className="pricing-feature">{CHECK_ICON} On-screen timeline view</li>
               <li className="pricing-feature">{CHECK_ICON} Core &amp; lifestyle recommendations</li>
               <li className="pricing-feature">{CHECK_ICON} Plain-language explanations</li>
-              <li className="pricing-feature">{CHECK_ICON} 1 free PDF export</li>
-              <li className="pricing-feature pricing-feature--disabled">{X_ICON} No calendar export</li>
+              <li className="pricing-feature pricing-feature--disabled">{X_ICON} No exports (PDF, calendar, or email)</li>
               <li className="pricing-feature pricing-feature--disabled">{X_ICON} No reminders</li>
               <li className="pricing-feature pricing-feature--disabled">{X_ICON} No AI assistant</li>
               <li className="pricing-feature pricing-feature--disabled">{X_ICON} Contains ads</li>
@@ -217,6 +230,9 @@ function PricingPage() {
                   }
                 />
               )}
+              <p className="pricing-billing-note">
+                Your bank statement will show <strong>PETVAXCALENDAR.COM</strong>
+              </p>
             </div>
           </div>
         </div>
@@ -308,7 +324,7 @@ function PricingPage() {
                 </tr>
                 <tr>
                   <td>PDF exports</td>
-                  <td>1</td>
+                  <td>{X_ICON}</td>
                   <td className="pricing-table--highlight">Unlimited</td>
                 </tr>
                 <tr>
@@ -369,8 +385,8 @@ function PricingPage() {
               <h3>Is the free schedule really free?</h3>
               <p>
                 Yes! Generate a full, personalized vaccine schedule at no cost. You
-                can view it on screen anytime. Upgrade to Pro Care to download, print,
-                or export it.
+                can view it on screen anytime. Exports (PDF, calendar, email) are
+                available with the Pro Care plan.
               </p>
             </div>
             <div className="pricing-faq-item">

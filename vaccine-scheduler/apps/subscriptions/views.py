@@ -42,10 +42,9 @@ class SubscriptionPlansView(APIView):
                     'On-screen timeline view',
                     'Core & lifestyle vaccine recommendations',
                     'Plain-language explanations',
-                    '1 free PDF export',
                 ],
                 'limitations': [
-                    'No calendar export',
+                    'No exports (PDF, calendar, or email)',
                     'No reminders',
                 ],
             },
@@ -152,6 +151,23 @@ class CreateSubscriptionView(APIView):
         except Exception:
             logger.warning("Failed to send subscription admin notification for user %s", request.user.email)
 
+        # Send user confirmation email (non-blocking)
+        try:
+            if os.environ.get('RESEND_API_KEY'):
+                from apps.email_service.services import EmailService
+                EmailService().send_subscription_confirmation_email(
+                    to_email=request.user.email,
+                    username=request.user.username,
+                    plan='Pro Care',
+                    price='$19.99',
+                    billing_cycle='monthly',
+                    period_start=period_start.strftime("%B %d, %Y"),
+                    period_end=period_end.strftime("%B %d, %Y") if period_end else None,
+                    is_promo=False,
+                )
+        except Exception:
+            logger.warning("Failed to send subscription confirmation email to %s", request.user.email)
+
         return Response(
             SubscriptionSerializer(sub).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
@@ -238,6 +254,23 @@ class RedeemPromoCodeView(APIView):
         PromoCodeRedemption.objects.create(promo_code=promo, user=request.user)
         promo.times_used = models.F('times_used') + 1
         promo.save(update_fields=['times_used', 'updated_at'])
+
+        # Send user confirmation email (non-blocking)
+        try:
+            if os.environ.get('RESEND_API_KEY'):
+                from apps.email_service.services import EmailService
+                EmailService().send_subscription_confirmation_email(
+                    to_email=request.user.email,
+                    username=request.user.username,
+                    plan='Pro Care',
+                    price='Free',
+                    billing_cycle='promo',
+                    period_start=now.strftime("%B %d, %Y"),
+                    period_end=period_end.strftime("%B %d, %Y"),
+                    is_promo=True,
+                )
+        except Exception:
+            logger.warning("Failed to send subscription confirmation email to %s", request.user.email)
 
         return Response(
             SubscriptionSerializer(sub).data,
@@ -395,10 +428,8 @@ class PayPalWebhookView(APIView):
 
 
 class RecordPdfExportView(APIView):
-    """Record a PDF export. Free users get 1; Pro users get unlimited."""
+    """Record a PDF export. Only Pro users can export."""
     permission_classes = [IsAuthenticated]
-
-    FREE_PDF_LIMIT = 1
 
     def post(self, request):
         user = request.user
@@ -410,34 +441,17 @@ class RecordPdfExportView(APIView):
         except Subscription.DoesNotExist:
             pass
 
-        if is_pro:
-            User.objects.filter(pk=user.pk).update(
-                pdf_exports_used=models.F('pdf_exports_used') + 1
-            )
-            user.refresh_from_db(fields=['pdf_exports_used'])
-            return Response({
-                'allowed': True,
-                'pdf_exports_used': user.pdf_exports_used,
-                'pdf_export_limit': None,
-            })
-
-        # Free user: atomic check-and-increment to prevent race conditions
-        updated = User.objects.filter(
-            pk=user.pk,
-            pdf_exports_used__lt=self.FREE_PDF_LIMIT,
-        ).update(pdf_exports_used=models.F('pdf_exports_used') + 1)
-
-        if updated == 0:
-            user.refresh_from_db(fields=['pdf_exports_used'])
+        if not is_pro:
             return Response({
                 'allowed': False,
-                'pdf_exports_used': user.pdf_exports_used,
-                'pdf_export_limit': self.FREE_PDF_LIMIT,
+                'error': 'Exports are only available with the Pro Care Plan.',
             }, status=status.HTTP_403_FORBIDDEN)
 
+        User.objects.filter(pk=user.pk).update(
+            pdf_exports_used=models.F('pdf_exports_used') + 1
+        )
         user.refresh_from_db(fields=['pdf_exports_used'])
         return Response({
             'allowed': True,
             'pdf_exports_used': user.pdf_exports_used,
-            'pdf_export_limit': self.FREE_PDF_LIMIT,
         })

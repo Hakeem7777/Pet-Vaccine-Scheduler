@@ -153,6 +153,14 @@
   margin-top: auto;
 }
 
+.pricing-billing-note {
+  margin: var(--spacing-sm) 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
 .btn-block {
   width: 100%;
 }

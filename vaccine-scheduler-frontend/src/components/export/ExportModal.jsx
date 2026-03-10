@@ -31,7 +31,7 @@ const SINGLE_TABS = [
  * @param {object} singleItem - Optional: single vaccine item to export (excludes PDF tab)
  */
 function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem = null }) {
-  const { isPro, canExportPdf, refreshUser } = useAuth();
+  const { isPro, refreshUser } = useAuth();
   const isSingleMode = singleItem !== null;
   const TABS = isSingleMode ? SINGLE_TABS : ALL_TABS;
   const [activeTab, setActiveTab] = useState('apple');
@@ -283,14 +283,6 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
         return (
           <div className="export-tab-content">
             <h4>Save as PDF</h4>
-            {!isPro && (
-              <p className="export-pdf-notice" style={{ color: canExportPdf ? 'var(--color-secondary)' : 'var(--color-muted)', marginBottom: 'var(--spacing-sm)', fontSize: '0.9rem' }}>
-                {canExportPdf
-                  ? 'You have 1 free PDF export. This will use it.'
-                  : <>You\u2019ve used your free PDF export. <a href="/pricing">Upgrade to Pro Care</a> for unlimited exports.</>
-                }
-              </p>
-            )}
             {pdfError && <p style={{ color: 'var(--color-danger)', marginBottom: 'var(--spacing-sm)', fontSize: '0.9rem' }}>{pdfError}</p>}
             <ol className="export-steps">
               <li>Click the &quot;Download PDF file&quot; button at the bottom</li>
@@ -401,37 +393,52 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
   );
 
   const actionLabel = getActionButtonLabel();
-  const isPdfDisabled = activeTab === 'pdf' && (!canExportPdf && !isPro);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
       <div className="export-modal">
-        {actionLabel && (
-          <div className="export-action-top">
-            <button
-              className="btn btn-primary btn-pill"
-              onClick={handleMainExport}
-              disabled={isPdfDisabled || pdfExporting}
-            >
-              {pdfExporting && activeTab === 'pdf' ? 'Exporting...' : actionLabel}
-            </button>
+        {!isPro ? (
+          <div className="export-upgrade-prompt">
+            <div className="export-upgrade-icon">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--color-primary)" strokeWidth="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h3>Exports Are a Pro Feature</h3>
+            <p>Upgrade to Pro Care to unlock PDF downloads, calendar sync, and email delivery of your vaccination schedule.</p>
+            <a href="/pricing" className="btn btn-primary btn-lg">Upgrade to Pro Care</a>
           </div>
+        ) : (
+          <>
+            {actionLabel && (
+              <div className="export-action-top">
+                <button
+                  className="btn btn-primary btn-pill"
+                  onClick={handleMainExport}
+                  disabled={pdfExporting}
+                >
+                  {pdfExporting && activeTab === 'pdf' ? 'Exporting...' : actionLabel}
+                </button>
+              </div>
+            )}
+
+            <nav className="export-tabs">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`export-tab ${activeTab === tab.id ? 'export-tab--active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <span className="export-tab-icon">{renderTabIcon(tab.icon)}</span>
+                  <span className="export-tab-label">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+
+            {renderTabContent()}
+          </>
         )}
-
-        <nav className="export-tabs">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={`export-tab ${activeTab === tab.id ? 'export-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span className="export-tab-icon">{renderTabIcon(tab.icon)}</span>
-              <span className="export-tab-label">{tab.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        {renderTabContent()}
       </div>
     </Modal>
   );

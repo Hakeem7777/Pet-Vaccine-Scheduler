@@ -924,6 +924,220 @@ PetVaxCalendar Admin Notification
                 'message': str(e)
             }
 
+    def send_subscription_confirmation_email(
+        self,
+        to_email: str,
+        username: str,
+        plan: str,
+        price: str,
+        billing_cycle: str,
+        period_start: str,
+        period_end: str = None,
+        is_promo: bool = False,
+    ) -> dict:
+        """
+        Send subscription confirmation email to the user.
+
+        Args:
+            to_email: Recipient email address
+            username: Username for personalization
+            plan: Plan name (e.g., 'Pro Care')
+            price: Display price (e.g., '$19.99')
+            billing_cycle: Billing frequency (e.g., 'monthly', 'promo')
+            period_start: Formatted start date string
+            period_end: Formatted end/next billing date string (optional)
+            is_promo: Whether subscription was activated via promo code
+
+        Returns:
+            dict with success status and message
+        """
+        display_name = username or to_email
+
+        if is_promo:
+            price_display = "Free (Promo Code)"
+            billing_display = f"Promo &mdash; expires {period_end}" if period_end else "Promo"
+            next_billing_label = "Expires"
+            next_billing_value = period_end or "N/A"
+        else:
+            price_display = f"{price}/month"
+            billing_display = "Monthly"
+            next_billing_label = "Next Billing Date"
+            next_billing_value = period_end or "Pending"
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Pro Care!</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td style="background-color: #2AB57F; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Welcome to Pro Care!
+                </h1>
+                <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
+                    Your subscription is now active
+                </p>
+            </td>
+        </tr>
+
+        <!-- Content -->
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {display_name},
+                </p>
+                <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6;">
+                    Thank you for subscribing to <strong>{plan}</strong>! Your account has been upgraded and all Pro features are now unlocked.
+                </p>
+
+                <!-- Subscription Details -->
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <tr>
+                        <td style="background-color: #f7fafc; padding: 12px 20px; font-weight: 600; font-size: 14px; color: #006D9C; border-bottom: 1px solid #e2e8f0;" colspan="2">
+                            Subscription Details
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px; width: 40%;">Plan</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 600;">{plan}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px;">Price</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 600;">{price_display}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px;">Billing</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px;">{billing_display}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px;">Start Date</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px;">{period_start}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; color: #5f6b76; font-size: 14px;">{next_billing_label}</td>
+                        <td style="padding: 12px 20px; font-size: 14px;">{next_billing_value}</td>
+                    </tr>
+                </table>
+
+                <!-- Features Unlocked -->
+                <h3 style="margin: 0 0 15px; font-size: 16px; color: #333f48;">Features Now Unlocked</h3>
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
+                    <tr>
+                        <td style="padding: 8px 0; font-size: 14px; line-height: 1.5;">
+                            <span style="color: #2AB57F; font-weight: bold; margin-right: 8px;">&#10003;</span> Unlimited PDF exports
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-size: 14px; line-height: 1.5;">
+                            <span style="color: #2AB57F; font-weight: bold; margin-right: 8px;">&#10003;</span> Calendar sync (Google, Apple, Outlook)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-size: 14px; line-height: 1.5;">
+                            <span style="color: #2AB57F; font-weight: bold; margin-right: 8px;">&#10003;</span> Automated email reminders
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-size: 14px; line-height: 1.5;">
+                            <span style="color: #2AB57F; font-weight: bold; margin-right: 8px;">&#10003;</span> Multi-pet dashboard
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-size: 14px; line-height: 1.5;">
+                            <span style="color: #2AB57F; font-weight: bold; margin-right: 8px;">&#10003;</span> AI-powered vaccine assistant
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-size: 14px; line-height: 1.5;">
+                            <span style="color: #2AB57F; font-weight: bold; margin-right: 8px;">&#10003;</span> Ad-free experience
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- CTA Button -->
+                <div style="text-align: center; margin: 30px 0 10px;">
+                    <a href="{os.environ.get('FRONTEND_URL', 'https://app.petvaxcalendar.com')}/home" style="display: inline-block; padding: 14px 32px; background-color: #006D9C; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                        Go to Your Dashboard
+                    </a>
+                </div>
+                {"" if is_promo else '<p style="margin: 20px 0 0; font-size: 12px; color: #a0aec0; text-align: center;">Your bank statement will show <strong>PETVAXCALENDAR.COM</strong></p>'}
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        if is_promo:
+            plain_price = "Free (Promo Code)"
+            plain_billing = f"Promo - expires {period_end}" if period_end else "Promo"
+        else:
+            plain_price = f"{price}/month"
+            plain_billing = "Monthly"
+
+        plain_content = f"""Welcome to Pro Care!
+
+Hi {display_name},
+
+Thank you for subscribing to {plan}! Your account has been upgraded and all Pro features are now unlocked.
+
+SUBSCRIPTION DETAILS
+{'=' * 40}
+Plan: {plan}
+Price: {plain_price}
+Billing: {plain_billing}
+Start Date: {period_start}
+{next_billing_label}: {next_billing_value}
+
+FEATURES NOW UNLOCKED
+- Unlimited PDF exports
+- Calendar sync (Google, Apple, Outlook)
+- Automated email reminders
+- Multi-pet dashboard
+- AI-powered vaccine assistant
+- Ad-free experience
+
+Visit your dashboard: {os.environ.get('FRONTEND_URL', 'https://app.petvaxcalendar.com')}/home
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": "Welcome to Pro Care! - PetVaxCalendar",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Subscription confirmation email sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
     def send_contact_reply(self, to_email: str, name: str, original_subject: str, reply_message: str) -> dict:
         """
         Send a reply to a contact form submission.

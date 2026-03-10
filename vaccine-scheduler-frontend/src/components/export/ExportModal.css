@@ -322,6 +322,29 @@
   }
 }
 
+/* Upgrade Prompt for Free Users */
+.export-upgrade-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  gap: 1rem;
+}
+
+.export-upgrade-prompt h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-neutral-dark);
+}
+
+.export-upgrade-prompt p {
+  margin: 0;
+  color: var(--color-text-muted);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
 /* Make modal wider for tabs */
 .modal-content:has(.export-modal) {
   max-width: 680px;

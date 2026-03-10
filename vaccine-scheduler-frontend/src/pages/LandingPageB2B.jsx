@@ -119,6 +119,39 @@ export default function LandingPageB2B() {
                 });
             }
 
+            // How It Works Animation (Desktop Only pinning)
+            if (isDesktop) {
+                // Initial states for steps 2, 3, 4
+                gsap.set(['.b2b-step.step-2', '.b2b-step.step-3', '.b2b-step.step-4'], { opacity: 0, y: 30 });
+                gsap.set('.b2b-progress-line', { width: "0%" });
+
+                const stepsTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: ".b2b-how-it-works",
+                        start: "center center",
+                        end: "+=1500", // Extra scroll area to pin
+                        pin: true,
+                        scrub: 1
+                    }
+                });
+
+                // Animate line and fade nodes sequentially
+                stepsTl.to('.b2b-progress-line', { width: "25%", duration: 1, ease: "none" })
+                    .to('.b2b-step.step-2', { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, "-=0.2")
+
+                    .to('.b2b-progress-line', { width: "50%", duration: 1, ease: "none" })
+                    .to('.b2b-step.step-3', { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, "-=0.2")
+
+                    .to('.b2b-progress-line', { width: "75%", duration: 1, ease: "none" })
+                    .to('.b2b-step.step-4', { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, "-=0.2");
+            } else {
+                // Mobile simple fade
+                gsap.from('.b2b-step', {
+                    y: 30, opacity: 0, stagger: 0.15,
+                    scrollTrigger: { trigger: ".b2b-how-it-works", start: "top 75%" }
+                });
+            }
+
             // Benefits Section
             gsap.from('.b2b-benefit-item', {
                 y: 50,
@@ -151,8 +184,9 @@ export default function LandingPageB2B() {
             {/* Header */}
             <header className="header b2b-header">
                 <div className="header-brand">
-                    <Link to="/" className="header-logo-link">
-                        <h1 style={{ color: 'var(--color-neutral-dark)' }}>PetVaxCalendar <span className="b2b-badge">For Clinics</span></h1>
+                    <Link to="/" className="header-logo-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <img src="/logoBanner.png" alt="PetVaxCalendar" className="header-logo" />
+                        <span className="b2b-badge">For Clinics</span>
                     </Link>
                 </div>
                 <nav className="header-nav">
@@ -165,13 +199,29 @@ export default function LandingPageB2B() {
 
             {/* Hero Section */}
             <section className="b2b-hero-section">
-                <div className="b2b-hero-bg"></div>
+                <div className="b2b-hero-bg">
+                    <picture>
+                        <source
+                            type="image/webp"
+                            srcSet="/Images/landing_page/hero-b2b/hero-b2b-480w.webp 480w, /Images/landing_page/hero-b2b/hero-b2b-768w.webp 768w, /Images/landing_page/hero-b2b/hero-b2b-1024w.webp 1024w, /Images/landing_page/hero-b2b/hero-b2b-1440w.webp 1440w, /Images/landing_page/hero-b2b/hero-b2b-2560w.webp 2560w"
+                            sizes="100vw"
+                        />
+                        <img
+                            src="/Images/landing_page/hero-b2b/hero-b2b-1440w.jpg"
+                            alt="Veterinary clinic with dog"
+                            loading="eager"
+                            fetchPriority="high"
+                            width="2560"
+                            height="1440"
+                        />
+                    </picture>
+                </div>
                 <div className="b2b-hero-content b2b-hero-text">
                     <h1>Vaccine Compliance Software for Veterinary Clinics</h1>
                     <p className="b2b-hero-sub">PetVaxCalendar helps veterinary practices improve booster compliance, reduce missed appointments, and enhance client retention with structured vaccination tracking.</p>
                     <div className="b2b-hero-actions">
-                        <button className="btn btn-primary btn-lg">Request Clinic Access</button>
-                        <button className="btn btn-outline btn-lg" style={{ backgroundColor: 'white' }}>Schedule a Demo</button>
+                        <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Request Clinic Access</a>
+                        <a href="mailto:sales@petvaxcalendar.com?subject=Demo%20Request" className="btn btn-outline btn-lg" style={{ backgroundColor: 'white' }}>Schedule a Demo</a>
                     </div>
                 </div>
             </section>
@@ -206,6 +256,9 @@ export default function LandingPageB2B() {
                                 <p>Your staff wastes time manually chasing down clients.</p>
                             </div>
                         </div>
+                        <div className="section-cta anim-fade-up">
+                            <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Talk to Our Team</a>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -214,7 +267,7 @@ export default function LandingPageB2B() {
             <section className="b2b-solution-section">
                 <div className="b2b-solution-header anim-fade-up">
                     <h2 className="section-title text-center">A Structured Vaccine Reminder System Designed for Veterinary Practices</h2>
-                    <p className="section-desc text-center">Designed to complement — not replace — your existing practice management system.</p>
+                    <p className="section-desc text-center">Designed to complement, not replace, your existing practice management system.</p>
                 </div>
                 <div className="b2b-cards-container">
                     <div className="b2b-solution-card card-1">
@@ -234,34 +287,46 @@ export default function LandingPageB2B() {
                         <p>✔ Client-accessible vaccination tracking</p>
                     </div>
                 </div>
+                <div className="section-cta anim-fade-up">
+                    <a href="mailto:sales@petvaxcalendar.com?subject=Walkthrough%20Request" className="btn btn-white btn-lg">Request a Walkthrough</a>
+                </div>
             </section>
 
             {/* How It Works Section */}
-            <section className="b2b-how-it-works anim-fade-up">
+            <section className="b2b-how-it-works">
                 <div className="container">
-                    <h2 className="text-center">How Veterinary Clinics Use PetVaxCalendar</h2>
-                    <p className="text-center b2b-subtext">Simple implementation. Minimal disruption.</p>
-                    <div className="b2b-steps-grid">
-                        <div className="b2b-step">
-                            <div className="step-circle">1</div>
-                            <h4>Enroll</h4>
-                            <p>Enroll your clinic into the platform.</p>
+                    <div className="b2b-how-header anim-fade-up">
+                        <h2 className="text-center">How Veterinary Clinics Use PetVaxCalendar</h2>
+                        <p className="text-center b2b-subtext">Simple implementation. Minimal disruption.</p>
+                    </div>
+                    <div className="b2b-steps-wrapper">
+                        <div className="b2b-progress-line-bg"></div>
+                        <div className="b2b-progress-line"></div>
+                        <div className="b2b-steps-grid">
+                            <div className="b2b-step step-1">
+                                <div className="step-circle">1</div>
+                                <h4>Enroll</h4>
+                                <p>Enroll your clinic into the platform.</p>
+                            </div>
+                            <div className="b2b-step step-2">
+                                <div className="step-circle">2</div>
+                                <h4>Connect</h4>
+                                <p>Provide clients access via QR code or link in the clinic.</p>
+                            </div>
+                            <div className="b2b-step step-3">
+                                <div className="step-circle">3</div>
+                                <h4>Automate</h4>
+                                <p>Clients receive structured reminders automatically.</p>
+                            </div>
+                            <div className="b2b-step step-4">
+                                <div className="step-circle">4</div>
+                                <h4>Improve</h4>
+                                <p>Watch compliance and appointment follow-through increase.</p>
+                            </div>
                         </div>
-                        <div className="b2b-step">
-                            <div className="step-circle">2</div>
-                            <h4>Connect</h4>
-                            <p>Provide clients access via QR code or link in the clinic.</p>
-                        </div>
-                        <div className="b2b-step">
-                            <div className="step-circle">3</div>
-                            <h4>Automate</h4>
-                            <p>Clients receive structured reminders automatically.</p>
-                        </div>
-                        <div className="b2b-step">
-                            <div className="step-circle">4</div>
-                            <h4>Improve</h4>
-                            <p>Watch compliance and appointment follow-through increase.</p>
-                        </div>
+                    </div>
+                    <div className="section-cta anim-fade-up">
+                        <a href="mailto:sales@petvaxcalendar.com?subject=Clinic%20Enrollment" className="btn btn-primary btn-lg">Get Your Clinic Started</a>
                     </div>
                 </div>
             </section>
@@ -270,7 +335,7 @@ export default function LandingPageB2B() {
             <section className="b2b-benefits-section">
                 <div className="container">
                     <h2 className="text-center">Increase Compliance. Strengthen Retention.</h2>
-                    <p className="text-center b2b-subtext">Prevention isn’t just good medicine — it’s good business.</p>
+                    <p className="text-center b2b-subtext">Prevention isn’t just good medicine, it’s good business.</p>
 
                     <div className="b2b-benefits-grid">
                         <div className="b2b-benefit-item">
@@ -294,6 +359,9 @@ export default function LandingPageB2B() {
                             <p>Differentiate from competitors</p>
                         </div>
                     </div>
+                    <div className="section-cta anim-fade-up">
+                        <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">See How It Works for Your Practice</a>
+                    </div>
                 </div>
             </section>
 
@@ -307,6 +375,9 @@ export default function LandingPageB2B() {
                         <span>🐾 Designed for responsible care</span>
                     </div>
                     <p className="b2b-trust-note">PetVaxCalendar supports best practices in vaccine scheduling and compliance management.</p>
+                    <div className="section-cta anim-fade-up">
+                        <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Request Clinic Access</a>
+                    </div>
                 </div>
             </section>
 
@@ -342,6 +413,9 @@ export default function LandingPageB2B() {
                             </div>
                         ))}
                     </div>
+                    <div className="section-cta anim-fade-up">
+                        <a href="mailto:sales@petvaxcalendar.com?subject=Question" className="btn btn-primary btn-lg">Still Have Questions? Contact Us</a>
+                    </div>
                 </div>
             </section>
 
@@ -349,8 +423,8 @@ export default function LandingPageB2B() {
             <section className="b2b-cta-footer anim-fade-up">
                 <h2>Improve Vaccine Compliance at Your Clinic</h2>
                 <div className="b2b-hero-actions justify-center">
-                    <button className="btn btn-primary btn-lg">Request Clinic Access</button>
-                    <button className="btn btn-outline btn-lg" style={{ borderColor: 'white', color: 'white' }}>Schedule a Demo</button>
+                    <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Request Clinic Access</a>
+                    <a href="mailto:sales@petvaxcalendar.com?subject=Demo%20Request" className="btn btn-outline btn-lg" style={{ borderColor: 'white', color: 'white' }}>Schedule a Demo</a>
                 </div>
             </section>
         </div>

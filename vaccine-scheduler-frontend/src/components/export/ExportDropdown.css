@@ -58,6 +58,18 @@
   margin: var(--spacing-xs) 0;
 }
 
+/* Upgrade prompt inside dropdown */
+.export-dropdown__upgrade {
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.export-dropdown__upgrade p {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 /* Hide dropdown in print */
 @media print {
   .export-dropdown {

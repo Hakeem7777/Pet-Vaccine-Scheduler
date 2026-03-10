@@ -28,6 +28,7 @@ import HelpVideoDetailPage from './pages/HelpVideoDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LandingPageB2C from './pages/LandingPageB2C';
 import LandingPageB2B from './pages/LandingPageB2B';
+import SubscriptionConfirmationPage from './pages/SubscriptionConfirmationPage';
 import ScrollToTop from './components/common/ScrollToTop';
 
 const paypalOptions = {
@@ -94,6 +95,7 @@ function App() {
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<MyDashboardPage />} />
                   <Route path="/dogs/:dogId" element={<DogDetailPage />} />
+                  <Route path="/subscription-confirmation" element={<SubscriptionConfirmationPage />} />
                 </Route>
 
                 {/* Admin panel - only accessible to staff users */}

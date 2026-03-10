@@ -14,6 +14,7 @@
     "@paypal/react-paypal-js": "^8.9.2",
     "@reactour/tour": "^3.8.0",
     "axios": "^1.13.2",
+    "canvas-confetti": "^1.9.4",
     "dompurify": "^3.3.1",
     "framer-motion": "^12.23.26",
     "gsap": "^3.14.2",
@@ -35,6 +36,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "sharp": "^0.34.5",
     "vite": "^7.2.4"
   }
 }

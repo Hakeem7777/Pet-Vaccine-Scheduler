@@ -155,7 +155,7 @@ export default function LandingPageB2C() {
             <header className="header b2c-header">
                 <div className="header-brand">
                     <Link to="/" className="header-logo-link">
-                        <h1 style={{ color: 'var(--color-primary)' }}>PetVaxCalendar</h1>
+                        <img src="/logoBanner.png" alt="PetVaxCalendar" className="header-logo" />
                     </Link>
                 </div>
                 <nav className="header-nav">
@@ -169,6 +169,7 @@ export default function LandingPageB2C() {
 
             {/* Hero Section */}
             <section className="hero-section">
+                <div className="hero-inner">
                 <div className="hero-content">
                     <div className="hero-title-line anim-fade">
                         <h1 className="hero-main-title">Pet Vaccination Schedule & Reminder App</h1>
@@ -188,8 +189,23 @@ export default function LandingPageB2C() {
                 </div>
                 <div className="hero-visual perspective-container">
                     <div className="hero-mockup">
-                        <img src="/Images/landing_page/Puppy vaccine shot 1.png" alt="App interface main dashboard showing records" />
+                        <picture>
+                            <source
+                                type="image/webp"
+                                srcSet="/Images/landing_page/puppy-vaccine-shot-1-480w.webp 480w, /Images/landing_page/puppy-vaccine-shot-1-768w.webp 768w"
+                                sizes="(max-width: 991px) 80vw, 40vw"
+                            />
+                            <img
+                                src="/Images/landing_page/Puppy vaccine shot 1.png"
+                                alt="App interface main dashboard showing records"
+                                loading="eager"
+                                fetchPriority="high"
+                                width="1023"
+                                height="365"
+                            />
+                        </picture>
                     </div>
+                </div>
                 </div>
             </section>
 
@@ -198,7 +214,7 @@ export default function LandingPageB2C() {
                 <div className="problem-container">
                     <div className="problem-header anim-fade-up">
                         <h2>Keeping Up With Your Pet’s Vaccination Schedule Shouldn’t Be Complicated.</h2>
-                        <p>Between puppy booster shots, annual rabies vaccines, and changing vet recommendations, it’s easy to lose track of what your pet needs — and when.</p>
+                        <p>Between puppy booster shots, annual rabies vaccines, and changing vet recommendations, it’s easy to lose track of what your pet needs and when.</p>
                     </div>
                     <div className="problem-cards-wrapper anim-fade">
                         <div className="problem-card">
@@ -218,6 +234,9 @@ export default function LandingPageB2C() {
                             <p>Last-minute rushes are stressful and expensive.</p>
                         </div>
                     </div>
+                    <div className="section-cta anim-fade-up">
+                        <Link to="/signup" className="btn btn-white btn-lg">Protect Your Pet Today</Link>
+                    </div>
                 </div>
             </section>
 
@@ -235,8 +254,24 @@ export default function LandingPageB2C() {
                             <li>Manage multiple pets in one account</li>
                         </ul>
                         <div className="solution-visual">
-                            <img src="/Images/landing_page/Puppy vaccine shot 5.png" alt="Digital vaccine records inside app" />
+                            <picture>
+                                <source
+                                    type="image/webp"
+                                    srcSet="/Images/landing_page/puppy-vaccine-shot-5-480w.webp 480w"
+                                    sizes="(max-width: 991px) 80vw, 40vw"
+                                />
+                                <img
+                                    src="/Images/landing_page/Puppy vaccine shot 5.png"
+                                    alt="Digital vaccine records inside app"
+                                    loading="lazy"
+                                    width="510"
+                                    height="248"
+                                />
+                            </picture>
                         </div>
+                    </div>
+                    <div className="section-cta anim-fade-up">
+                        <Link to="/pricing" className="btn btn-outline-light btn-lg">See Plans &amp; Pricing</Link>
                     </div>
                 </div>
             </section>
@@ -255,7 +290,21 @@ export default function LandingPageB2C() {
                                 <p>Enter your dog’s birthdate and basic details in less than a minute.</p>
                             </div>
                             <div className="step-visual">
-                                <img className="step-img-parallax" src="/Images/landing_page/Puppy vaccine shot 2.png" alt="Adding a pet profile" />
+                                <picture>
+                                    <source
+                                        type="image/webp"
+                                        srcSet="/Images/landing_page/puppy-vaccine-shot-2-480w.webp 480w, /Images/landing_page/puppy-vaccine-shot-2-768w.webp 768w"
+                                        sizes="(max-width: 991px) 80vw, 40vw"
+                                    />
+                                    <img
+                                        className="step-img-parallax"
+                                        src="/Images/landing_page/Puppy vaccine shot 2.png"
+                                        alt="Adding a pet profile"
+                                        loading="lazy"
+                                        width="1019"
+                                        height="295"
+                                    />
+                                </picture>
                             </div>
                         </div>
 
@@ -266,7 +315,21 @@ export default function LandingPageB2C() {
                                 <p>We generate a recommended vaccine schedule aligned with standard veterinary guidelines.</p>
                             </div>
                             <div className="step-visual">
-                                <img className="step-img-parallax" src="/Images/landing_page/Puppy vaccine shot 3.png" alt="Viewing timeline schedule" />
+                                <picture>
+                                    <source
+                                        type="image/webp"
+                                        srcSet="/Images/landing_page/puppy-vaccine-shot-3-480w.webp 480w, /Images/landing_page/puppy-vaccine-shot-3-768w.webp 768w, /Images/landing_page/puppy-vaccine-shot-3-1024w.webp 1024w"
+                                        sizes="(max-width: 991px) 80vw, 40vw"
+                                    />
+                                    <img
+                                        className="step-img-parallax"
+                                        src="/Images/landing_page/Puppy vaccine shot 3.png"
+                                        alt="Viewing timeline schedule"
+                                        loading="lazy"
+                                        width="1024"
+                                        height="355"
+                                    />
+                                </picture>
                             </div>
                         </div>
 
@@ -277,9 +340,26 @@ export default function LandingPageB2C() {
                                 <p>Get notified before upcoming vaccines so you stay fully compliant and protected.</p>
                             </div>
                             <div className="step-visual">
-                                <img className="step-img-parallax" src="/Images/landing_page/Puppy vaccine shot 4.png" alt="Push notification reminders" />
+                                <picture>
+                                    <source
+                                        type="image/webp"
+                                        srcSet="/Images/landing_page/puppy-vaccine-shot-4-480w.webp 480w"
+                                        sizes="(max-width: 991px) 80vw, 40vw"
+                                    />
+                                    <img
+                                        className="step-img-parallax"
+                                        src="/Images/landing_page/Puppy vaccine shot 4.png"
+                                        alt="Push notification reminders"
+                                        loading="lazy"
+                                        width="511"
+                                        height="323"
+                                    />
+                                </picture>
                             </div>
                         </div>
+                    </div>
+                    <div className="section-cta anim-fade-up">
+                        <Link to="/signup" className="btn btn-primary btn-lg">Get Started Free</Link>
                     </div>
                 </div>
             </section>
@@ -307,6 +387,9 @@ export default function LandingPageB2C() {
                             <h4>Senior Pets</h4>
                             <p>Maintaining rabies compliance and vet guidelines</p>
                         </div>
+                    </div>
+                    <div className="section-cta anim-fade-up">
+                        <Link to="/pricing" className="btn btn-primary btn-lg">View Pricing Options</Link>
                     </div>
                 </div>
             </section>
@@ -342,6 +425,9 @@ export default function LandingPageB2C() {
                             </div>
                         ))}
                     </div>
+                    <div className="section-cta anim-fade-up">
+                        <Link to="/signup" className="btn btn-primary btn-lg">Create Your Free Account</Link>
+                    </div>
                 </div>
             </section>
 
@@ -352,10 +438,19 @@ export default function LandingPageB2C() {
                 <Link to="/signup" className="btn btn-primary btn-lg">Start Tracking for Free</Link>
             </section>
 
+            {/* Clinic CTA Section */}
+            <section className="clinic-cta-section anim-fade-up">
+                <div className="clinic-cta-inner">
+                    <span className="clinic-cta-badge">For Veterinary Clinics</span>
+                    <h2>Are You a Veterinary Professional?</h2>
+                    <p>Streamline vaccine compliance, reduce missed appointments, and keep every patient on schedule with PetVaxCalendar for Clinics.</p>
+                    <Link to="/for-clinics" className="btn btn-outline-light btn-lg">Learn More About Clinic Solutions</Link>
+                </div>
+            </section>
+
             <footer className="b2c-footer">
                 <div className="footer-container">
-                    <Link to="/for-clinics" className="clinic-link">→ Looking to improve vaccine compliance at your clinic? Learn More About Clinic Partnerships</Link>
-                    <p className="copyright">© 2026 PetVaxCalendar. All rights reserved.</p>
+                    <p className="copyright">&copy; 2026 PetVaxCalendar. All rights reserved.</p>
                 </div>
             </footer>
         </div>

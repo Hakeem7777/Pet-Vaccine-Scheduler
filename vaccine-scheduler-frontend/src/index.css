@@ -150,8 +150,8 @@ a {
 }
 
 a:hover {
-  text-decoration: underline;
-  color: var(--color-accent);
+  color: var(--color-secondary);
+  text-decoration: none;
 }
 
 /* Layout */
@@ -1778,12 +1778,19 @@ a:hover {
   }
 }
 
-.loading-container,
-.page-loading {
+.loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 200px;
+}
+
+.page-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  width: 100%;
 }
 
 /* ==========================================
