@@ -359,7 +359,7 @@ function DogForm({ dog, onSubmit, onCancel, isLoading }) {
 
         {/* Image Upload */}
         <div className="form-group image-upload-group">
-          <label className="image-upload-label">Image</label>
+          <label className="image-upload-label">Image of dog (optional)</label>
 
           {imagePreview ? (
             <div className="image-preview-container">

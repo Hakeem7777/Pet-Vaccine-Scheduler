@@ -12,8 +12,8 @@ services:
     # Render region (optional - defaults to Oregon)
     # region: oregon
 
-    # Instance type - start with free/starter tier
-    plan: free  # Options: free, starter, standard, pro
+    # Instance type
+    plan: starter  # Options: free, starter, standard, pro
 
     # Health check configuration
     healthCheckPath: /api/health/
@@ -80,3 +80,31 @@ services:
       name: vaccine-db
       mountPath: /app/db
       sizeGB: 1  # Adjust as needed (1GB minimum on Render)
+
+  # Cron job: Send vaccination reminder emails every hour
+  - type: cron
+    name: vaccine-reminders
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "0 * * * *"  # Every hour at minute 0
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        fromService:
+          name: vaccine-scheduler
+          type: web
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        sync: false  # Must match the web service's Supabase PostgreSQL URL
+      - key: RESEND_API_KEY
+        sync: false  # Must be set manually in dashboard
+      - key: RESEND_FROM_EMAIL
+        value: "onboarding@resend.dev"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    # Override the default CMD to run the reminder command
+    dockerCommand: python manage.py send_reminders

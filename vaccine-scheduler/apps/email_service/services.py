@@ -257,6 +257,333 @@ You are receiving this because you enabled vaccination reminders.
                 'message': str(e),
             }
 
+    def send_overdue_digest_email(
+        self,
+        to_email: str,
+        user_name: str,
+        overdue_items: list,
+    ) -> dict:
+        """
+        Send a single digest email listing all overdue vaccines across all dogs.
+
+        Args:
+            to_email: Recipient email
+            user_name: User's display name
+            overdue_items: List of dicts, each with:
+                dog_name, vaccine_name, dose_info, due_date (formatted str), days_overdue (int)
+
+        Returns:
+            dict with success status and message
+        """
+        count = len(overdue_items)
+        plural = "vaccine" if count == 1 else "vaccines"
+        subject = f"[OVERDUE] {count} {plural} need attention"
+
+        # Group items by dog name
+        dogs = {}
+        for item in overdue_items:
+            dog_name = item['dog_name']
+            if dog_name not in dogs:
+                dogs[dog_name] = []
+            dogs[dog_name].append(item)
+
+        # Build HTML vaccine rows grouped by dog
+        dog_sections_html = ""
+        dog_sections_text = ""
+
+        for dog_name, items in dogs.items():
+            dog_sections_html += f"""
+                <tr>
+                    <td style="padding: 20px 0 8px;">
+                        <h3 style="margin: 0; color: #333f48; font-size: 16px; font-weight: 700;">
+                            {dog_name}
+                        </h3>
+                    </td>
+                </tr>"""
+
+            dog_sections_text += f"\n{dog_name}\n" + "-" * len(dog_name) + "\n"
+
+            for item in items:
+                days = item['days_overdue']
+                dog_sections_html += f"""
+                <tr>
+                    <td style="padding: 4px 0;">
+                        <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 8px; border-left: 4px solid #E53E3E;">
+                            <tr>
+                                <td style="padding: 14px 18px;">
+                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; width: 35%; font-size: 14px;">Vaccine:</td>
+                                            <td style="padding: 3px 0; font-weight: 600; font-size: 14px;">{item['vaccine_name']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; font-size: 14px;">Dose:</td>
+                                            <td style="padding: 3px 0; font-weight: 600; font-size: 14px;">{item['dose_info']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; font-size: 14px;">Due Date:</td>
+                                            <td style="padding: 3px 0; font-weight: 600; font-size: 14px;">{item['due_date']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; font-size: 14px;">Status:</td>
+                                            <td style="padding: 3px 0; color: #E53E3E; font-weight: 600; font-size: 14px;">{days} day(s) overdue</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>"""
+
+                dog_sections_text += (
+                    f"  - {item['vaccine_name']} ({item['dose_info']})\n"
+                    f"    Due: {item['due_date']} — {days} day(s) overdue\n"
+                )
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overdue Vaccination Digest</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="background-color: #006D9C; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Overdue Vaccinations
+                </h1>
+                <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                    {count} {plural} need attention
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {user_name},
+                </p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    The following vaccinations are past due. Please schedule an appointment with your veterinarian.
+                </p>
+                <table cellpadding="0" cellspacing="0" width="100%">
+                    {dog_sections_html}
+                </table>
+                <p style="margin: 20px 0 0; font-size: 14px; color: #718096; line-height: 1.6;">
+                    You can manage your reminder settings in your dashboard.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler<br>
+                    You are receiving this because you enabled vaccination reminders.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""Overdue Vaccination Digest
+
+Hi {user_name},
+
+The following {count} {plural} are past due. Please schedule an appointment with your veterinarian.
+{dog_sections_text}
+You can manage your reminder settings in your dashboard.
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+You are receiving this because you enabled vaccination reminders.
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content,
+                "text": plain_content,
+            })
+            return {
+                'success': True,
+                'message': "Overdue digest email sent successfully",
+                'id': response.get('id'),
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e),
+            }
+
+    def send_due_today_digest_email(
+        self,
+        to_email: str,
+        user_name: str,
+        due_today_items: list,
+    ) -> dict:
+        """
+        Send a single digest email listing all vaccines due today across all dogs.
+
+        Args:
+            to_email: Recipient email
+            user_name: User's display name
+            due_today_items: List of dicts, each with:
+                dog_name, vaccine_name, dose_info, due_date (formatted str)
+
+        Returns:
+            dict with success status and message
+        """
+        count = len(due_today_items)
+        plural = "vaccine" if count == 1 else "vaccines"
+        subject = f"[TODAY] {count} {plural} due today"
+
+        # Group items by dog name
+        dogs = {}
+        for item in due_today_items:
+            dog_name = item['dog_name']
+            if dog_name not in dogs:
+                dogs[dog_name] = []
+            dogs[dog_name].append(item)
+
+        # Build HTML vaccine rows grouped by dog
+        dog_sections_html = ""
+        dog_sections_text = ""
+
+        for dog_name, items in dogs.items():
+            dog_sections_html += f"""
+                <tr>
+                    <td style="padding: 20px 0 8px;">
+                        <h3 style="margin: 0; color: #333f48; font-size: 16px; font-weight: 700;">
+                            {dog_name}
+                        </h3>
+                    </td>
+                </tr>"""
+
+            dog_sections_text += f"\n{dog_name}\n" + "-" * len(dog_name) + "\n"
+
+            for item in items:
+                dog_sections_html += f"""
+                <tr>
+                    <td style="padding: 4px 0;">
+                        <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 8px; border-left: 4px solid #E53E3E;">
+                            <tr>
+                                <td style="padding: 14px 18px;">
+                                    <table cellpadding="0" cellspacing="0" width="100%">
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; width: 35%; font-size: 14px;">Vaccine:</td>
+                                            <td style="padding: 3px 0; font-weight: 600; font-size: 14px;">{item['vaccine_name']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; font-size: 14px;">Dose:</td>
+                                            <td style="padding: 3px 0; font-weight: 600; font-size: 14px;">{item['dose_info']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; font-size: 14px;">Due Date:</td>
+                                            <td style="padding: 3px 0; font-weight: 600; font-size: 14px;">{item['due_date']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 3px 0; color: #5f6b76; font-size: 14px;">Status:</td>
+                                            <td style="padding: 3px 0; color: #E53E3E; font-weight: 600; font-size: 14px;">Due today</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>"""
+
+                dog_sections_text += (
+                    f"  - {item['vaccine_name']} ({item['dose_info']})\n"
+                    f"    Due today ({item['due_date']})\n"
+                )
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaccinations Due Today</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <tr>
+            <td style="background-color: #006D9C; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Vaccinations Due Today
+                </h1>
+                <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                    {count} {plural} due today
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {user_name},
+                </p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    The following vaccinations are due today. Please schedule an appointment with your veterinarian.
+                </p>
+                <table cellpadding="0" cellspacing="0" width="100%">
+                    {dog_sections_html}
+                </table>
+                <p style="margin: 20px 0 0; font-size: 14px; color: #718096; line-height: 1.6;">
+                    You can manage your reminder settings in your dashboard.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler<br>
+                    You are receiving this because you enabled vaccination reminders.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""Vaccinations Due Today
+
+Hi {user_name},
+
+The following {count} {plural} are due today. Please schedule an appointment with your veterinarian.
+{dog_sections_text}
+You can manage your reminder settings in your dashboard.
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+You are receiving this because you enabled vaccination reminders.
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content,
+                "text": plain_content,
+            })
+            return {
+                'success': True,
+                'message': "Due today digest email sent successfully",
+                'id': response.get('id'),
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e),
+            }
+
     def _generate_email_html(
         self,
         dog_name: str,

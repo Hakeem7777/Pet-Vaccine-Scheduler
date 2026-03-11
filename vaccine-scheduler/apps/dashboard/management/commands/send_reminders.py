@@ -41,9 +41,17 @@ class Command(BaseCommand):
             action='store_true',
             help='Print what would be sent without actually sending emails',
         )
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Send emails immediately, skipping the preferred-hour and '
+                 'dedup checks. Does not log to ReminderLog, so the '
+                 'scheduled send at the user\'s preferred hour still fires.',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
+        force = options['force']
         now = timezone.now()
         today = now.date()
 
@@ -75,6 +83,7 @@ class Command(BaseCommand):
         total_sent = 0
         total_skipped = 0
         total_errors = 0
+        total_digest_items = 0
 
         for pref in prefs:
             user = pref.user
@@ -85,7 +94,7 @@ class Command(BaseCommand):
             except (KeyError, Exception):
                 user_tz = ZoneInfo('UTC')
             user_local_hour = now.astimezone(user_tz).hour
-            if user_local_hour != pref.preferred_hour:
+            if not force and user_local_hour != pref.preferred_hour:
                 continue
 
             dogs = get_visible_dogs_queryset(user)
@@ -95,6 +104,12 @@ class Command(BaseCommand):
 
             lead_time_days = pref.lead_time_days
             interval_hours = pref.interval_hours
+            user_name = user.first_name or user.username or user.email
+
+            # Phase A: Collect all candidates across all dogs for this user
+            overdue_items = []
+            due_today_items = []
+            upcoming_items = []
 
             for dog in dogs:
                 selected_noncore = get_noncore_for_dog(dog)
@@ -147,71 +162,219 @@ class Command(BaseCommand):
                         continue
 
                     # Check if a reminder was sent recently enough
-                    last_log = (
-                        ReminderLog.objects
-                        .filter(
-                            user=user,
-                            dog=dog,
-                            vaccine_id=vaccine_id,
-                            dose_number=dose_number,
-                            scheduled_date=due_date,
+                    # --force skips dedup so the scheduled send still fires
+                    if not force:
+                        last_log = (
+                            ReminderLog.objects
+                            .filter(
+                                user=user,
+                                dog=dog,
+                                vaccine_id=vaccine_id,
+                                dose_number=dose_number,
+                                scheduled_date=due_date,
+                            )
+                            .order_by('-sent_at')
+                            .first()
                         )
-                        .order_by('-sent_at')
-                        .first()
-                    )
 
-                    if last_log:
-                        time_since_last = now - last_log.sent_at
-                        if time_since_last < datetime.timedelta(hours=interval_hours):
-                            total_skipped += 1
-                            continue
+                        if last_log:
+                            time_since_last = now - last_log.sent_at
+                            if time_since_last < datetime.timedelta(hours=interval_hours):
+                                total_skipped += 1
+                                continue
 
                     formatted_due_date = due_date.strftime("%B %d, %Y")
-                    user_name = user.first_name or user.username or user.email
+                    entry = {
+                        'dog': dog,
+                        'dog_name': dog.name,
+                        'vaccine_id': vaccine_id,
+                        'vaccine_name': vaccine_name,
+                        'dose_info': dose_info,
+                        'dose_number': dose_number,
+                        'due_date': due_date,
+                        'due_date_formatted': formatted_due_date,
+                        'days_remaining': days_remaining,
+                    }
 
-                    if dry_run:
+                    if days_remaining < 0:
+                        entry['days_overdue'] = abs(days_remaining)
+                        overdue_items.append(entry)
+                    elif days_remaining == 0:
+                        due_today_items.append(entry)
+                    else:
+                        upcoming_items.append(entry)
+
+            # Phase B: Send emails for this user
+
+            # B1: Send a single digest for all overdue items
+            if overdue_items:
+                digest_data = [
+                    {
+                        'dog_name': item['dog_name'],
+                        'vaccine_name': item['vaccine_name'],
+                        'dose_info': item['dose_info'],
+                        'due_date': item['due_date_formatted'],
+                        'days_overdue': item['days_overdue'],
+                    }
+                    for item in overdue_items
+                ]
+
+                if dry_run:
+                    dog_count = len({item['dog_name'] for item in overdue_items})
+                    self.stdout.write(
+                        f"  [DRY RUN] Would send overdue digest to {user.email}: "
+                        f"{len(overdue_items)} vaccine(s) across {dog_count} dog(s)"
+                    )
+                    for item in overdue_items:
                         self.stdout.write(
-                            f"  [DRY RUN] Would send to {user.email}: "
-                            f"{dog.name} - {vaccine_name} ({dose_info}) "
-                            f"due {formatted_due_date} ({days_remaining} days)"
+                            f"    - {item['dog_name']}: {item['vaccine_name']} "
+                            f"({item['dose_info']}) due {item['due_date_formatted']} "
+                            f"({item['days_overdue']} days overdue)"
                         )
-                        total_sent += 1
-                        continue
-
-                    result = email_service.send_reminder_email(
+                    total_sent += 1
+                    total_digest_items += len(overdue_items)
+                else:
+                    result = email_service.send_overdue_digest_email(
                         to_email=user.email,
                         user_name=user_name,
-                        dog_name=dog.name,
-                        vaccine_name=vaccine_name,
-                        dose_info=dose_info,
-                        due_date=formatted_due_date,
-                        days_remaining=days_remaining,
+                        overdue_items=digest_data,
                     )
 
                     if result['success']:
-                        ReminderLog.objects.create(
-                            user=user,
-                            dog=dog,
-                            vaccine_id=vaccine_id,
-                            dose_number=dose_number,
-                            scheduled_date=due_date,
-                            sent_at=now,
-                        )
+                        # Don't log when --force so the scheduled send still fires
+                        if not force:
+                            ReminderLog.objects.bulk_create([
+                                ReminderLog(
+                                    user=user,
+                                    dog=item['dog'],
+                                    vaccine_id=item['vaccine_id'],
+                                    dose_number=item['dose_number'],
+                                    scheduled_date=item['due_date'],
+                                    sent_at=now,
+                                )
+                                for item in overdue_items
+                            ])
                         total_sent += 1
+                        total_digest_items += len(overdue_items)
                         logger.info(
-                            f"Sent reminder to {user.email} for {dog.name} - {vaccine_name}"
+                            f"Sent overdue digest to {user.email} with "
+                            f"{len(overdue_items)} vaccine(s)"
                         )
                     else:
                         total_errors += 1
                         logger.error(
-                            f"Failed to send reminder to {user.email}: {result['message']}"
+                            f"Failed to send overdue digest to {user.email}: "
+                            f"{result['message']}"
                         )
+
+            # B2: Send a single digest for all due-today items
+            if due_today_items:
+                digest_data = [
+                    {
+                        'dog_name': item['dog_name'],
+                        'vaccine_name': item['vaccine_name'],
+                        'dose_info': item['dose_info'],
+                        'due_date': item['due_date_formatted'],
+                    }
+                    for item in due_today_items
+                ]
+
+                if dry_run:
+                    dog_count = len({item['dog_name'] for item in due_today_items})
+                    self.stdout.write(
+                        f"  [DRY RUN] Would send due-today digest to {user.email}: "
+                        f"{len(due_today_items)} vaccine(s) across {dog_count} dog(s)"
+                    )
+                    for item in due_today_items:
+                        self.stdout.write(
+                            f"    - {item['dog_name']}: {item['vaccine_name']} "
+                            f"({item['dose_info']}) due today"
+                        )
+                    total_sent += 1
+                    total_digest_items += len(due_today_items)
+                else:
+                    result = email_service.send_due_today_digest_email(
+                        to_email=user.email,
+                        user_name=user_name,
+                        due_today_items=digest_data,
+                    )
+
+                    if result['success']:
+                        if not force:
+                            ReminderLog.objects.bulk_create([
+                                ReminderLog(
+                                    user=user,
+                                    dog=item['dog'],
+                                    vaccine_id=item['vaccine_id'],
+                                    dose_number=item['dose_number'],
+                                    scheduled_date=item['due_date'],
+                                    sent_at=now,
+                                )
+                                for item in due_today_items
+                            ])
+                        total_sent += 1
+                        total_digest_items += len(due_today_items)
+                        logger.info(
+                            f"Sent due-today digest to {user.email} with "
+                            f"{len(due_today_items)} vaccine(s)"
+                        )
+                    else:
+                        total_errors += 1
+                        logger.error(
+                            f"Failed to send due-today digest to {user.email}: "
+                            f"{result['message']}"
+                        )
+
+            # B3: Send individual emails for upcoming items
+            for item in upcoming_items:
+                if dry_run:
+                    self.stdout.write(
+                        f"  [DRY RUN] Would send to {user.email}: "
+                        f"{item['dog_name']} - {item['vaccine_name']} "
+                        f"({item['dose_info']}) due {item['due_date_formatted']} "
+                        f"({item['days_remaining']} days)"
+                    )
+                    total_sent += 1
+                    continue
+
+                result = email_service.send_reminder_email(
+                    to_email=user.email,
+                    user_name=user_name,
+                    dog_name=item['dog_name'],
+                    vaccine_name=item['vaccine_name'],
+                    dose_info=item['dose_info'],
+                    due_date=item['due_date_formatted'],
+                    days_remaining=item['days_remaining'],
+                )
+
+                if result['success']:
+                    if not force:
+                        ReminderLog.objects.create(
+                            user=user,
+                            dog=item['dog'],
+                            vaccine_id=item['vaccine_id'],
+                            dose_number=item['dose_number'],
+                            scheduled_date=item['due_date'],
+                            sent_at=now,
+                        )
+                    total_sent += 1
+                    logger.info(
+                        f"Sent reminder to {user.email} for "
+                        f"{item['dog_name']} - {item['vaccine_name']}"
+                    )
+                else:
+                    total_errors += 1
+                    logger.error(
+                        f"Failed to send reminder to {user.email}: "
+                        f"{result['message']}"
+                    )
 
         prefix = "[DRY RUN] " if dry_run else ""
         self.stdout.write(
             self.style.SUCCESS(
                 f"\n{prefix}Reminders complete: "
-                f"{total_sent} sent, {total_skipped} skipped (too recent), "
+                f"{total_sent} sent ({total_digest_items} in digests), "
+                f"{total_skipped} skipped (too recent), "
                 f"{total_errors} errors"
             )
         )
