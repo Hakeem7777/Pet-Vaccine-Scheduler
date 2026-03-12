@@ -6,7 +6,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from .views import serve_react_app, health_check
+from .views import serve_react_app, health_check, serve_landing_video
 
 urlpatterns = [
     # Health check endpoint (for Render)
@@ -26,6 +26,9 @@ urlpatterns = [
     path('api/', include('apps.blog.urls')),
     path('api/', include('apps.advertisements.urls')),
     path('api/', include('apps.help_videos.urls')),
+
+    # Serve landing page demo videos from filesystem
+    path('videos/<str:filename>', serve_landing_video, name='serve-landing-video'),
 ]
 
 # Serve media files in development
