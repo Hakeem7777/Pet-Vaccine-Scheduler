@@ -55,7 +55,7 @@ COPY vaccine-scheduler/ .
 COPY --from=frontend-builder /frontend/dist /app/frontend_build
 
 # Create directories for data persistence
-RUN mkdir -p /app/db /app/data /app/llm_context /app/staticfiles /app/media/landing_videos
+RUN mkdir -p /app/db /app/data /app/llm_context /app/staticfiles
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser && \

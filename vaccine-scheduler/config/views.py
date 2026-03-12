@@ -1,7 +1,6 @@
 """
 Views for serving the React SPA frontend.
 """
-import os
 from pathlib import Path
 from django.http import HttpResponse, Http404
 from django.conf import settings
@@ -35,22 +34,3 @@ def health_check(request):
     return HttpResponse("OK", content_type="text/plain")
 
 
-def serve_landing_video(request, filename):
-    """
-    Serve landing page demo videos from LANDING_PAGE_VIDEO_ROOT.
-    Only allows specific filenames to prevent directory traversal.
-    """
-    from django.http import FileResponse
-
-    allowed = {'demo-b2c.mp4', 'demo-b2b.mp4'}
-    if filename not in allowed:
-        raise Http404("Video not found")
-
-    video_path = Path(settings.LANDING_PAGE_VIDEO_ROOT) / filename
-    if not video_path.exists():
-        raise Http404("Video not found")
-
-    return FileResponse(
-        open(video_path, 'rb'),
-        content_type='video/mp4',
-    )

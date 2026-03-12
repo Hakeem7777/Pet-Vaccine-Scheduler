@@ -45,6 +45,7 @@ from .serializers import (
     ContactSubmissionSerializer,
     DashboardDogSummarySerializer,
     DashboardRecentVaccinationSerializer,
+    LandingPageVideoPublicSerializer,
     LandingPageVideoSerializer,
     ReminderPreferenceSerializer,
     TokenUsageSerializer,
@@ -903,11 +904,11 @@ class AdminLandingVideoListCreateView(APIView):
 
     def get(self, request):
         videos = LandingPageVideo.objects.all()
-        serializer = LandingPageVideoSerializer(videos, many=True)
+        serializer = LandingPageVideoSerializer(videos, many=True, context={'request': request})
         return Response({'results': serializer.data, 'count': len(serializer.data)})
 
     def post(self, request):
-        serializer = LandingPageVideoSerializer(data=request.data)
+        serializer = LandingPageVideoSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -927,14 +928,14 @@ class AdminLandingVideoDetailView(APIView):
         video = self._get_video(pk)
         if not video:
             return Response({'detail': 'Landing page video not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = LandingPageVideoSerializer(video)
+        serializer = LandingPageVideoSerializer(video, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk):
         video = self._get_video(pk)
         if not video:
             return Response({'detail': 'Landing page video not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = LandingPageVideoSerializer(video, data=request.data, partial=True)
+        serializer = LandingPageVideoSerializer(video, data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -945,3 +946,17 @@ class AdminLandingVideoDetailView(APIView):
             return Response({'detail': 'Landing page video not found.'}, status=status.HTTP_404_NOT_FOUND)
         video.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LandingVideoPublicView(APIView):
+    """Public endpoint: returns the active video URL for a given page type."""
+    permission_classes = [AllowAny]
+
+    def get(self, request, page_type):
+        if page_type not in ('b2c', 'b2b'):
+            return Response({'detail': 'Invalid page type.'}, status=status.HTTP_400_BAD_REQUEST)
+        video = LandingPageVideo.objects.filter(page_type=page_type, is_active=True).first()
+        if not video:
+            return Response({'video_url': None})
+        serializer = LandingPageVideoPublicSerializer(video, context={'request': request})
+        return Response(serializer.data)

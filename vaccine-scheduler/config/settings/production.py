@@ -93,11 +93,6 @@ if FRONTEND_BUILD_DIR.exists():
 WHITENOISE_INDEX_FILE = True  # Serve index.html for root
 WHITENOISE_SKIP_COMPRESS_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'gz', 'tgz', 'bz2', 'tbz', 'xz', 'br', 'swf', 'flv', 'woff', 'woff2', 'mp4', 'webm', 'ogg']
 
-# Landing page videos — served via Django view at /videos/<filename>
-if not os.getenv('LANDING_PAGE_VIDEO_ROOT'):
-    LANDING_PAGE_VIDEO_ROOT = BASE_DIR / 'media' / 'landing_videos'
-    LANDING_PAGE_VIDEO_ROOT.mkdir(parents=True, exist_ok=True)
-
 # CORS settings for production
 CORS_ALLOWED_ORIGINS = [
     origin.strip()

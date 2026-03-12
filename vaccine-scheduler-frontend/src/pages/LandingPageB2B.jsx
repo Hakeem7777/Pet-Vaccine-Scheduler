@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -12,6 +12,14 @@ export default function LandingPageB2B() {
     const demoVideoRef = useRef(null);
     const [openFaq, setOpenFaq] = useState(null);
     const [demoVideoPlaying, setDemoVideoPlaying] = useState(false);
+    const [videoUrl, setVideoUrl] = useState(null);
+
+    useEffect(() => {
+        fetch('/api/landing-videos/b2b/')
+            .then(r => r.json())
+            .then(data => { if (data.video_url) setVideoUrl(data.video_url); })
+            .catch(() => {});
+    }, []);
 
     const toggleFaq = (index) => {
         setOpenFaq(openFaq === index ? null : index);
@@ -257,7 +265,7 @@ export default function LandingPageB2B() {
                             preload="metadata"
                             className={`demo-video${demoVideoPlaying ? '' : ' demo-video--hidden'}`}
                         >
-                            <source src="/videos/demo-b2b.mp4" type="video/mp4" />
+                            {videoUrl && <source src={videoUrl} type="video/mp4" />}
                             Your browser does not support the video tag.
                         </video>
                     </div>

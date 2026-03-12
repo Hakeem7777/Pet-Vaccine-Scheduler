@@ -1,9 +1,5 @@
-import os
-import shutil
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.utils import timezone
 
@@ -158,21 +154,13 @@ class TokenUsage(models.Model):
         return f"{self.user.email} - {self.endpoint} ({self.total_tokens} tokens)"
 
 
-def _get_landing_video_storage():
-    return FileSystemStorage(location=str(settings.LANDING_PAGE_VIDEO_ROOT))
-
-
 class LandingPageVideo(models.Model):
-    """Manages demo videos shown on landing pages. Saved to frontend public/videos/."""
+    """Manages demo videos shown on landing pages. Stored in R2."""
 
     PAGE_TYPE_CHOICES = [
         ('b2c', 'B2C (Pet Owners)'),
         ('b2b', 'B2B (Clinics)'),
     ]
-    DEMO_FILENAMES = {
-        'b2c': 'demo-b2c.mp4',
-        'b2b': 'demo-b2b.mp4',
-    }
 
     title = models.CharField(max_length=255, help_text='Internal label for this video')
     page_type = models.CharField(
@@ -182,10 +170,9 @@ class LandingPageVideo(models.Model):
         help_text='Which landing page this video is for',
     )
     video_file = models.FileField(
-        upload_to='',
-        storage=_get_landing_video_storage,
+        upload_to='landing_videos/',
         validators=[validate_video_file],
-        help_text='Upload MP4/WebM/Ogg — will be saved to frontend public/videos/',
+        help_text='Upload MP4/WebM/Ogg — stored in R2',
     )
     is_active = models.BooleanField(
         default=True,
@@ -202,18 +189,8 @@ class LandingPageVideo(models.Model):
         return f"{self.title} ({self.get_page_type_display()}, {'active' if self.is_active else 'inactive'})"
 
     def save(self, *args, **kwargs):
-        # Deactivate other videos of the same page type
         if self.is_active:
             LandingPageVideo.objects.filter(
                 is_active=True, page_type=self.page_type
             ).exclude(pk=self.pk).update(is_active=False)
-
         super().save(*args, **kwargs)
-
-        # Copy to the page-specific demo file so the frontend reference doesn't break
-        if self.is_active and self.video_file:
-            src = self.video_file.path
-            filename = self.DEMO_FILENAMES.get(self.page_type, f'demo-{self.page_type}.mp4')
-            dest = os.path.join(str(settings.LANDING_PAGE_VIDEO_ROOT), filename)
-            if os.path.abspath(src) != os.path.abspath(dest):
-                shutil.copy2(src, dest)

@@ -26,6 +26,7 @@ from .views import (
     AdminReferralStatsView,
     AdminLandingVideoListCreateView,
     AdminLandingVideoDetailView,
+    LandingVideoPublicView,
 )
 
 app_name = 'dashboard'
@@ -36,6 +37,7 @@ urlpatterns = [
     path('dashboard/reminders/', ReminderPreferenceView.as_view(), name='reminder-preferences'),
     path('dashboard/referrals/', ClientReferralView.as_view(), name='client-referrals'),
     path('leads/capture/', LeadCaptureView.as_view(), name='lead-capture'),
+    path('landing-videos/<str:page_type>/', LandingVideoPublicView.as_view(), name='landing-video-public'),
 
     # Admin endpoints
     path('admin-panel/stats/', AdminStatsView.as_view(), name='admin-stats'),

@@ -188,7 +188,25 @@ class AdminPromoCodeRedemptionSerializer(serializers.ModelSerializer):
 
 
 class LandingPageVideoSerializer(serializers.ModelSerializer):
+    video_file_url = serializers.SerializerMethodField()
+
     class Meta:
         model = LandingPageVideo
-        fields = ['id', 'title', 'page_type', 'video_file', 'is_active', 'uploaded_at', 'updated_at']
+        fields = ['id', 'title', 'page_type', 'video_file', 'video_file_url', 'is_active', 'uploaded_at', 'updated_at']
         read_only_fields = ['uploaded_at', 'updated_at']
+
+    def get_video_file_url(self, obj):
+        from apps.storage import get_file_url
+        return get_file_url(obj.video_file, self.context.get('request'))
+
+
+class LandingPageVideoPublicSerializer(serializers.ModelSerializer):
+    video_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LandingPageVideo
+        fields = ['video_url', 'page_type']
+
+    def get_video_url(self, obj):
+        from apps.storage import get_file_url
+        return get_file_url(obj.video_file, self.context.get('request'))
