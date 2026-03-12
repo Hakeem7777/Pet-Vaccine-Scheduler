@@ -37,6 +37,21 @@ class User(AbstractUser):
     has_seen_schedule_tour = models.BooleanField(default=False)
     pdf_exports_used = models.PositiveIntegerField(default=0)
 
+    referral_code = models.CharField(
+        max_length=8,
+        unique=True,
+        blank=True,
+        help_text="Unique referral code for this user"
+    )
+    referred_by = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='referrals',
+        help_text="The user who referred this user"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,6 +62,19 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.username
+
+    def save(self, *args, **kwargs):
+        if not self.referral_code:
+            self.referral_code = User.generate_referral_code()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_referral_code():
+        alphabet = string.ascii_uppercase + string.digits
+        while True:
+            code = ''.join(secrets.choice(alphabet) for _ in range(8))
+            if not User.objects.filter(referral_code=code).exists():
+                return code
 
 
 class PendingRegistration(models.Model):
@@ -61,6 +89,7 @@ class PendingRegistration(models.Model):
     last_name = models.CharField(max_length=150, blank=True, default='')
     clinic_name = models.CharField(max_length=255, blank=True, default='')
     phone = models.CharField(max_length=20, blank=True, default='')
+    referral_code = models.CharField(max_length=8, blank=True, default='')
     otp = models.CharField(max_length=6)
     otp_expires_at = models.DateTimeField()
     otp_attempts = models.IntegerField(default=0)

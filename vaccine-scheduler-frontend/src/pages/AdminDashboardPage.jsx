@@ -36,6 +36,7 @@ const TABS = [
   { key: 'blogs', label: 'Blogs' },
   { key: 'ads', label: 'Ads' },
   { key: 'help-videos', label: 'Help Videos' },
+  { key: 'referrals', label: 'Referrals' },
   { key: 'promo-codes', label: 'Promo Codes' },
   { key: 'tokens', label: 'Token Usage' },
   { key: 'model-tokens', label: 'Model Tokens' },
@@ -114,6 +115,7 @@ function AdminDashboardPage() {
   const [helpVideoFormData, setHelpVideoFormData] = useState(null);
   const [helpVideoFormLoading, setHelpVideoFormLoading] = useState(false);
   const [openKebabHelpVideoId, setOpenKebabHelpVideoId] = useState(null);
+  const [referrals, setReferrals] = useState(null);
   const [promoCodes, setPromoCodes] = useState(null);
   const [promoFormOpen, setPromoFormOpen] = useState(false);
   const [promoFormData, setPromoFormData] = useState(null);
@@ -134,6 +136,7 @@ function AdminDashboardPage() {
     blogs: {},
     ads: {},
     'help-videos': {},
+    referrals: {},
     'promo-codes': {},
     tokens: {},
   });
@@ -295,6 +298,11 @@ function AdminDashboardPage() {
         case 'help-videos': {
           const helpData = await adminApi.getAdminHelpVideos(params);
           setHelpVideos(helpData);
+          break;
+        }
+        case 'referrals': {
+          const referralData = await adminApi.getAdminReferralStats(params);
+          setReferrals(referralData);
           break;
         }
         case 'promo-codes': {
@@ -2921,6 +2929,81 @@ function AdminDashboardPage() {
     );
   }
 
+  function renderReferrals() {
+    const results = referrals?.results || [];
+    const totalReferrals = referrals?.total_referrals || 0;
+    const totalCount = referrals?.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Referrals</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalReferrals} Total {totalReferrals === 1 ? 'Referral' : 'Referrals'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Users who have referred others to PetVaxCalendar</p>
+          </div>
+        </div>
+
+        <form className="admin-filter-bar" onSubmit={handleSearch}>
+          <input
+            type="text"
+            className="admin-filter-bar__search"
+            placeholder="Search by email or username..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button type="submit" className="btn btn-primary btn-sm">Search</button>
+        </form>
+
+        {loading ? <LoadingSpinner /> : (
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Referral Code</th>
+                  <th>Referrals</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.length === 0 ? (
+                  <tr><td colSpan="5" className="admin-table__empty">No referrers found.</td></tr>
+                ) : results.map((u) => (
+                  <tr key={u.id}>
+                    <td>{u.username}</td>
+                    <td>{u.email}</td>
+                    <td style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>{u.referral_code}</td>
+                    <td>
+                      <span className="admin-badge admin-badge--active">{u.referral_count}</span>
+                    </td>
+                    <td>{new Date(u.date_joined).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {referrals && totalPages > 1 && (
+              <div className="admin-tab-pagination">
+                <span className="admin-tab-pagination__info">Page {page} of {totalPages}</span>
+                <div className="admin-tab-pagination__buttons">
+                  <button className="btn btn-outline btn-sm admin-tab-pagination__btn" disabled={page <= 1} onClick={() => handlePageChange(page - 1)}>Previous</button>
+                  <button className="btn btn-outline btn-sm admin-tab-pagination__btn" disabled={page >= totalPages} onClick={() => handlePageChange(page + 1)}>Next</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const tabRenderers = {
     overview: renderOverview,
     users: renderUsers,
@@ -2930,6 +3013,7 @@ function AdminDashboardPage() {
     blogs: renderBlogs,
     ads: renderAds,
     'help-videos': renderHelpVideos,
+    referrals: renderReferrals,
     'promo-codes': renderPromoCodes,
     tokens: renderTokenUsage,
     'model-tokens': renderModelTokens,

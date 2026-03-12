@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     ClientDashboardView,
+    ClientReferralView,
     LeadCaptureView,
     ReminderPreferenceView,
     AdminStatsView,
@@ -22,6 +23,7 @@ from .views import (
     AdminPromoCodeListCreateView,
     AdminPromoCodeDetailView,
     AdminPromoCodeRedemptionsView,
+    AdminReferralStatsView,
 )
 
 app_name = 'dashboard'
@@ -30,6 +32,7 @@ urlpatterns = [
     # Client dashboard
     path('dashboard/', ClientDashboardView.as_view(), name='client-dashboard'),
     path('dashboard/reminders/', ReminderPreferenceView.as_view(), name='reminder-preferences'),
+    path('dashboard/referrals/', ClientReferralView.as_view(), name='client-referrals'),
     path('leads/capture/', LeadCaptureView.as_view(), name='lead-capture'),
 
     # Admin endpoints
@@ -48,6 +51,9 @@ urlpatterns = [
     path('admin-panel/token-usage/stats/', AdminTokenUsageStatsView.as_view(), name='admin-token-usage-stats'),
     path('admin-panel/ai-analytics/', AdminAIAnalyticsView.as_view(), name='admin-ai-analytics'),
     path('admin-panel/ai-models/', AdminAIModelsView.as_view(), name='admin-ai-models'),
+
+    # Referrals
+    path('admin-panel/referrals/', AdminReferralStatsView.as_view(), name='admin-referrals'),
 
     # Promo codes
     path('admin-panel/promo-codes/', AdminPromoCodeListCreateView.as_view(), name='admin-promo-codes'),

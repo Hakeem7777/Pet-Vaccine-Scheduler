@@ -181,6 +181,13 @@ export async function deleteAdminAd(id) {
   await client.delete(`/admin-panel/advertisements/${id}/`);
 }
 
+// ── Referral Admin API ──────────────────────────────────────────
+
+export async function getAdminReferralStats(params = {}) {
+  const response = await client.get('/admin-panel/referrals/', { params });
+  return response.data;
+}
+
 // ── Promo Code Admin API ────────────────────────────────────────
 
 export async function getAdminPromoCodes(params = {}) {

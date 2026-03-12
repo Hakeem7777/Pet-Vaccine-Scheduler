@@ -15,6 +15,11 @@ export async function updateReminderPreferences(data) {
   return response.data;
 }
 
+export async function getReferralInfo() {
+  const response = await client.get('/dashboard/referrals/');
+  return response.data;
+}
+
 export async function captureLeadEmail(email, source = 'guest_schedule') {
   const response = await client.post('/leads/capture/', { email, source });
   return response.data;

@@ -6,6 +6,7 @@ import csv
 import io
 
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.db.models import Count, Max, Min, Sum
 from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
 from django.http import StreamingHttpResponse
@@ -118,7 +119,8 @@ class AdminStatsView(APIView):
             _vaccination_count=Count('dogs__vaccination_records', distinct=True),
             _total_tokens_used=Sum('token_usages__total_tokens'),
             _ai_call_count=Count('token_usages', distinct=True),
-        ).order_by('-date_joined')[:5]
+            _referral_count=Count('referrals', distinct=True),
+        ).select_related('referred_by').order_by('-date_joined')[:5]
 
         token_totals = TokenUsage.objects.aggregate(
             total_input=Sum('input_tokens'),
@@ -134,6 +136,7 @@ class AdminStatsView(APIView):
             'total_contacts': ContactSubmission.objects.count(),
             'total_ai_tokens': token_totals['total_tokens'] or 0,
             'total_ai_calls': token_totals['total_calls'] or 0,
+            'total_referrals': User.objects.filter(referred_by__isnull=False).count(),
             'recent_registrations': AdminUserSerializer(recent_users, many=True).data,
         })
 
@@ -153,7 +156,8 @@ class AdminUserListView(ListAPIView):
             _vaccination_count=Count('dogs__vaccination_records', distinct=True),
             _total_tokens_used=Sum('token_usages__total_tokens'),
             _ai_call_count=Count('token_usages', distinct=True),
-        )
+            _referral_count=Count('referrals', distinct=True),
+        ).select_related('referred_by')
 
 
 class AdminUserToggleActiveView(APIView):
@@ -722,6 +726,72 @@ class AdminAIModelsView(APIView):
         return Response({
             'models': AVAILABLE_MODELS,
             'default': ANALYTICS_MODEL,
+        })
+
+
+# ── Referrals ────────────────────────────────────────────────────
+
+class ClientReferralView(APIView):
+    """GET referral info for the authenticated user."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        referrals = User.objects.filter(referred_by=user).order_by('-date_joined')[:10]
+        return Response({
+            'referral_code': user.referral_code,
+            'referral_count': User.objects.filter(referred_by=user).count(),
+            'recent_referrals': [
+                {'username': r.username, 'date_joined': r.date_joined}
+                for r in referrals
+            ],
+        })
+
+
+class AdminReferralStatsView(APIView):
+    """Referral statistics for the admin panel."""
+    permission_classes = [IsAdminUser]
+
+    PAGE_SIZE = 20
+
+    def get(self, request):
+        total_referrals = User.objects.filter(referred_by__isnull=False).count()
+
+        # Top referrers with pagination
+        page = int(request.query_params.get('page', 1))
+        search = request.query_params.get('search', '').strip()
+
+        referrers_qs = (
+            User.objects
+            .annotate(_referral_count=Count('referrals', distinct=True))
+            .filter(_referral_count__gt=0)
+            .order_by('-_referral_count')
+        )
+
+        if search:
+            referrers_qs = referrers_qs.filter(
+                models.Q(email__icontains=search) | models.Q(username__icontains=search)
+            )
+
+        total = referrers_qs.count()
+        start = (page - 1) * self.PAGE_SIZE
+        end = start + self.PAGE_SIZE
+        referrers = referrers_qs[start:end]
+
+        return Response({
+            'total_referrals': total_referrals,
+            'count': total,
+            'results': [
+                {
+                    'id': u.id,
+                    'username': u.username,
+                    'email': u.email,
+                    'referral_code': u.referral_code,
+                    'referral_count': u._referral_count,
+                    'date_joined': u.date_joined,
+                }
+                for u in referrers
+            ],
         })
 
 

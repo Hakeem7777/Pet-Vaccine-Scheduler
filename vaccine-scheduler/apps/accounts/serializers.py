@@ -81,6 +81,7 @@ class UserSerializer(serializers.ModelSerializer):
     Serializer for user profile display and updates.
     """
     subscription = serializers.SerializerMethodField()
+    referral_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -88,9 +89,12 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'clinic_name', 'phone', 'is_staff', 'date_joined', 'created_at', 'updated_at',
             'has_seen_dashboard_tour', 'has_seen_schedule_tour', 'subscription',
-            'pdf_exports_used',
+            'pdf_exports_used', 'referral_code', 'referral_count',
         ]
-        read_only_fields = ['id', 'date_joined', 'created_at', 'updated_at', 'is_staff', 'subscription', 'pdf_exports_used']
+        read_only_fields = ['id', 'date_joined', 'created_at', 'updated_at', 'is_staff', 'subscription', 'pdf_exports_used', 'referral_code', 'referral_count']
+
+    def get_referral_count(self, obj):
+        return obj.referrals.count()
 
     def get_subscription(self, obj):
         try:
@@ -160,6 +164,7 @@ class PendingRegistrationSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
     clinic_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
     phone = serializers.CharField(max_length=20, required=False, allow_blank=True, default='')
+    referral_code = serializers.CharField(max_length=8, required=False, allow_blank=True, default='')
 
     def validate(self, attrs: dict) -> dict:
         if attrs['password'] != attrs['password_confirm']:

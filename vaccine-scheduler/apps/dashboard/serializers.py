@@ -14,6 +14,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
     total_tokens_used = serializers.SerializerMethodField()
     ai_call_count = serializers.SerializerMethodField()
+    referral_count = serializers.SerializerMethodField()
+    referred_by_email = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -22,6 +24,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
             'clinic_name', 'phone', 'is_staff', 'is_active',
             'date_joined', 'dog_count', 'vaccination_count',
             'total_tokens_used', 'ai_call_count',
+            'referral_code', 'referral_count', 'referred_by_email',
         ]
 
     def get_dog_count(self, obj):
@@ -35,6 +38,17 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     def get_ai_call_count(self, obj):
         return getattr(obj, '_ai_call_count', 0) or 0
+
+    def get_referral_count(self, obj):
+        return getattr(obj, '_referral_count', 0) or 0
+
+    def get_referred_by_email(self, obj):
+        if obj.referred_by_id:
+            try:
+                return obj.referred_by.email
+            except User.DoesNotExist:
+                return None
+        return None
 
 
 class AdminDogSerializer(serializers.ModelSerializer):

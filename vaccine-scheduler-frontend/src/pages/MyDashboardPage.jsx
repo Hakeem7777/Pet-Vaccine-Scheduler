@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getDashboardStats } from '../api/dashboard';
+import { getDashboardStats, getReferralInfo } from '../api/dashboard';
 import * as authApi from '../api/auth';
 import * as subscriptionsApi from '../api/subscriptions';
 import ReminderSettings from '../components/dashboard/ReminderSettings';
@@ -28,6 +28,10 @@ function MyDashboardPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
 
+  // Referral state
+  const [referralInfo, setReferralInfo] = useState(null);
+  const [referralCopied, setReferralCopied] = useState(false);
+
   // Password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({ old_password: '', new_password: '', new_password_confirm: '' });
@@ -36,10 +40,13 @@ function MyDashboardPage() {
 
   useEffect(() => {
     if (!isAdmin) {
-      getDashboardStats()
-        .then(setStats)
-        .catch(() => {})
-        .finally(() => setLoading(false));
+      Promise.all([
+        getDashboardStats().catch(() => null),
+        getReferralInfo().catch(() => null),
+      ]).then(([statsData, referralData]) => {
+        setStats(statsData);
+        setReferralInfo(referralData);
+      }).finally(() => setLoading(false));
     }
   }, [isAdmin]);
 
@@ -144,6 +151,65 @@ function MyDashboardPage() {
           <div className="my-dash-card__icon">
             <img src="/Images/generic_icons/syringe_icon.svg" alt="" width="28" height="28" />
           </div>
+        </div>
+      </div>
+
+      {/* Refer a Friend */}
+      <div className="my-dashboard__section">
+        <div className="my-dashboard__section-header">
+          <h3 className="my-dashboard__section-title">Refer a Friend</h3>
+        </div>
+        <div className="my-dashboard__referral">
+          <p className="my-dashboard__referral-desc">
+            Share your referral code with friends so they can enter it when they sign up!
+          </p>
+          <div className="my-dashboard__referral-link-row">
+            <input
+              readOnly
+              value={referralInfo?.referral_code || user?.referral_code || ''}
+              className="my-dashboard__referral-input my-dashboard__referral-input--code"
+              onClick={(e) => e.target.select()}
+            />
+            <button
+              className="btn btn-primary btn-pill"
+              onClick={() => {
+                navigator.clipboard.writeText(referralInfo?.referral_code || user?.referral_code || '');
+                setReferralCopied(true);
+                setTimeout(() => setReferralCopied(false), 2000);
+              }}
+            >
+              {referralCopied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <div className="my-dashboard__stats" style={{ marginTop: '1rem' }}>
+            <div className="my-dash-card">
+              <div className="my-dash-card__content">
+                <div className="my-dash-card__number">{referralInfo?.referral_count ?? 0}</div>
+                <div className="my-dash-card__label">Friends Referred</div>
+              </div>
+              <div className="my-dash-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" width="28" height="28">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          {referralInfo?.recent_referrals?.length > 0 && (
+            <div className="my-dashboard__referral-list">
+              <h4 className="my-dashboard__referral-list-title">Recent Referrals</h4>
+              {referralInfo.recent_referrals.map((r, i) => (
+                <div key={i} className="my-dashboard__referral-item">
+                  <span>{r.username}</span>
+                  <span className="my-dashboard__referral-date">
+                    {new Date(r.date_joined).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

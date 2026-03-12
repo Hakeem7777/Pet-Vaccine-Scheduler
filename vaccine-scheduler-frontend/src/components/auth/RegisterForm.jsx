@@ -13,6 +13,7 @@ function RegisterForm({ onSuccess }) {
     first_name: '',
     last_name: '',
     phone: '',
+    referral_code: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -192,17 +193,33 @@ function RegisterForm({ onSuccess }) {
         </div>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="phone">Phone</label>
-        <div className="input-phone-wrapper">
-          <span className="input-phone-prefix">US</span>
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="phone">Phone</label>
+          <div className="input-phone-wrapper">
+            <span className="input-phone-prefix">US</span>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="Enter your number"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="referral_code">Referral Code</label>
           <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="Enter your number"
-            value={formData.phone}
+            type="text"
+            id="referral_code"
+            name="referral_code"
+            placeholder="Enter referral code"
+            value={formData.referral_code}
             onChange={handleChange}
+            maxLength={8}
+            style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}
           />
         </div>
       </div>

@@ -32,6 +32,10 @@ class EmailService:
         """Get the admin notification email from environment."""
         return os.environ.get('CONTACT_ADMIN_EMAIL')
 
+    def _get_support_email(self):
+        """Get the support email from environment."""
+        return os.environ.get('SUPPORT_EMAIL', 'support@petvaxcalendar.com')
+
     def send_schedule_email(
         self,
         to_emails: List[str],
@@ -208,9 +212,11 @@ class EmailService:
         </tr>
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
-                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                <p style="margin: 0; color: rgba(255,255,255); font-size: 12px;">
                     PetVaxCalendar - Dog Vaccination Scheduler<br>
-                    You are receiving this because you enabled vaccination reminders.
+                    You are receiving this because you enabled vaccination reminders.<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -378,9 +384,11 @@ You are receiving this because you enabled vaccination reminders.
         </tr>
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
-                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                <p style="margin: 0; color: rgba(255,255,255); font-size: 12px;">
                     PetVaxCalendar - Dog Vaccination Scheduler<br>
-                    You are receiving this because you enabled vaccination reminders.
+                    You are receiving this because you enabled vaccination reminders.<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -541,9 +549,11 @@ You are receiving this because you enabled vaccination reminders.
         </tr>
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
-                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                <p style="margin: 0; color: rgba(255,255,255); font-size: 12px;">
                     PetVaxCalendar - Dog Vaccination Scheduler<br>
-                    You are receiving this because you enabled vaccination reminders.
+                    You are receiving this because you enabled vaccination reminders.<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -679,7 +689,9 @@ You are receiving this because you enabled vaccination reminders.
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
                     This email was sent from Vaccine Scheduler.<br>
-                    Generated on {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+                    Generated on {datetime.now().strftime("%B %d, %Y at %I:%M %p")}<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -871,7 +883,9 @@ You are receiving this because you enabled vaccination reminders.
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
-                    PetVaxCalendar - Dog Vaccination Scheduler
+                    PetVaxCalendar - Dog Vaccination Scheduler<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -995,7 +1009,9 @@ PetVaxCalendar - Dog Vaccination Scheduler
             <td style="background-color: #333f48; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
                     Sent from PetVaxCalendar Contact Form<br>
-                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -1107,7 +1123,9 @@ Sent from PetVaxCalendar Contact Form
             <td style="background-color: #333f48; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
                     PetVaxCalendar Admin Notification<br>
-                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -1210,7 +1228,9 @@ PetVaxCalendar Admin Notification
             <td style="background-color: #333f48; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
                     PetVaxCalendar Admin Notification<br>
-                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}
+                    {datetime.now().strftime("%B %d, %Y at %I:%M %p")}<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -1401,7 +1421,9 @@ PetVaxCalendar Admin Notification
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
-                    PetVaxCalendar - Dog Vaccination Scheduler
+                    PetVaxCalendar - Dog Vaccination Scheduler<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -1505,7 +1527,9 @@ PetVaxCalendar - Dog Vaccination Scheduler
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
-                    PetVaxCalendar - Dog Vaccination Scheduler
+                    PetVaxCalendar - Dog Vaccination Scheduler<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -1604,7 +1628,9 @@ PetVaxCalendar - Dog Vaccination Scheduler
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
-                    PetVaxCalendar - Dog Vaccination Scheduler
+                    PetVaxCalendar - Dog Vaccination Scheduler<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>
@@ -1704,7 +1730,9 @@ PetVaxCalendar - Dog Vaccination Scheduler
         <tr>
             <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
                 <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
-                    PetVaxCalendar - Dog Vaccination Scheduler
+                    PetVaxCalendar - Dog Vaccination Scheduler<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
                 </p>
             </td>
         </tr>

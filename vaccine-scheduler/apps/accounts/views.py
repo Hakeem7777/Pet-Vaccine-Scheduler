@@ -112,6 +112,7 @@ class RegisterView(APIView):
                 'last_name': data.get('last_name', ''),
                 'clinic_name': data.get('clinic_name', ''),
                 'phone': data.get('phone', ''),
+                'referral_code': data.get('referral_code', ''),
                 'otp': otp,
                 'otp_expires_at': otp_expires_at,
             }
@@ -190,6 +191,15 @@ class VerifyOTPView(APIView):
             clinic_name=pending.clinic_name,
             phone=pending.phone,
         )
+
+        # Link referral if a valid referral code was provided
+        if pending.referral_code:
+            try:
+                referrer = User.objects.get(referral_code=pending.referral_code)
+                user.referred_by = referrer
+                user.save(update_fields=['referred_by'])
+            except User.DoesNotExist:
+                pass  # Invalid referral code - ignore silently
 
         # Clean up pending registration
         pending.delete()
