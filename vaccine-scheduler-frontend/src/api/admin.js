@@ -219,6 +219,36 @@ export async function getAdminPromoCodeRedemptions(id) {
   return response.data;
 }
 
+// ── Landing Page Video Admin API ──────────────────────────────
+
+export async function getAdminLandingVideos() {
+  const response = await client.get('/admin-panel/landing-videos/');
+  return response.data;
+}
+
+export async function getAdminLandingVideo(id) {
+  const response = await client.get(`/admin-panel/landing-videos/${id}/`);
+  return response.data;
+}
+
+export async function createAdminLandingVideo(data) {
+  const response = await client.post('/admin-panel/landing-videos/', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+export async function updateAdminLandingVideo(id, data) {
+  const response = await client.put(`/admin-panel/landing-videos/${id}/`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+export async function deleteAdminLandingVideo(id) {
+  await client.delete(`/admin-panel/landing-videos/${id}/`);
+}
+
 // ── Help Video Admin API ──────────────────────────────────────
 
 export async function getAdminHelpVideos(params = {}) {

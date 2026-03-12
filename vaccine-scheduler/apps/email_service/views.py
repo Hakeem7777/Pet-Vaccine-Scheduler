@@ -51,6 +51,20 @@ class SendScheduleEmailView(APIView):
             "historyAnalysis": "Optional analysis text"
         }
         """
+        # Only Pro users can send emails
+        from apps.subscriptions.models import Subscription
+        is_pro = False
+        try:
+            is_pro = request.user.subscription.is_pro
+        except Subscription.DoesNotExist:
+            pass
+
+        if not is_pro:
+            return Response(
+                {'error': 'Email exports are only available with the Pro Care Plan.', 'redirect': '/pricing'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # Check if Resend is configured
         if not os.environ.get('RESEND_API_KEY'):
             return Response(

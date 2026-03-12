@@ -36,6 +36,7 @@ const TABS = [
   { key: 'blogs', label: 'Blogs' },
   { key: 'ads', label: 'Ads' },
   { key: 'help-videos', label: 'Help Videos' },
+  { key: 'landing-videos', label: 'Landing Videos' },
   { key: 'referrals', label: 'Referrals' },
   { key: 'promo-codes', label: 'Promo Codes' },
   { key: 'tokens', label: 'Token Usage' },
@@ -115,6 +116,11 @@ function AdminDashboardPage() {
   const [helpVideoFormData, setHelpVideoFormData] = useState(null);
   const [helpVideoFormLoading, setHelpVideoFormLoading] = useState(false);
   const [openKebabHelpVideoId, setOpenKebabHelpVideoId] = useState(null);
+  const [landingVideos, setLandingVideos] = useState(null);
+  const [landingVideoFormOpen, setLandingVideoFormOpen] = useState(false);
+  const [landingVideoFormData, setLandingVideoFormData] = useState(null);
+  const [landingVideoFormLoading, setLandingVideoFormLoading] = useState(false);
+  const [openKebabLandingVideoId, setOpenKebabLandingVideoId] = useState(null);
   const [referrals, setReferrals] = useState(null);
   const [promoCodes, setPromoCodes] = useState(null);
   const [promoFormOpen, setPromoFormOpen] = useState(false);
@@ -179,6 +185,7 @@ function AdminDashboardPage() {
         setOpenKebabBlogId(null);
         setOpenKebabAdId(null);
         setOpenKebabHelpVideoId(null);
+        setOpenKebabLandingVideoId(null);
         setOpenKebabPromoId(null);
       }
     }
@@ -298,6 +305,11 @@ function AdminDashboardPage() {
         case 'help-videos': {
           const helpData = await adminApi.getAdminHelpVideos(params);
           setHelpVideos(helpData);
+          break;
+        }
+        case 'landing-videos': {
+          const landingData = await adminApi.getAdminLandingVideos();
+          setLandingVideos(landingData);
           break;
         }
         case 'referrals': {
@@ -2227,6 +2239,247 @@ function AdminDashboardPage() {
     );
   }
 
+  // ── Landing Page Video Handlers ─────────────────────────────────
+
+  async function handleDeleteLandingVideo(id, title) {
+    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
+    try {
+      await adminApi.deleteAdminLandingVideo(id);
+      fetchTabData('landing-videos', search, page, {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to delete landing video.');
+    }
+  }
+
+  async function handleEditLandingVideo(id) {
+    try {
+      const video = await adminApi.getAdminLandingVideo(id);
+      setLandingVideoFormData({
+        id: video.id,
+        title: video.title,
+        page_type: video.page_type,
+        video_file: null,
+        existing_video_file: video.video_file,
+        is_active: video.is_active,
+      });
+      setLandingVideoFormOpen(true);
+    } catch {
+      alert('Failed to load landing video.');
+    }
+  }
+
+  function handleNewLandingVideo() {
+    setLandingVideoFormData({
+      title: '',
+      page_type: 'b2c',
+      video_file: null,
+      existing_video_file: null,
+      is_active: true,
+    });
+    setLandingVideoFormOpen(true);
+  }
+
+  async function handleLandingVideoFormSubmit(e) {
+    e.preventDefault();
+    setLandingVideoFormLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', landingVideoFormData.title);
+      formData.append('page_type', landingVideoFormData.page_type);
+      formData.append('is_active', landingVideoFormData.is_active);
+      if (landingVideoFormData.video_file instanceof File) {
+        if (!validateFileSize(landingVideoFormData.video_file, MAX_VIDEO_SIZE)) return;
+        formData.append('video_file', landingVideoFormData.video_file);
+      }
+
+      if (landingVideoFormData.id) {
+        await adminApi.updateAdminLandingVideo(landingVideoFormData.id, formData);
+      } else {
+        await adminApi.createAdminLandingVideo(formData);
+      }
+      setLandingVideoFormOpen(false);
+      setLandingVideoFormData(null);
+      fetchTabData('landing-videos', search, 1, {}, ordering);
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to save landing video.');
+    } finally {
+      setLandingVideoFormLoading(false);
+    }
+  }
+
+  function renderLandingVideoForm() {
+    const fd = landingVideoFormData || { title: '', page_type: 'b2c', video_file: null, existing_video_file: null, is_active: true };
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <button className="btn btn-outline btn-sm" onClick={() => { setLandingVideoFormOpen(false); setLandingVideoFormData(null); }}>
+              &larr; Back to List
+            </button>
+            <h2 className="admin-tab-card__title" style={{ marginLeft: '1rem' }}>
+              {fd.id ? 'Edit Landing Video' : 'New Landing Video'}
+            </h2>
+          </div>
+        </div>
+
+        <form className="blog-form" onSubmit={handleLandingVideoFormSubmit}>
+          <div className="blog-form__field">
+            <label className="blog-form__label">Title</label>
+            <input
+              className="blog-form__input"
+              type="text"
+              value={fd.title}
+              onChange={(e) => setLandingVideoFormData({ ...fd, title: e.target.value })}
+              required
+              placeholder="e.g. Homepage Demo Video"
+            />
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Landing Page</label>
+            <select
+              className="blog-form__select"
+              value={fd.page_type}
+              onChange={(e) => setLandingVideoFormData({ ...fd, page_type: e.target.value })}
+            >
+              <option value="b2c">B2C (Pet Owners)</option>
+              <option value="b2b">B2B (Clinics)</option>
+            </select>
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label">Video File</label>
+            <input
+              className="blog-form__input"
+              type="file"
+              accept="video/*"
+              onChange={(e) => {
+                const file = e.target.files[0] || null;
+                if (file && !validateFileSize(file, MAX_VIDEO_SIZE)) { e.target.value = ''; return; }
+                setLandingVideoFormData({ ...fd, video_file: file });
+              }}
+            />
+            {fd.existing_video_file && !fd.video_file && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Current video uploaded. Upload a new file to replace it.</p>
+            )}
+            {!fd.id && !fd.video_file && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Upload an MP4, WebM, or Ogg video (max 100 MB). This will be shown on the landing pages.</p>
+            )}
+          </div>
+
+          <div className="blog-form__field">
+            <label className="blog-form__label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={fd.is_active}
+                onChange={(e) => setLandingVideoFormData({ ...fd, is_active: e.target.checked })}
+              />
+              Active (shown on landing pages as demo video)
+            </label>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Only one video can be active per page type. Activating this will deactivate other videos for the same page.</p>
+          </div>
+
+          <div className="blog-form__actions">
+            <button type="button" className="btn btn-outline" onClick={() => { setLandingVideoFormOpen(false); setLandingVideoFormData(null); }}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={landingVideoFormLoading || !fd.title.trim() || (!fd.id && !fd.video_file)}>
+              {landingVideoFormLoading ? 'Saving...' : (fd.id ? 'Update Video' : 'Upload Video')}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  function renderLandingVideos() {
+    if (landingVideoFormOpen) return renderLandingVideoForm();
+
+    const results = landingVideos?.results || [];
+    const totalCount = landingVideos?.count || 0;
+
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <div className="admin-tab-card__title-row">
+              <h2 className="admin-tab-card__title">Landing Page Videos</h2>
+              <span className="admin-tab-card__count-badge">
+                {totalCount} {totalCount === 1 ? 'Video' : 'Videos'}
+              </span>
+            </div>
+            <p className="admin-tab-card__subtitle">Demo videos for B2B and B2C landing pages. One active video per page type.</p>
+          </div>
+          <button className="btn btn-primary" onClick={handleNewLandingVideo}>
+            + Upload Video
+          </button>
+        </div>
+
+        {loading ? <LoadingSpinner /> : (
+          <div className="admin-table-container" style={{ overflow: 'visible' }}>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Page</th>
+                  <th>Status</th>
+                  <th>File</th>
+                  <th>Uploaded</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.length === 0 ? (
+                  <tr><td colSpan="6" className="admin-table__empty">No landing videos uploaded yet.</td></tr>
+                ) : results.map((video) => (
+                  <tr key={video.id}>
+                    <td className="admin-table__title-cell">{video.title}</td>
+                    <td>
+                      <span className="admin-badge" style={{ background: video.page_type === 'b2b' ? '#006D9C' : '#2AB57F', color: '#fff' }}>
+                        {video.page_type === 'b2b' ? 'B2B' : 'B2C'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`admin-badge ${video.is_active ? 'admin-badge--active' : 'admin-badge--draft'}`}>
+                        {video.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                      {video.video_file ? video.video_file.split('/').pop() : '-'}
+                    </td>
+                    <td>{new Date(video.uploaded_at).toLocaleDateString()}</td>
+                    <td className="admin-kebab-cell">
+                      <button
+                        className="admin-kebab-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenKebabLandingVideoId(openKebabLandingVideoId === video.id ? null : video.id);
+                        }}
+                        aria-label="Landing video actions"
+                      >
+                        &#8942;
+                      </button>
+                      {openKebabLandingVideoId === video.id && (
+                        <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                          <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabLandingVideoId(null); handleEditLandingVideo(video.id); }}>
+                            Edit
+                          </button>
+                          <button className="admin-kebab-menu__item admin-kebab-menu__item--danger" onClick={() => { setOpenKebabLandingVideoId(null); handleDeleteLandingVideo(video.id, video.title); }}>
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // ── Promo Code Handlers ──────────────────────────────────────────
 
   function handleNewPromo() {
@@ -3013,6 +3266,7 @@ function AdminDashboardPage() {
     blogs: renderBlogs,
     ads: renderAds,
     'help-videos': renderHelpVideos,
+    'landing-videos': renderLandingVideos,
     referrals: renderReferrals,
     'promo-codes': renderPromoCodes,
     tokens: renderTokenUsage,

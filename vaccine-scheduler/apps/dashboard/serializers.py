@@ -4,7 +4,7 @@ from rest_framework import serializers
 from apps.patients.models import Dog
 from apps.subscriptions.models import PromoCode, PromoCodeRedemption
 from apps.vaccinations.models import VaccinationRecord
-from .models import ContactSubmission, ReminderPreference, TokenUsage
+from .models import ContactSubmission, LandingPageVideo, ReminderPreference, TokenUsage
 
 User = get_user_model()
 
@@ -185,3 +185,10 @@ class AdminPromoCodeRedemptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = PromoCodeRedemption
         fields = ['id', 'user_email', 'user_username', 'redeemed_at']
+
+
+class LandingPageVideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LandingPageVideo
+        fields = ['id', 'title', 'page_type', 'video_file', 'is_active', 'uploaded_at', 'updated_at']
+        read_only_fields = ['uploaded_at', 'updated_at']

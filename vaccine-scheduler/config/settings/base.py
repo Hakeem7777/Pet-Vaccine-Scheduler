@@ -145,6 +145,12 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Landing page video upload destination (frontend public folder)
+LANDING_PAGE_VIDEO_ROOT = Path(os.getenv(
+    'LANDING_PAGE_VIDEO_ROOT',
+    str(BASE_DIR.parent / 'vaccine-scheduler-frontend' / 'public' / 'videos')
+))
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

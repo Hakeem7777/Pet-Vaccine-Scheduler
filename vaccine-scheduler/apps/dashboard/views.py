@@ -16,6 +16,7 @@ from rest_framework import serializers as drf_serializers, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import DestroyAPIView, ListAPIView
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -33,7 +34,7 @@ from .filters import (
     AdminUserFilter,
     AdminVaccinationFilter,
 )
-from .models import ContactSubmission, LeadCapture, ReminderPreference, TokenUsage
+from .models import ContactSubmission, LandingPageVideo, LeadCapture, ReminderPreference, TokenUsage
 from .permissions import IsAdminUser
 from .serializers import (
     AdminDogSerializer,
@@ -44,6 +45,7 @@ from .serializers import (
     ContactSubmissionSerializer,
     DashboardDogSummarySerializer,
     DashboardRecentVaccinationSerializer,
+    LandingPageVideoSerializer,
     ReminderPreferenceSerializer,
     TokenUsageSerializer,
 )
@@ -891,3 +893,55 @@ class AdminPromoCodeRedemptionsView(APIView):
             'code': promo.code,
             'results': serializer.data,
         })
+
+
+# ── Landing Page Video Views ─────────────────────────────────────
+
+class AdminLandingVideoListCreateView(APIView):
+    permission_classes = [IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        videos = LandingPageVideo.objects.all()
+        serializer = LandingPageVideoSerializer(videos, many=True)
+        return Response({'results': serializer.data, 'count': len(serializer.data)})
+
+    def post(self, request):
+        serializer = LandingPageVideoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class AdminLandingVideoDetailView(APIView):
+    permission_classes = [IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def _get_video(self, pk):
+        try:
+            return LandingPageVideo.objects.get(pk=pk)
+        except LandingPageVideo.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        video = self._get_video(pk)
+        if not video:
+            return Response({'detail': 'Landing page video not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = LandingPageVideoSerializer(video)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        video = self._get_video(pk)
+        if not video:
+            return Response({'detail': 'Landing page video not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = LandingPageVideoSerializer(video, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        video = self._get_video(pk)
+        if not video:
+            return Response({'detail': 'Landing page video not found.'}, status=status.HTTP_404_NOT_FOUND)
+        video.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

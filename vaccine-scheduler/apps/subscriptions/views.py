@@ -428,7 +428,7 @@ class PayPalWebhookView(APIView):
 
 
 class RecordPdfExportView(APIView):
-    """Record a PDF export. Only Pro users can export."""
+    """Record a PDF export. Pro users get unlimited; free users get 1."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -441,10 +441,12 @@ class RecordPdfExportView(APIView):
         except Subscription.DoesNotExist:
             pass
 
-        if not is_pro:
+        # Free users get exactly 1 PDF export ever
+        if not is_pro and user.pdf_exports_used >= 1:
             return Response({
                 'allowed': False,
-                'error': 'Exports are only available with the Pro Care Plan.',
+                'error': 'You\u2019ve used your free PDF export. Upgrade to Pro Care for unlimited exports.',
+                'redirect': '/pricing',
             }, status=status.HTTP_403_FORBIDDEN)
 
         User.objects.filter(pk=user.pk).update(

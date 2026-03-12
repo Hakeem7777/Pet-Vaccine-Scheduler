@@ -9,7 +9,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPageB2C() {
     const container = useRef();
+    const demoVideoRef = useRef(null);
     const [openFaq, setOpenFaq] = useState(null);
+    const [demoVideoPlaying, setDemoVideoPlaying] = useState(false);
 
     const toggleFaq = (index) => {
         setOpenFaq(openFaq === index ? null : index);
@@ -206,6 +208,42 @@ export default function LandingPageB2C() {
                         </picture>
                     </div>
                 </div>
+                </div>
+            </section>
+
+            {/* Demo Video Section */}
+            <section className="demo-video-section anim-fade-up">
+                <div className="demo-video-container">
+                    <h2>See It In Action</h2>
+                    <p>Watch how PetVaxCalendar keeps your pet's vaccinations on track.</p>
+                    <div className="demo-video-wrapper">
+                        {!demoVideoPlaying && (
+                            <div
+                                className="demo-video-placeholder"
+                                onClick={() => {
+                                    setDemoVideoPlaying(true);
+                                    setTimeout(() => demoVideoRef.current?.play(), 100);
+                                }}
+                            >
+                                <button className="demo-video-play-btn" aria-label="Play demo video">
+                                    <svg viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="34" cy="34" r="34" fill="rgba(0, 109, 156, 0.9)" />
+                                        <polygon points="27,20 27,48 50,34" fill="#fff" />
+                                    </svg>
+                                </button>
+                                <span className="demo-video-placeholder-label">Watch the demo</span>
+                            </div>
+                        )}
+                        <video
+                            ref={demoVideoRef}
+                            controls={demoVideoPlaying}
+                            preload="metadata"
+                            className={`demo-video${demoVideoPlaying ? '' : ' demo-video--hidden'}`}
+                        >
+                            <source src="/videos/demo-b2c.mp4" type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
                 </div>
             </section>
 

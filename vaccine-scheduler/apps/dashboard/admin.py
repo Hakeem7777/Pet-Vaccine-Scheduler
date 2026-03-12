@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ContactSubmission, LeadCapture, ReminderPreference, ReminderLog, TokenUsage
+from .models import ContactSubmission, LeadCapture, LandingPageVideo, ReminderPreference, ReminderLog, TokenUsage
 
 
 @admin.register(ContactSubmission)
@@ -40,3 +40,10 @@ class TokenUsageAdmin(admin.ModelAdmin):
     list_filter = ['endpoint', 'model_name', 'created_at']
     search_fields = ['user__email', 'endpoint']
     readonly_fields = ['user', 'endpoint', 'model_name', 'input_tokens', 'output_tokens', 'total_tokens', 'created_at']
+
+
+@admin.register(LandingPageVideo)
+class LandingPageVideoAdmin(admin.ModelAdmin):
+    list_display = ['title', 'page_type', 'is_active', 'video_file', 'uploaded_at']
+    list_filter = ['is_active', 'page_type']
+    readonly_fields = ['uploaded_at', 'updated_at']

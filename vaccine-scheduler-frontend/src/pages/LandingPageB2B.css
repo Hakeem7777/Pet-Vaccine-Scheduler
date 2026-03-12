@@ -97,6 +97,99 @@
     justify-content: center !important;
 }
 
+/* Demo Video Section */
+.demo-video-section {
+  padding: 5rem 2rem;
+  background: var(--color-neutral-light);
+  text-align: center;
+}
+
+.demo-video-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.demo-video-container h2 {
+  font-size: 2rem;
+  color: var(--color-neutral-dark);
+  margin-bottom: 0.5rem;
+}
+
+.demo-video-container p {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+.demo-video-wrapper {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, #e8f4f8 0%, #d1e9f0 40%, #b8dce8 100%);
+}
+
+.demo-video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  cursor: pointer;
+  z-index: 2;
+  background: linear-gradient(135deg, #e8f4f8 0%, #d1e9f0 40%, #b8dce8 100%);
+  border-radius: 12px;
+}
+
+.demo-video-placeholder:hover .demo-video-play-btn svg circle {
+  fill: rgba(0, 109, 156, 1);
+}
+
+.demo-video-placeholder:hover .demo-video-play-btn {
+  transform: scale(1.1);
+}
+
+.demo-video-play-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 68px;
+  height: 68px;
+  transition: transform 0.25s ease;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.demo-video-play-btn svg {
+  width: 100%;
+  height: 100%;
+}
+
+.demo-video-placeholder-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-primary-dark);
+  letter-spacing: 0.02em;
+}
+
+.demo-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.demo-video--hidden {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Problem Section - Split Screen */
 .b2b-problem-section {
     background-color: white;
@@ -493,5 +586,22 @@
     .trust-features {
         flex-direction: column;
         gap: 20px;
+    }
+
+    .demo-video-section {
+        padding: 3rem 1rem;
+    }
+
+    .demo-video-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .demo-video-play-btn {
+        width: 52px;
+        height: 52px;
+    }
+
+    .demo-video-placeholder-label {
+        font-size: 0.85rem;
     }
 }

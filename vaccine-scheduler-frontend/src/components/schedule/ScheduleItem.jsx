@@ -212,19 +212,17 @@ function ScheduleItem({ item, type, dogId, dogName, dogInfo, onVaccinationAdded,
 
           {/* Action buttons */}
           <div className="schedule-accordion__actions">
-            {isPro && (
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsExportModalOpen(true);
-                }}
-                type="button"
-              >
-                Export <img src="/Images/generic_icons/export-icon.svg" alt="" width="14" height="14"
-                style={{marginLeft:"5px"}}/>
-              </button>
-            )}
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExportModalOpen(true);
+              }}
+              type="button"
+            >
+              Export <img src="/Images/generic_icons/export-icon.svg" alt="" width="14" height="14"
+              style={{marginLeft:"5px"}}/>
+            </button>
             {!item.contraindicated && (
               <button
                 className="btn btn-sm btn-primary"

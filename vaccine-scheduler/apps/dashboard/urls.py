@@ -24,6 +24,8 @@ from .views import (
     AdminPromoCodeDetailView,
     AdminPromoCodeRedemptionsView,
     AdminReferralStatsView,
+    AdminLandingVideoListCreateView,
+    AdminLandingVideoDetailView,
 )
 
 app_name = 'dashboard'
@@ -59,4 +61,8 @@ urlpatterns = [
     path('admin-panel/promo-codes/', AdminPromoCodeListCreateView.as_view(), name='admin-promo-codes'),
     path('admin-panel/promo-codes/<int:pk>/', AdminPromoCodeDetailView.as_view(), name='admin-promo-code-detail'),
     path('admin-panel/promo-codes/<int:pk>/redemptions/', AdminPromoCodeRedemptionsView.as_view(), name='admin-promo-code-redemptions'),
+
+    # Landing page videos
+    path('admin-panel/landing-videos/', AdminLandingVideoListCreateView.as_view(), name='admin-landing-videos'),
+    path('admin-panel/landing-videos/<int:pk>/', AdminLandingVideoDetailView.as_view(), name='admin-landing-video-detail'),
 ]

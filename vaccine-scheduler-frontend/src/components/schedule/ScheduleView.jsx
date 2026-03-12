@@ -105,7 +105,7 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
     <div className="schedule-view">
       <div className="schedule-view__header">
         <h3>Vaccination Schedule</h3>
-        {hasVaccines && (isPro || canExportPdf) && (
+        {hasVaccines && (
           <button
             className="btn btn-outline btn-sm"
             onClick={() => setIsExportModalOpen(true)}

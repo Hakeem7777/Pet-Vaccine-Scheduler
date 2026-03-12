@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from '../common/Modal';
 import { exportAllToICS, exportToGoogleCalendar, exportSingleToICS, generateGoogleCalendarUrl } from '../../utils/calendarExport';
 import { sendScheduleEmail } from '../../api/email';
@@ -31,7 +32,8 @@ const SINGLE_TABS = [
  * @param {object} singleItem - Optional: single vaccine item to export (excludes PDF tab)
  */
 function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem = null }) {
-  const { isPro, refreshUser } = useAuth();
+  const { isPro, pdfExportsUsed, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const isSingleMode = singleItem !== null;
   const TABS = isSingleMode ? SINGLE_TABS : ALL_TABS;
   const [activeTab, setActiveTab] = useState('apple');
@@ -42,6 +44,11 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
   const [pdfError, setPdfError] = useState(null);
 
   function handleExportICS() {
+    if (!isPro) {
+      onClose();
+      navigate('/pricing');
+      return;
+    }
     if (isSingleMode) {
       exportSingleToICS(singleItem, dogName || 'Dog');
     } else {
@@ -50,6 +57,11 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
   }
 
   function handleExportGoogle() {
+    if (!isPro) {
+      onClose();
+      navigate('/pricing');
+      return;
+    }
     if (isSingleMode) {
       const url = generateGoogleCalendarUrl(singleItem, dogName || 'Dog');
       window.open(url, '_blank');
@@ -60,6 +72,14 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
 
   async function handleExportPDF() {
     if (isSingleMode) return;
+
+    // Free users who already used their 1 free export go to pricing
+    if (!isPro && pdfExportsUsed >= 1) {
+      onClose();
+      navigate('/pricing');
+      return;
+    }
+
     setPdfError(null);
     setPdfExporting(true);
 
@@ -72,7 +92,8 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
       }, 100);
     } catch (error) {
       if (error.response?.status === 403) {
-        setPdfError('You\u2019ve used your free PDF export. Upgrade to Pro Care for unlimited exports.');
+        onClose();
+        navigate('/pricing');
       } else {
         setPdfError('Failed to export PDF. Please try again.');
       }
@@ -124,6 +145,12 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
 
   async function handleSendEmail(e) {
     e.preventDefault();
+
+    if (!isPro) {
+      onClose();
+      navigate('/pricing');
+      return;
+    }
 
     const validEmails = emails.filter(email => email.trim() !== '');
 
@@ -397,48 +424,32 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
       <div className="export-modal">
-        {!isPro ? (
-          <div className="export-upgrade-prompt">
-            <div className="export-upgrade-icon">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--color-primary)" strokeWidth="1.5">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <h3>Exports Are a Pro Feature</h3>
-            <p>Upgrade to Pro Care to unlock PDF downloads, calendar sync, and email delivery of your vaccination schedule.</p>
-            <a href="/pricing" className="btn btn-primary btn-lg">Upgrade to Pro Care</a>
+        {actionLabel && (
+          <div className="export-action-top">
+            <button
+              className="btn btn-primary btn-pill"
+              onClick={handleMainExport}
+              disabled={pdfExporting}
+            >
+              {pdfExporting && activeTab === 'pdf' ? 'Exporting...' : actionLabel}
+            </button>
           </div>
-        ) : (
-          <>
-            {actionLabel && (
-              <div className="export-action-top">
-                <button
-                  className="btn btn-primary btn-pill"
-                  onClick={handleMainExport}
-                  disabled={pdfExporting}
-                >
-                  {pdfExporting && activeTab === 'pdf' ? 'Exporting...' : actionLabel}
-                </button>
-              </div>
-            )}
-
-            <nav className="export-tabs">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  className={`export-tab ${activeTab === tab.id ? 'export-tab--active' : ''}`}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  <span className="export-tab-icon">{renderTabIcon(tab.icon)}</span>
-                  <span className="export-tab-label">{tab.label}</span>
-                </button>
-              ))}
-            </nav>
-
-            {renderTabContent()}
-          </>
         )}
+
+        <nav className="export-tabs">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={`export-tab ${activeTab === tab.id ? 'export-tab--active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="export-tab-icon">{renderTabIcon(tab.icon)}</span>
+              <span className="export-tab-label">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {renderTabContent()}
       </div>
     </Modal>
   );
