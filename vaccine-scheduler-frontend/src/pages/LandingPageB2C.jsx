@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Footer from '../components/layout/Footer';
 import './LandingPageB2C.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -494,11 +495,7 @@ export default function LandingPageB2C() {
                 </div>
             </section>
 
-            <footer className="b2c-footer">
-                <div className="footer-container">
-                    <p className="copyright">&copy; 2026 PetVaxCalendar. All rights reserved.</p>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }

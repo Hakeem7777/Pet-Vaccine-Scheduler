@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Footer from '../components/layout/Footer';
 import './LandingPageB2B.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -473,6 +474,8 @@ export default function LandingPageB2B() {
                     <a href="mailto:sales@petvaxcalendar.com?subject=Demo%20Request" className="btn btn-outline btn-lg" style={{ borderColor: 'white', color: 'white' }}>Schedule a Demo</a>
                 </div>
             </section>
+
+            <Footer />
         </div>
     );
 }
