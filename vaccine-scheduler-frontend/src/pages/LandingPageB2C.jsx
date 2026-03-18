@@ -193,8 +193,8 @@ export default function LandingPageB2C() {
                     </div>
                     <div className="hero-title-line anim-fade">
                         <div className="hero-actions">
-                            <Link to="/signup" className="btn btn-primary btn-lg">Start Free</Link>
-                            <span className="no-cc">No credit card required</span>
+                            <Link to="/signup" className="btn btn-primary btn-lg">Check Your Pet's Vaccine Schedule in 10 Seconds</Link>
+                            <span className="no-cc">Free · No credit card required</span>
                         </div>
                     </div>
                 </div>
@@ -203,16 +203,16 @@ export default function LandingPageB2C() {
                         <picture>
                             <source
                                 type="image/webp"
-                                srcSet="/Images/landing_page/puppy-vaccine-shot-1-480w.webp 480w, /Images/landing_page/puppy-vaccine-shot-1-768w.webp 768w"
+                                srcSet="/Images/landing_page/puppy-vaccine-reminder-480w.webp 480w, /Images/landing_page/puppy-vaccine-reminder-768w.webp 768w, /Images/landing_page/puppy-vaccine-reminder-1024w.webp 1024w, /Images/landing_page/puppy-vaccine-reminder-1440w.webp 1440w"
                                 sizes="(max-width: 991px) 80vw, 40vw"
                             />
                             <img
-                                src="/Images/landing_page/Puppy vaccine shot 1.png"
-                                alt="App interface main dashboard showing records"
+                                src="/Images/landing_page/puppy-vaccine-reminder-1440w.jpg"
+                                alt="Puppy vaccine reminder"
                                 loading="eager"
                                 fetchPriority="high"
-                                width="1023"
-                                height="365"
+                                width="1440"
+                                height="960"
                             />
                         </picture>
                     </div>

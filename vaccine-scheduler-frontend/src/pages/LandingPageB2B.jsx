@@ -203,7 +203,7 @@ export default function LandingPageB2B() {
                 <nav className="header-nav">
                     <Link to="/" className="header-nav-link">For Pet Owners</Link>
                     <div className="header-user">
-                        <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-sm">Request Access</a>
+                        <Link to="/contact" className="btn btn-primary btn-sm">Request Access</Link>
                     </div>
                 </nav>
             </header>
@@ -214,16 +214,16 @@ export default function LandingPageB2B() {
                     <picture>
                         <source
                             type="image/webp"
-                            srcSet="/Images/landing_page/hero-b2b/hero-b2b-480w.webp 480w, /Images/landing_page/hero-b2b/hero-b2b-768w.webp 768w, /Images/landing_page/hero-b2b/hero-b2b-1024w.webp 1024w, /Images/landing_page/hero-b2b/hero-b2b-1440w.webp 1440w, /Images/landing_page/hero-b2b/hero-b2b-2560w.webp 2560w"
+                            srcSet="/Images/landing_page/puppy-vaccine-shot-1-480w.webp 480w, /Images/landing_page/puppy-vaccine-shot-1-768w.webp 768w"
                             sizes="100vw"
                         />
                         <img
-                            src="/Images/landing_page/hero-b2b/hero-b2b-1440w.jpg"
-                            alt="Veterinary clinic with dog"
+                            src="/Images/landing_page/Puppy vaccine shot 1.png"
+                            alt="Puppy receiving a vaccine shot"
                             loading="eager"
                             fetchPriority="high"
-                            width="2560"
-                            height="1440"
+                            width="1023"
+                            height="365"
                         />
                     </picture>
                 </div>
@@ -231,7 +231,7 @@ export default function LandingPageB2B() {
                     <h1>Vaccine Compliance Software for Veterinary Clinics</h1>
                     <p className="b2b-hero-sub">PetVaxCalendar helps veterinary practices improve booster compliance, reduce missed appointments, and enhance client retention with structured vaccination tracking.</p>
                     <div className="b2b-hero-actions">
-                        <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Request Clinic Access</a>
+                        <Link to="/contact" className="btn btn-primary btn-lg">Request Clinic Access</Link>
                         <a href="mailto:sales@petvaxcalendar.com?subject=Demo%20Request" className="btn btn-outline btn-lg" style={{ backgroundColor: 'white' }}>Schedule a Demo</a>
                     </div>
                 </div>
@@ -403,7 +403,7 @@ export default function LandingPageB2B() {
                     </div>
                     <p className="b2b-trust-note">PetVaxCalendar supports best practices in vaccine scheduling and compliance management.</p>
                     <div className="section-cta anim-fade-up">
-                        <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Request Clinic Access</a>
+                        <Link to="/contact" className="btn btn-primary btn-lg">Request Clinic Access</Link>
                     </div>
                 </div>
             </section>
@@ -450,7 +450,7 @@ export default function LandingPageB2B() {
             <section className="b2b-cta-footer anim-fade-up">
                 <h2>Improve Vaccine Compliance at Your Clinic</h2>
                 <div className="b2b-hero-actions justify-center">
-                    <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Request Clinic Access</a>
+                    <Link to="/contact" className="btn btn-primary btn-lg">Request Clinic Access</Link>
                     <a href="mailto:sales@petvaxcalendar.com?subject=Demo%20Request" className="btn btn-outline btn-lg" style={{ borderColor: 'white', color: 'white' }}>Schedule a Demo</a>
                 </div>
             </section>
