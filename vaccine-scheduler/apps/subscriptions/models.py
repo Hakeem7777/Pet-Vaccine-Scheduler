@@ -17,6 +17,11 @@ class Subscription(models.Model):
         ('expired', 'Expired'),
         ('pending', 'Pending'),
     ]
+    PROVIDER_CHOICES = [
+        ('paypal', 'PayPal'),
+        ('stripe', 'Stripe'),
+        ('promo', 'Promo Code'),
+    ]
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -26,11 +31,17 @@ class Subscription(models.Model):
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES)
     billing_cycle = models.CharField(max_length=20, choices=BILLING_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default='paypal')
     paypal_subscription_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     paypal_order_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=255, null=True, blank=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    refunded_at = models.DateTimeField(null=True, blank=True)
+    refund_amount = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    refund_id = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,6 +100,17 @@ class Subscription(models.Model):
         """Ad-free experience."""
         return self.is_active
 
+    @property
+    def is_refund_eligible(self):
+        """Eligible for full refund if within 2 days of creation and paid provider."""
+        if self.payment_provider == 'promo':
+            return False
+        if self.refunded_at is not None:
+            return False
+        if not self.is_active:
+            return False
+        return (timezone.now() - self.created_at).total_seconds() <= 2 * 24 * 3600
+
 
 class PromoCode(models.Model):
     code = models.CharField(max_length=50, unique=True)
@@ -146,6 +168,21 @@ class PayPalWebhookEvent(models.Model):
 
     class Meta:
         db_table = 'paypal_webhook_events'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.event_type} - {self.event_id}"
+
+
+class StripeWebhookEvent(models.Model):
+    event_id = models.CharField(max_length=255, unique=True)
+    event_type = models.CharField(max_length=255)
+    payload = models.JSONField()
+    processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'stripe_webhook_events'
         ordering = ['-created_at']
 
     def __str__(self):

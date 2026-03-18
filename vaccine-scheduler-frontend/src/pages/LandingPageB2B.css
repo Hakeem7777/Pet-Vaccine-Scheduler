@@ -24,6 +24,27 @@
     font-weight: 500;
 }
 
+@media (max-width: 1024px) {
+    .b2b-header {
+        max-height: none;
+        height: auto;
+        min-height: 60px;
+    }
+
+    .b2b-header .header-nav {
+        gap: var(--spacing-sm);
+    }
+
+    .b2b-badge {
+        display: none;
+    }
+
+    .b2b-hero-section {
+        min-height: auto;
+        padding-top: 60px;
+    }
+}
+
 /* Hero Section */
 .b2b-hero-section {
     position: relative;
@@ -130,64 +151,11 @@
   background: linear-gradient(135deg, #e8f4f8 0%, #d1e9f0 40%, #b8dce8 100%);
 }
 
-.demo-video-placeholder {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  cursor: pointer;
-  z-index: 2;
-  background: linear-gradient(135deg, #e8f4f8 0%, #d1e9f0 40%, #b8dce8 100%);
-  border-radius: 12px;
-}
-
-.demo-video-placeholder:hover .demo-video-play-btn svg circle {
-  fill: rgba(0, 109, 156, 1);
-}
-
-.demo-video-placeholder:hover .demo-video-play-btn {
-  transform: scale(1.1);
-}
-
-.demo-video-play-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  width: 68px;
-  height: 68px;
-  transition: transform 0.25s ease;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-}
-
-.demo-video-play-btn svg {
-  width: 100%;
-  height: 100%;
-}
-
-.demo-video-placeholder-label {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--color-primary-dark);
-  letter-spacing: 0.02em;
-}
-
 .demo-video {
   width: 100%;
   height: 100%;
   display: block;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.demo-video--hidden {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
+  border: none;
 }
 
 /* Problem Section - Split Screen */
@@ -547,20 +515,51 @@
         font-size: 2.5rem;
     }
 
+    .b2b-hero-sub {
+        font-size: 1.05rem;
+        margin-bottom: 24px;
+    }
+
     .b2b-hero-actions {
         flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .b2b-hero-actions .btn-lg {
+        width: 100%;
+        justify-content: center;
     }
 
     .b2b-split-container {
         flex-direction: column;
+        min-height: auto;
     }
 
     .b2b-problem-left {
+        position: static;
+        height: auto;
         padding: 60px 5% 40px;
     }
 
     .b2b-problem-right {
         padding: 0 5% 60px;
+    }
+
+    .b2b-problem-wrapper {
+        gap: 30px;
+    }
+
+    .b2b-problem-point {
+        padding: 24px;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+    }
+
+    .b2b-solution-section {
+        padding: 60px 5%;
     }
 
     .b2b-cards-container {
@@ -572,6 +571,7 @@
 
     .b2b-solution-card {
         position: static;
+        padding: 30px;
     }
 
     .b2b-steps-grid {
@@ -595,13 +595,14 @@
     .demo-video-container h2 {
         font-size: 1.5rem;
     }
+}
 
-    .demo-video-play-btn {
-        width: 52px;
-        height: 52px;
+@media (max-width: 480px) {
+    .b2b-hero-content h1 {
+        font-size: 1.75rem;
     }
 
-    .demo-video-placeholder-label {
-        font-size: 0.85rem;
+    .section-title {
+        font-size: 1.5rem;
     }
 }

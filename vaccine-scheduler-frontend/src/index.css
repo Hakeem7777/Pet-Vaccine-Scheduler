@@ -181,6 +181,7 @@ a:hover {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-shrink: 0;
 }
 
 .header-logo-link {
@@ -198,9 +199,54 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
-.header-logo {
+.header-logo-full {
   width: 210px;
   height: 50px;
+}
+
+.header-logo-icon {
+  display: none;
+  height: 40px;
+  width: auto;
+}
+
+/* Hamburger button — hidden on desktop */
+.header-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1101;
+}
+
+.header-hamburger__line {
+  display: block;
+  width: 24px;
+  height: 2.5px;
+  background-color: var(--color-neutral-dark);
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.header-hamburger__line--open:nth-child(1) {
+  transform: translateY(7.5px) rotate(45deg);
+}
+
+.header-hamburger__line--open:nth-child(2) {
+  opacity: 0;
+}
+
+.header-hamburger__line--open:nth-child(3) {
+  transform: translateY(-7.5px) rotate(-45deg);
+}
+
+/* Desktop: mobile-menu wrapper is transparent, just holds nav + user inline */
+.header-mobile-menu {
+  display: contents;
 }
 
 .header-nav {
@@ -261,7 +307,6 @@ a:hover {
   font-family: var(--font-heading);
   font-size: 0.65rem;
   font-weight: 800;
-  /* Add more padding to top to push text down, and slightly more left padding to balance letter-spacing + text indent visually */
   padding: 5px 10px 3px 12px;
   border-radius: var(--radius-xl);
   text-transform: uppercase;
@@ -323,6 +368,91 @@ a:hover {
   flex-shrink: 0;
 }
 
+/* ===== Mobile Header (max-width: 1024px) ===== */
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 16px;
+    height: 60px;
+    max-height: 60px;
+    flex-wrap: wrap;
+  }
+
+  .header-logo-full {
+    display: none;
+  }
+
+  .header-logo-icon {
+    display: block;
+    height: 36px;
+  }
+
+  .header-hamburger {
+    display: flex;
+  }
+
+  /* Mobile menu: dropdown below header */
+  .header-mobile-menu {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    box-shadow: var(--shadow-md);
+    flex-direction: column;
+    padding: var(--spacing-md) 0;
+    z-index: 1099;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  .header-mobile-menu--open {
+    display: flex;
+  }
+
+  .header-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0 var(--spacing-md);
+  }
+
+  .header-nav-link {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 15px;
+    border-radius: var(--radius);
+  }
+
+  .tour-trigger-btn {
+    justify-content: flex-start;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .header-user {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-top: 1px solid #E2E8F0;
+    margin-top: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .header-user .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .user-name {
+    padding: var(--spacing-xs) 0;
+  }
+}
+
 .main-content {
   flex: 1;
   padding: var(--spacing-xl);
@@ -330,6 +460,18 @@ a:hover {
   margin: 0 auto;
   width: 100%;
   background-color: #FFFFFF;
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
 }
 
 /* Buttons */
@@ -415,6 +557,18 @@ a:hover {
   font-size: 0.8rem;
 }
 
+/* Mobile touch targets */
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .btn-sm {
+    min-height: 36px;
+  }
+}
+
 /* Forms */
 .form-group {
   margin-bottom: var(--spacing-md);
@@ -433,7 +587,7 @@ a:hover {
 .form-group textarea {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 1rem;
+  font-size: 16px; /* Prevents iOS auto-zoom on focus */
   font-family: var(--font-body);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
@@ -1590,6 +1744,7 @@ a:hover {
   align-items: center;
   justify-content: center;
   z-index: 1200;
+  padding: var(--spacing-md);
 }
 
 .modal-content {
@@ -2387,6 +2542,26 @@ a:hover {
 /* Register form wider */
 .auth-form--register {
   max-width: 560px;
+}
+
+@media (max-width: 640px) {
+  .auth-form {
+    padding: 24px 16px;
+    border-radius: 12px;
+  }
+
+  .auth-form h2 {
+    font-size: 1.25rem;
+  }
+
+  .auth-form--register {
+    max-width: 100%;
+  }
+
+  .sex-pill {
+    height: 56px;
+    font-size: 0.85rem;
+  }
 }
 
 /* Password toggle */
@@ -4126,7 +4301,26 @@ a:hover {
   color: var(--color-text-muted);
 }
 
-/* Responsive */
+/* Responsive — tablet */
+@media (max-width: 768px) {
+  .dog-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .dog-detail-topbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .dog-info-card {
+    padding: var(--spacing-md);
+  }
+
+  .schedule-accordion__actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Responsive — mobile */
 @media (max-width: 640px) {
   .form-row {
     grid-template-columns: 1fr;
@@ -4137,10 +4331,6 @@ a:hover {
   }
 
   .noncore-options {
-    grid-template-columns: 1fr;
-  }
-
-  .dog-detail-hero {
     grid-template-columns: 1fr;
   }
 
@@ -4803,7 +4993,7 @@ a:hover {
 
 @media (max-width: 640px) {
   .footer {
-    padding: 24px 20px 16px;
+    padding: 24px 16px 16px;
   }
 
   .footer-nav {
@@ -4813,6 +5003,11 @@ a:hover {
 
   .footer-separator {
     display: none;
+  }
+
+  .footer-resources .footer-link {
+    font-size: 14px;
+    line-height: 20px;
   }
 }
 

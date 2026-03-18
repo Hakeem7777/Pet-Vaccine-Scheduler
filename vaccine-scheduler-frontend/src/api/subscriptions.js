@@ -25,6 +25,11 @@ export async function redeemPromoCode(code) {
   return response.data;
 }
 
+export async function createStripeCheckout(data) {
+  const response = await client.post('/subscriptions/stripe/create-checkout/', data);
+  return response.data;
+}
+
 export async function recordPdfExport() {
   const response = await client.post('/subscriptions/pdf-export/record/');
   return response.data;

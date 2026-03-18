@@ -2,6 +2,9 @@
 Views for vaccination management and schedule calculation.
 """
 import datetime
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import viewsets, status
@@ -12,6 +15,8 @@ from rest_framework.views import APIView
 
 from apps.patients.models import Dog
 from apps.patients.views import get_visible_dogs_queryset
+from apps.subscriptions.models import Subscription
+from apps.email_service.pdf_generator import generate_schedule_pdf
 from .models import Vaccine, VaccinationRecord
 from .serializers import (
     VaccineSerializer,
@@ -156,6 +161,104 @@ class ScheduleView(APIView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class SchedulePdfView(APIView):
+    """
+    Generate and download a PDF of the vaccination schedule.
+
+    POST /api/dogs/{dog_id}/schedule/pdf/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, dog_id: int):
+        User = get_user_model()
+        user = request.user
+
+        # Verify dog ownership
+        dog = get_object_or_404(
+            get_visible_dogs_queryset(user),
+            pk=dog_id
+        )
+
+        # PDF export quota check
+        is_pro = False
+        try:
+            is_pro = user.subscription.is_pro
+        except Subscription.DoesNotExist:
+            pass
+
+        if not is_pro and user.pdf_exports_used >= 1:
+            return Response({
+                'allowed': False,
+                'error': (
+                    'You\u2019ve used your free PDF export. '
+                    'Upgrade to Pro Care for unlimited exports.'
+                ),
+                'redirect': '/pricing',
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Validate request (same as ScheduleView)
+        serializer = ScheduleRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        selected_noncore = serializer.validated_data.get('selected_noncore', [])
+        reference_date = serializer.validated_data.get('reference_date') or datetime.date.today()
+
+        # Calculate schedule
+        schedule = scheduler_service.calculate_schedule_for_dog(
+            dog=dog,
+            selected_noncore=selected_noncore,
+            reference_date=reference_date,
+        )
+
+        # Analyze history
+        history_analysis = scheduler_service.analyze_history(dog)
+
+        # Build dog info
+        dog_info = {
+            'breed': dog.breed,
+            'age_weeks': dog.age_weeks,
+            'age_classification': scheduler_service.get_age_classification(dog, reference_date),
+            'birth_date': dog.birth_date.isoformat(),
+        }
+
+        # Fetch vaccination history
+        records = (
+            VaccinationRecord.objects
+            .filter(dog=dog)
+            .select_related('vaccine')
+            .order_by('-date_administered')
+        )
+        vaccination_history = [
+            {
+                'vaccine_name': r.vaccine.name,
+                'date_administered': r.date_administered,
+                'dose_number': r.dose_number,
+                'administered_by': r.administered_by,
+                'notes': r.notes,
+            }
+            for r in records
+        ]
+
+        # Generate PDF
+        pdf_bytes = generate_schedule_pdf(
+            dog_name=dog.name,
+            dog_info=dog_info,
+            schedule=schedule,
+            history_analysis=history_analysis,
+            vaccination_history=vaccination_history,
+        )
+
+        # Record the export
+        User.objects.filter(pk=user.pk).update(
+            pdf_exports_used=models.F('pdf_exports_used') + 1
+        )
+
+        # Return PDF file
+        filename = f"{dog.name}_vaccination_schedule.pdf".replace(' ', '_')
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 class HistoryAnalysisView(APIView):

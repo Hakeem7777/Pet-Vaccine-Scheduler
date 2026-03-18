@@ -62,6 +62,7 @@ class SubscriptionInlineSerializer(serializers.Serializer):
     plan = serializers.CharField()
     billing_cycle = serializers.CharField()
     status = serializers.CharField()
+    payment_provider = serializers.CharField()
     is_active = serializers.BooleanField()
     is_paid = serializers.BooleanField()
     is_pro = serializers.BooleanField()
@@ -71,9 +72,12 @@ class SubscriptionInlineSerializer(serializers.Serializer):
     dog_limit = serializers.IntegerField(allow_null=True)
     has_ai_chat = serializers.BooleanField()
     has_no_ads = serializers.BooleanField()
+    is_refund_eligible = serializers.BooleanField()
     current_period_start = serializers.DateTimeField()
     current_period_end = serializers.DateTimeField(allow_null=True)
     cancelled_at = serializers.DateTimeField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    refunded_at = serializers.DateTimeField(allow_null=True)
 
 
 class UserSerializer(serializers.ModelSerializer):

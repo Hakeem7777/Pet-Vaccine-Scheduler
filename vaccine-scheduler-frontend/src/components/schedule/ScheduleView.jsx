@@ -122,6 +122,8 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
         schedule={filteredSchedule}
         dogName={dogName}
         dogInfo={dogInfo}
+        dogId={dogId}
+        selectedNoncore={selectedNoncore}
       />
 
       <NoncoreSelector

@@ -19,6 +19,27 @@
   font-size: 1.1rem;
 }
 
+@media (max-width: 1024px) {
+  .b2c-header {
+    max-height: none;
+    height: auto;
+    min-height: 60px;
+  }
+
+  .b2c-header .header-nav {
+    gap: var(--spacing-sm);
+  }
+
+  .b2c-header .header-user {
+    gap: var(--spacing-xs);
+  }
+
+  .btn-lg {
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+}
+
 /* Hero Section */
 .hero-section {
   min-height: 100vh;
@@ -133,64 +154,11 @@
   background: linear-gradient(135deg, #e8f4f8 0%, #d1e9f0 40%, #b8dce8 100%);
 }
 
-.demo-video-placeholder {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  cursor: pointer;
-  z-index: 2;
-  background: linear-gradient(135deg, #e8f4f8 0%, #d1e9f0 40%, #b8dce8 100%);
-  border-radius: 12px;
-}
-
-.demo-video-placeholder:hover .demo-video-play-btn svg circle {
-  fill: rgba(0, 109, 156, 1);
-}
-
-.demo-video-placeholder:hover .demo-video-play-btn {
-  transform: scale(1.1);
-}
-
-.demo-video-play-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  width: 68px;
-  height: 68px;
-  transition: transform 0.25s ease;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-}
-
-.demo-video-play-btn svg {
-  width: 100%;
-  height: 100%;
-}
-
-.demo-video-placeholder-label {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--color-primary-dark);
-  letter-spacing: 0.02em;
-}
-
 .demo-video {
   width: 100%;
   height: 100%;
   display: block;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.demo-video--hidden {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
+  border: none;
 }
 
 /* Problem Section */
@@ -633,6 +601,7 @@
 
   .hero-actions {
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   .hero-visual {
@@ -645,19 +614,41 @@
 }
 
 @media (max-width: 767px) {
+  .hero-section {
+    min-height: auto;
+    padding: 80px 0 40px;
+  }
 
   .hero-main-title,
   .hero-highlight {
     font-size: 2.2rem;
   }
 
+  .subheadline {
+    font-size: 1.05rem;
+    margin-bottom: 24px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .hero-actions .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+
   .problem-cards-wrapper {
     flex-direction: column;
     width: 100%;
+    gap: 16px;
   }
 
   .problem-card {
     max-width: 100%;
+    min-width: 0;
   }
 
   .timeline-path {
@@ -692,13 +683,15 @@
   .demo-video-container h2 {
     font-size: 1.5rem;
   }
+}
 
-  .demo-video-play-btn {
-    width: 52px;
-    height: 52px;
+@media (max-width: 480px) {
+  .hero-main-title,
+  .hero-highlight {
+    font-size: 1.75rem;
   }
 
-  .demo-video-placeholder-label {
-    font-size: 0.85rem;
+  .subheadline {
+    font-size: 0.95rem;
   }
 }

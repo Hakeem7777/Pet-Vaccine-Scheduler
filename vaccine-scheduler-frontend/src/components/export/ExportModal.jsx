@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '../common/Modal';
 import { exportAllToICS, exportToGoogleCalendar, exportSingleToICS, generateGoogleCalendarUrl } from '../../utils/calendarExport';
 import { sendScheduleEmail } from '../../api/email';
-import { recordPdfExport } from '../../api/subscriptions';
+import { downloadSchedulePdf } from '../../api/vaccines';
 import { useAuth } from '../../context/AuthContext';
 import './ExportModal.css';
 
@@ -31,7 +31,7 @@ const SINGLE_TABS = [
  * @param {object} dogInfo - Dog info for email
  * @param {object} singleItem - Optional: single vaccine item to export (excludes PDF tab)
  */
-function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem = null }) {
+function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem = null, dogId, selectedNoncore }) {
   const { isPro, pdfExportsUsed, refreshUser } = useAuth();
   const navigate = useNavigate();
   const isSingleMode = singleItem !== null;
@@ -84,12 +84,21 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
     setPdfExporting(true);
 
     try {
-      await recordPdfExport();
-      onClose();
+      const response = await downloadSchedulePdf(dogId, selectedNoncore || []);
+
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${(dogName || 'Dog').replace(/\s+/g, '_')}_vaccination_schedule.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       refreshUser();
-      setTimeout(() => {
-        window.print();
-      }, 100);
+      onClose();
     } catch (error) {
       if (error.response?.status === 403) {
         onClose();

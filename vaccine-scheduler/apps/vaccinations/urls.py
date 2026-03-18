@@ -8,6 +8,7 @@ from .views import (
     VaccineViewSet,
     VaccinationRecordViewSet,
     ScheduleView,
+    SchedulePdfView,
     HistoryAnalysisView,
 )
 
@@ -45,6 +46,11 @@ urlpatterns = [
         'dogs/<int:dog_id>/schedule/',
         ScheduleView.as_view(),
         name='dog-schedule'
+    ),
+    path(
+        'dogs/<int:dog_id>/schedule/pdf/',
+        SchedulePdfView.as_view(),
+        name='dog-schedule-pdf'
     ),
     path(
         'dogs/<int:dog_id>/schedule/history-analysis/',

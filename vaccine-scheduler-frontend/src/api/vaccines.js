@@ -25,3 +25,12 @@ export async function getHistoryAnalysis(dogId) {
   const response = await client.get(`/dogs/${dogId}/schedule/history-analysis/`);
   return response.data;
 }
+
+export async function downloadSchedulePdf(dogId, selectedNoncore = []) {
+  const response = await client.post(`/dogs/${dogId}/schedule/pdf/`, {
+    selected_noncore: selectedNoncore,
+  }, {
+    responseType: 'blob',
+  });
+  return response;
+}

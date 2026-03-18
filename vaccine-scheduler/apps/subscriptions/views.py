@@ -16,13 +16,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from django.contrib.auth import get_user_model
-from .models import Subscription, PayPalWebhookEvent, PromoCode, PromoCodeRedemption
+from .models import Subscription, PayPalWebhookEvent, StripeWebhookEvent, PromoCode, PromoCodeRedemption
 from .serializers import (
     SubscriptionSerializer,
     CreateSubscriptionSerializer,
+    CreateStripeCheckoutSerializer,
     RedeemPromoCodeSerializer,
 )
 from . import paypal
+from . import stripe_client
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +68,7 @@ class SubscriptionPlansView(APIView):
                     'AI-powered vaccine assistant',
                 ],
                 'paypal_plan_id': getattr(settings, 'PAYPAL_PRO_MONTHLY_PLAN_ID', ''),
+                'stripe_price_id': getattr(settings, 'STRIPE_PRO_MONTHLY_PRICE_ID', ''),
             },
         }
         return Response(plans)
@@ -131,12 +134,23 @@ class CreateSubscriptionView(APIView):
                 'plan': 'pro',
                 'billing_cycle': 'monthly',
                 'status': 'active',
+                'payment_provider': 'paypal',
                 'paypal_subscription_id': paypal_sub_id,
+                'stripe_subscription_id': None,
+                'stripe_customer_id': None,
                 'current_period_start': period_start,
                 'current_period_end': period_end,
                 'cancelled_at': None,
+                'refunded_at': None,
+                'refund_amount': None,
+                'refund_id': None,
             },
         )
+
+        # Reset created_at on re-subscription so refund window starts fresh
+        if not created:
+            Subscription.objects.filter(pk=sub.pk).update(created_at=timezone.now())
+            sub.refresh_from_db()
 
         # Send admin notification (non-blocking)
         try:
@@ -242,13 +256,24 @@ class RedeemPromoCodeView(APIView):
                 'plan': 'pro',
                 'billing_cycle': 'monthly',
                 'status': 'active',
+                'payment_provider': 'promo',
                 'paypal_subscription_id': None,
                 'paypal_order_id': None,
+                'stripe_subscription_id': None,
+                'stripe_customer_id': None,
                 'current_period_start': now,
                 'current_period_end': period_end,
                 'cancelled_at': None,
+                'refunded_at': None,
+                'refund_amount': None,
+                'refund_id': None,
             },
         )
+
+        # Reset created_at on re-subscription
+        if not created:
+            Subscription.objects.filter(pk=sub.pk).update(created_at=timezone.now())
+            sub.refresh_from_db()
 
         # Record redemption and increment counter
         PromoCodeRedemption.objects.create(promo_code=promo, user=request.user)
@@ -297,15 +322,102 @@ class CancelSubscriptionView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Cancel on PayPal (skip for promo-code subscriptions with no PayPal ID)
         reason = request.data.get('reason', 'Cancelled by user')
-        if sub.paypal_subscription_id:
+        refunded = False
+        refund_amount = None
+
+        # Save provider IDs locally before any API calls (webhook may clear them)
+        paypal_sub_id = sub.paypal_subscription_id
+        stripe_sub_id = sub.stripe_subscription_id
+
+        logger.info(
+            "Cancel request for %s: paypal_id=%s, stripe_id=%s, provider=%s, "
+            "is_refund_eligible=%s, created_at=%s, status=%s",
+            request.user.email, paypal_sub_id, stripe_sub_id,
+            sub.payment_provider, sub.is_refund_eligible, sub.created_at, sub.status,
+        )
+
+        # Process refund if eligible (within 2-day window)
+        if sub.is_refund_eligible:
+            if paypal_sub_id:
+                try:
+                    # Find the captured/sale payment to refund
+                    # Use a wide time range — payment may predate created_at
+                    txns = paypal.get_subscription_transactions(
+                        paypal_sub_id,
+                        sub.created_at - timedelta(days=3),
+                        timezone.now() + timedelta(hours=1),
+                    )
+                    transactions = txns.get('transactions', [])
+                    logger.info("PayPal transactions for %s: %s", paypal_sub_id, transactions)
+
+                    txn_id = None
+                    txn_amount = None
+                    for txn in transactions:
+                        if txn.get('status') == 'COMPLETED':
+                            txn_id = txn.get('id')
+                            # Extract amount from transaction
+                            amount_info = txn.get('amount_with_breakdown', {})
+                            gross = amount_info.get('gross_amount', {})
+                            txn_amount = gross.get('value')
+                            break
+
+                    if txn_id:
+                        # Try v1 sale refund first (PayPal Subscriptions use sale resources)
+                        try:
+                            refund_result = paypal.refund_sale(txn_id)
+                            logger.info("PayPal sale refund result: %s", refund_result)
+                        except Exception:
+                            logger.info("v1 sale refund failed for %s, trying v2 capture refund", txn_id)
+                            refund_result = paypal.refund_capture(txn_id)
+                            logger.info("PayPal capture refund result: %s", refund_result)
+
+                        actual_amount = float(txn_amount) if txn_amount else 19.99
+                        sub.refunded_at = timezone.now()
+                        sub.refund_amount = actual_amount
+                        sub.refund_id = refund_result.get('id', '')
+                        refunded = True
+                        refund_amount = actual_amount
+                    else:
+                        logger.warning("No COMPLETED transactions found for PayPal sub %s", paypal_sub_id)
+                except Exception:
+                    logger.exception("Failed to refund PayPal subscription %s", paypal_sub_id)
+                    return Response(
+                        {'error': 'Could not process refund. Please try again or contact support.'},
+                        status=status.HTTP_502_BAD_GATEWAY,
+                    )
+            elif stripe_sub_id:
+                try:
+                    refund_result = stripe_client.refund_subscription(stripe_sub_id)
+                    sub.refunded_at = timezone.now()
+                    sub.refund_amount = refund_result.amount / 100  # Stripe amounts are in cents
+                    sub.refund_id = refund_result.id
+                    refunded = True
+                    refund_amount = float(sub.refund_amount)
+                except Exception:
+                    logger.exception("Failed to refund Stripe subscription %s", stripe_sub_id)
+                    return Response(
+                        {'error': 'Could not process refund. Please try again or contact support.'},
+                        status=status.HTTP_502_BAD_GATEWAY,
+                    )
+
+        # Cancel on the payment provider
+        if paypal_sub_id:
             try:
-                paypal.cancel_subscription(sub.paypal_subscription_id, reason)
+                paypal.cancel_subscription(paypal_sub_id, reason)
             except Exception:
-                logger.exception("Failed to cancel PayPal subscription %s", sub.paypal_subscription_id)
+                logger.exception("Failed to cancel PayPal subscription %s", paypal_sub_id)
                 return Response(
                     {'error': 'Could not cancel subscription with PayPal.'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+        elif stripe_sub_id:
+            try:
+                stripe_client.cancel_subscription(stripe_sub_id)
+            except Exception:
+                logger.exception("Failed to cancel Stripe subscription %s", stripe_sub_id)
+                return Response(
+                    {'error': 'Could not cancel subscription with Stripe.'},
                     status=status.HTTP_502_BAD_GATEWAY,
                 )
 
@@ -313,7 +425,11 @@ class CancelSubscriptionView(APIView):
         sub.status = 'cancelled'
         sub.cancelled_at = timezone.now()
         sub.paypal_subscription_id = None
-        sub.save(update_fields=['status', 'cancelled_at', 'paypal_subscription_id', 'updated_at'])
+        sub.stripe_subscription_id = None
+        update_fields = ['status', 'cancelled_at', 'paypal_subscription_id', 'stripe_subscription_id', 'updated_at']
+        if refunded:
+            update_fields += ['refunded_at', 'refund_amount', 'refund_id']
+        sub.save(update_fields=update_fields)
 
         # Send admin notification (non-blocking)
         try:
@@ -327,7 +443,242 @@ class CancelSubscriptionView(APIView):
         except Exception:
             logger.warning("Failed to send cancellation admin notification for user %s", request.user.email)
 
-        return Response(SubscriptionSerializer(sub).data)
+        data = SubscriptionSerializer(sub).data
+        data['refunded'] = refunded
+        if refund_amount is not None:
+            data['refund_amount'] = refund_amount
+        return Response(data)
+
+
+class CreateStripeCheckoutView(APIView):
+    """
+    Create a Stripe Checkout Session for Pro Care subscription.
+
+    Returns the checkout URL for the frontend to redirect to.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = CreateStripeCheckoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        success_url = serializer.validated_data['success_url']
+        cancel_url = serializer.validated_data['cancel_url']
+        price_id = getattr(settings, 'STRIPE_PRO_MONTHLY_PRICE_ID', '')
+
+        if not price_id:
+            return Response(
+                {'error': 'Stripe is not configured.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        try:
+            session = stripe_client.create_checkout_session(
+                price_id=price_id,
+                user=request.user,
+                success_url=success_url,
+                cancel_url=cancel_url,
+            )
+        except Exception:
+            logger.exception("Failed to create Stripe checkout session for user %s", request.user.email)
+            return Response(
+                {'error': 'Could not create checkout session.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response({
+            'session_id': session.id,
+            'checkout_url': session.url,
+        })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class StripeWebhookView(APIView):
+    """
+    Receive and process Stripe webhook events.
+    No authentication required — uses webhook signature verification.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+
+        try:
+            event = stripe_client.construct_webhook_event(payload, sig_header)
+        except Exception:
+            logger.warning("Invalid Stripe webhook signature")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        event_id = event['id']
+        event_type = event['type']
+
+        # Deduplicate
+        if StripeWebhookEvent.objects.filter(event_id=event_id).exists():
+            return Response(status=status.HTTP_200_OK)
+
+        # Store event
+        StripeWebhookEvent.objects.create(
+            event_id=event_id,
+            event_type=event_type,
+            payload=event,
+            processed=False,
+        )
+
+        # Process event
+        try:
+            self._process_event(event_type, event['data']['object'])
+            StripeWebhookEvent.objects.filter(event_id=event_id).update(processed=True)
+        except Exception:
+            logger.exception("Failed to process Stripe webhook event %s", event_id)
+
+        return Response(status=status.HTTP_200_OK)
+
+    def _process_event(self, event_type, obj):
+        if event_type == 'checkout.session.completed':
+            self._handle_checkout_completed(obj)
+        elif event_type == 'customer.subscription.updated':
+            self._handle_subscription_updated(obj)
+        elif event_type == 'customer.subscription.deleted':
+            self._handle_subscription_deleted(obj)
+        elif event_type == 'invoice.payment_succeeded':
+            self._handle_invoice_paid(obj)
+
+    def _handle_checkout_completed(self, session):
+        user_id = session.get('metadata', {}).get('user_id')
+        stripe_sub_id = session.get('subscription')
+        stripe_customer_id = session.get('customer')
+
+        if not user_id or not stripe_sub_id:
+            return
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            logger.warning("Stripe checkout: user %s not found", user_id)
+            return
+
+        sub, created = Subscription.objects.update_or_create(
+            user=user,
+            defaults={
+                'plan': 'pro',
+                'billing_cycle': 'monthly',
+                'status': 'active',
+                'payment_provider': 'stripe',
+                'stripe_subscription_id': stripe_sub_id,
+                'stripe_customer_id': stripe_customer_id,
+                'paypal_subscription_id': None,
+                'paypal_order_id': None,
+                'current_period_start': timezone.now(),
+                'cancelled_at': None,
+                'refunded_at': None,
+                'refund_amount': None,
+                'refund_id': None,
+            },
+        )
+
+        # Reset created_at on re-subscription
+        if not created:
+            Subscription.objects.filter(pk=sub.pk).update(created_at=timezone.now())
+            sub.refresh_from_db()
+
+        # Send admin notification
+        try:
+            if os.environ.get('RESEND_API_KEY'):
+                from apps.email_service.services import EmailService
+                EmailService().send_subscription_notification(
+                    user_email=user.email,
+                    username=user.username,
+                    plan='Pro Care',
+                    paypal_subscription_id=f'stripe:{stripe_sub_id}',
+                )
+        except Exception:
+            logger.warning("Failed to send Stripe subscription admin notification for user %s", user.email)
+
+        # Send user confirmation email
+        try:
+            if os.environ.get('RESEND_API_KEY'):
+                from apps.email_service.services import EmailService
+                EmailService().send_subscription_confirmation_email(
+                    to_email=user.email,
+                    username=user.username,
+                    plan='Pro Care',
+                    price='$19.99',
+                    billing_cycle='monthly',
+                    period_start=timezone.now().strftime("%B %d, %Y"),
+                    period_end=None,
+                    is_promo=False,
+                )
+        except Exception:
+            logger.warning("Failed to send subscription confirmation email to %s", user.email)
+
+    def _handle_subscription_updated(self, subscription):
+        stripe_sub_id = subscription.get('id')
+        if not stripe_sub_id:
+            return
+
+        try:
+            sub = Subscription.objects.get(stripe_subscription_id=stripe_sub_id)
+        except Subscription.DoesNotExist:
+            return
+
+        stripe_status = subscription.get('status', '')
+        status_map = {
+            'active': 'active',
+            'past_due': 'suspended',
+            'unpaid': 'suspended',
+            'canceled': 'cancelled',
+            'incomplete': 'pending',
+            'incomplete_expired': 'expired',
+            'trialing': 'active',
+        }
+        new_status = status_map.get(stripe_status, sub.status)
+        sub.status = new_status
+
+        current_period_end = subscription.get('current_period_end')
+        if current_period_end:
+            from datetime import datetime
+            sub.current_period_end = datetime.fromtimestamp(
+                current_period_end, tz=timezone.utc
+            )
+
+        sub.save(update_fields=['status', 'current_period_end', 'updated_at'])
+
+    def _handle_subscription_deleted(self, subscription):
+        stripe_sub_id = subscription.get('id')
+        if not stripe_sub_id:
+            return
+
+        try:
+            sub = Subscription.objects.get(stripe_subscription_id=stripe_sub_id)
+        except Subscription.DoesNotExist:
+            return
+
+        sub.status = 'cancelled'
+        sub.cancelled_at = timezone.now()
+        sub.stripe_subscription_id = None
+        sub.save(update_fields=['status', 'cancelled_at', 'stripe_subscription_id', 'updated_at'])
+
+    def _handle_invoice_paid(self, invoice):
+        stripe_sub_id = invoice.get('subscription')
+        if not stripe_sub_id:
+            return
+
+        try:
+            sub = Subscription.objects.get(stripe_subscription_id=stripe_sub_id)
+        except Subscription.DoesNotExist:
+            return
+
+        period_end = invoice.get('lines', {}).get('data', [{}])[0].get('period', {}).get('end')
+        if period_end:
+            from datetime import datetime
+            sub.current_period_end = datetime.fromtimestamp(
+                period_end, tz=timezone.utc
+            )
+            sub.status = 'active'
+            sub.save(update_fields=['status', 'current_period_end', 'updated_at'])
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -405,10 +756,12 @@ class PayPalWebhookView(APIView):
             sub.save(update_fields=['status', 'current_period_end', 'updated_at'])
 
         elif event_type == 'BILLING.SUBSCRIPTION.CANCELLED':
-            sub.status = 'cancelled'
-            sub.cancelled_at = timezone.now()
-            sub.paypal_subscription_id = None
-            sub.save(update_fields=['status', 'cancelled_at', 'paypal_subscription_id', 'updated_at'])
+            # Only process if not already cancelled by CancelSubscriptionView
+            # (which handles its own status update and refund logic)
+            if sub.status != 'cancelled':
+                sub.status = 'cancelled'
+                sub.cancelled_at = timezone.now()
+                sub.save(update_fields=['status', 'cancelled_at', 'updated_at'])
 
         elif event_type == 'BILLING.SUBSCRIPTION.SUSPENDED':
             sub.status = 'suspended'

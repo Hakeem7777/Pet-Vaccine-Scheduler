@@ -62,6 +62,39 @@ def cancel_subscription(subscription_id, reason='Cancelled by user'):
     return True
 
 
+# --- Refunds ---
+
+def get_subscription_transactions(subscription_id, start_time, end_time):
+    """Get transactions for a subscription within a date range."""
+    url = f"{_get_base_url()}/v1/billing/subscriptions/{subscription_id}/transactions"
+    params = {
+        'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+    }
+    response = requests.get(url, headers=_auth_headers(), params=params, timeout=30)
+    response.raise_for_status()
+    return response.json()
+
+
+def refund_capture(capture_id, amount=None, currency='USD'):
+    """Refund a PayPal captured payment (v2 Payments API). Full refund if amount is None."""
+    url = f"{_get_base_url()}/v2/payments/captures/{capture_id}/refund"
+    body = {}
+    if amount is not None:
+        body['amount'] = {'value': str(amount), 'currency_code': currency}
+    response = requests.post(url, headers=_auth_headers(), json=body, timeout=30)
+    response.raise_for_status()
+    return response.json()
+
+
+def refund_sale(sale_id):
+    """Refund a PayPal sale (v1 Payments API — used by Subscriptions billing)."""
+    url = f"{_get_base_url()}/v1/payments/sale/{sale_id}/refund"
+    response = requests.post(url, headers=_auth_headers(), json={}, timeout=30)
+    response.raise_for_status()
+    return response.json()
+
+
 # --- Webhook Verification ---
 
 def verify_webhook_signature(headers, body, webhook_id=None):

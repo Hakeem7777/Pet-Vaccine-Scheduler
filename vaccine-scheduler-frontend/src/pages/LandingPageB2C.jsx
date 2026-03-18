@@ -1,26 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useRef, useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useAuth } from '../context/AuthContext';
 import Footer from '../components/layout/Footer';
 import './LandingPageB2C.css';
+
+const CLOUDFLARE_ACCOUNT_ID = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID;
+const CLOUDFLARE_VIDEO_ID = import.meta.env.VITE_CLOUDFLARE_B2C_VIDEO_ID;
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPageB2C() {
+    const { isAuthenticated, isAdmin } = useAuth();
     const container = useRef();
-    const demoVideoRef = useRef(null);
     const [openFaq, setOpenFaq] = useState(null);
-    const [demoVideoPlaying, setDemoVideoPlaying] = useState(false);
-    const [videoUrl, setVideoUrl] = useState(null);
 
-    useEffect(() => {
-        fetch('/api/landing-videos/b2c/')
-            .then(r => r.json())
-            .then(data => { if (data.video_url) setVideoUrl(data.video_url); })
-            .catch(() => {});
-    }, []);
+    if (isAuthenticated) {
+        return <Navigate to={isAdmin ? '/admin-panel' : '/home'} replace />;
+    }
 
     const toggleFaq = (index) => {
         setOpenFaq(openFaq === index ? null : index);
@@ -166,7 +165,8 @@ export default function LandingPageB2C() {
             <header className="header b2c-header">
                 <div className="header-brand">
                     <Link to="/" className="header-logo-link">
-                        <img src="/logoBanner.png" alt="PetVaxCalendar" className="header-logo" />
+                        <img src="/logoBanner.png" alt="PetVaxCalendar" className="header-logo header-logo-full" />
+                        <img src="/logoIcon.png" alt="PetVaxCalendar" className="header-logo header-logo-icon" />
                     </Link>
                 </div>
                 <nav className="header-nav">
@@ -226,32 +226,12 @@ export default function LandingPageB2C() {
                     <h2>See It In Action</h2>
                     <p>Watch how PetVaxCalendar keeps your pet's vaccinations on track.</p>
                     <div className="demo-video-wrapper">
-                        {!demoVideoPlaying && (
-                            <div
-                                className="demo-video-placeholder"
-                                onClick={() => {
-                                    setDemoVideoPlaying(true);
-                                    setTimeout(() => demoVideoRef.current?.play(), 100);
-                                }}
-                            >
-                                <button className="demo-video-play-btn" aria-label="Play demo video">
-                                    <svg viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="34" cy="34" r="34" fill="rgba(0, 109, 156, 0.9)" />
-                                        <polygon points="27,20 27,48 50,34" fill="#fff" />
-                                    </svg>
-                                </button>
-                                <span className="demo-video-placeholder-label">Watch the demo</span>
-                            </div>
-                        )}
-                        <video
-                            ref={demoVideoRef}
-                            controls={demoVideoPlaying}
-                            preload="metadata"
-                            className={`demo-video${demoVideoPlaying ? '' : ' demo-video--hidden'}`}
-                        >
-                            {videoUrl && <source src={videoUrl} type="video/mp4" />}
-                            Your browser does not support the video tag.
-                        </video>
+                        <iframe
+                            src={`https://customer-${CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${CLOUDFLARE_VIDEO_ID}/iframe`}
+                            className="demo-video"
+                            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                            allowFullScreen
+                        />
                     </div>
                 </div>
             </section>

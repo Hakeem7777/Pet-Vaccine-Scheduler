@@ -1,7 +1,8 @@
-import { useEffect, useCallback } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { useAuth } from '../context/AuthContext';
 import PageTransition from '../components/common/PageTransition';
 import './SubscriptionConfirmationPage.css';
 
@@ -45,7 +46,24 @@ const featureItemVariants = {
 function SubscriptionConfirmationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state;
+  const [searchParams] = useSearchParams();
+  const { refreshUser } = useAuth();
+  const [stripeReady, setStripeReady] = useState(false);
+
+  const isStripeReturn = searchParams.has('session_id');
+  const state = location.state || (isStripeReturn ? {
+    plan: 'Pro Care Plan',
+    price: '$19.99',
+    billingCycle: 'monthly',
+    isPromo: false,
+  } : null);
+
+  // Refresh user data on Stripe redirect return
+  useEffect(() => {
+    if (isStripeReturn && !stripeReady) {
+      refreshUser().then(() => setStripeReady(true));
+    }
+  }, [isStripeReturn, stripeReady, refreshUser]);
 
   const fireConfetti = useCallback(() => {
     // Initial burst from center

@@ -29,6 +29,10 @@ function PricingPage() {
   const [processingPlan, setProcessingPlan] = useState(null);
   const [{ isPending: isPayPalPending }] = usePayPalScriptReducer();
 
+  // Payment method state
+  const [paymentMethod, setPaymentMethod] = useState('stripe'); // 'stripe' or 'paypal'
+  const [stripeLoading, setStripeLoading] = useState(false);
+
   // Promo code state
   const [promoOpen, setPromoOpen] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -75,6 +79,23 @@ function PricingPage() {
     }
   }
 
+  // Pro Care: Stripe Checkout
+  async function handleStripeCheckout() {
+    setStripeLoading(true);
+    setError(null);
+    try {
+      const currentUrl = window.location.origin;
+      const { checkout_url } = await subscriptionsApi.createStripeCheckout({
+        success_url: `${currentUrl}/subscription-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${currentUrl}/pricing`,
+      });
+      window.location.href = checkout_url;
+    } catch {
+      setError('Failed to start checkout. Please try again.');
+      setStripeLoading(false);
+    }
+  }
+
   async function handlePromoRedeem(e) {
     e.preventDefault();
     if (!promoCode.trim()) return;
@@ -113,7 +134,7 @@ function PricingPage() {
 
   return (
       <PageTransition className="pricing-page">
-        <button className="btn btn-outline btn-pill back-btn" onClick={() => navigate('/')}>
+        <button className="btn btn-outline btn-pill back-btn" onClick={() => navigate(-1)}>
           &larr; Back
         </button>
 
@@ -214,21 +235,65 @@ function PricingPage() {
                 <button className="btn btn-outline btn-block" disabled>
                   Current Plan
                 </button>
-              ) : processingPlan === 'pro' || isPayPalPending ? (
-                <LoadingSpinner />
               ) : (
-                <PayPalButtons
-                  style={{ layout: 'vertical', label: 'subscribe', shape: 'pill', color: 'gold' }}
-                  createSubscription={(data, actions) => {
-                    return actions.subscription.create({
-                      plan_id: plans?.pro?.paypal_plan_id || '',
-                    });
-                  }}
-                  onApprove={(data) => handleProApprove(data)}
-                  onError={() =>
-                    setError('PayPal encountered an error. Please try again.')
-                  }
-                />
+                <>
+                  {/* Payment Method Toggle */}
+                  <div className="pricing-payment-toggle">
+                    <button
+                      className={`pricing-payment-toggle__btn${paymentMethod === 'stripe' ? ' pricing-payment-toggle__btn--active' : ''}`}
+                      onClick={() => setPaymentMethod('stripe')}
+                    >
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                        <line x1="1" y1="10" x2="23" y2="10" />
+                      </svg>
+                      Card
+                    </button>
+                    <button
+                      className={`pricing-payment-toggle__btn${paymentMethod === 'paypal' ? ' pricing-payment-toggle__btn--active' : ''}`}
+                      onClick={() => setPaymentMethod('paypal')}
+                    >
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.603c-.564 0-1.04.405-1.128.958L7.076 21.337z" />
+                      </svg>
+                      PayPal
+                    </button>
+                  </div>
+
+                  {/* Stripe Payment */}
+                  {paymentMethod === 'stripe' && (
+                    stripeLoading || processingPlan === 'pro' ? (
+                      <LoadingSpinner />
+                    ) : (
+                      <button
+                        className="btn btn-primary btn-block"
+                        onClick={handleStripeCheckout}
+                      >
+                        Subscribe with Card
+                      </button>
+                    )
+                  )}
+
+                  {/* PayPal Payment */}
+                  {paymentMethod === 'paypal' && (
+                    processingPlan === 'pro' || isPayPalPending ? (
+                      <LoadingSpinner />
+                    ) : (
+                      <PayPalButtons
+                        style={{ layout: 'vertical', label: 'subscribe', shape: 'pill', color: 'gold' }}
+                        createSubscription={(data, actions) => {
+                          return actions.subscription.create({
+                            plan_id: plans?.pro?.paypal_plan_id || '',
+                          });
+                        }}
+                        onApprove={(data) => handleProApprove(data)}
+                        onError={() =>
+                          setError('PayPal encountered an error. Please try again.')
+                        }
+                      />
+                    )
+                  )}
+                </>
               )}
               <p className="pricing-billing-note">
                 Your bank statement will show <strong>PETVAXCALENDAR.COM</strong>

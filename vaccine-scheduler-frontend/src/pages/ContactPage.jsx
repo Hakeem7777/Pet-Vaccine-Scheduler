@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Footer from '../components/layout/Footer';
 import { submitContactForm } from '../api/contact';
 import './ContactPage.css';
 
 function ContactPage() {
+  const { isAuthenticated } = useAuth();
+  const backUrl = isAuthenticated ? '/home' : '/';
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -59,7 +62,7 @@ function ContactPage() {
           transition={{ duration: 0.4 }}
         >
           <div className="contact-header">
-            <Link to="/home" className="contact-back-link">
+            <Link to={backUrl} className="contact-back-link">
               Back to Home
             </Link>
           </div>
@@ -72,7 +75,7 @@ function ContactPage() {
               respond as soon as possible. You should receive a confirmation email
               shortly.
             </p>
-            <Link to="/home" className="btn btn-primary">
+            <Link to={backUrl} className="btn btn-primary">
               Return to Home
             </Link>
           </div>
@@ -91,7 +94,7 @@ function ContactPage() {
         transition={{ duration: 0.4 }}
       >
         <div className="contact-header">
-          <Link to="/home" className="contact-back-link">
+          <Link to={backUrl} className="contact-back-link">
             Back to Home
           </Link>
           <h1>Contact Us</h1>
@@ -161,7 +164,7 @@ function ContactPage() {
           </div>
 
           <div className="form-actions">
-            <Link to="/home" className="btn btn-outline">
+            <Link to={backUrl} className="btn btn-outline">
               Cancel
             </Link>
             <button type="submit" className="btn btn-primary" disabled={isLoading}>

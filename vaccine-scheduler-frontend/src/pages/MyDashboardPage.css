@@ -251,6 +251,26 @@
   margin: 0 0 1.5rem;
 }
 
+.cancel-modal__refund {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin: 0 0 1.25rem;
+}
+
+.cancel-modal__refund--eligible {
+  background: #e6f9ee;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.cancel-modal__refund--ineligible {
+  background: #fef3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
 .cancel-modal .form-group {
   margin-bottom: 1.25rem;
 }
@@ -274,7 +294,7 @@
   border-top: 1px solid var(--border-color, #e2e8f0);
 }
 
-/* Responsive */
+/* Responsive — mobile */
 @media (max-width: 640px) {
   .my-dashboard__stats {
     grid-template-columns: 1fr;
@@ -292,6 +312,33 @@
 
   .my-dashboard__referral-link-row {
     flex-direction: column;
+  }
+
+  .my-dash-card {
+    padding: 1rem;
+  }
+
+  .my-dash-card__number {
+    font-size: 2rem;
+  }
+
+  .my-dashboard__section {
+    padding: 16px;
+  }
+
+  .my-dashboard__subscription-actions {
+    flex-direction: column;
+  }
+
+  .my-dashboard__profile-actions {
+    flex-direction: column;
+  }
+
+  .my-dashboard .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 18px;
   }
 }
 

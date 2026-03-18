@@ -430,6 +430,17 @@ function MyDashboardPage() {
             <p className="cancel-modal__warning">
               You will lose access to PDF downloads, calendar export, reminders, AI assistant, and multi-pet dashboard.
             </p>
+            {subscription?.payment_provider !== 'promo' && (
+              subscription?.is_refund_eligible ? (
+                <p className="cancel-modal__refund cancel-modal__refund--eligible">
+                  You subscribed less than 2 days ago. You will receive a full refund of $19.99.
+                </p>
+              ) : (
+                <p className="cancel-modal__refund cancel-modal__refund--ineligible">
+                  Your subscription is past the 2-day refund window. No refund will be issued.
+                </p>
+              )
+            )}
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -437,10 +448,13 @@ function MyDashboardPage() {
                 setCancellingSubscription(true);
                 setSubMsg(null);
                 try {
-                  await subscriptionsApi.cancelSubscription(cancelReason || 'No reason provided');
+                  const result = await subscriptionsApi.cancelSubscription(cancelReason || 'No reason provided');
                   await refreshUser();
                   setShowCancelModal(false);
-                  setSubMsg({ type: 'success', text: 'Your subscription has been cancelled.' });
+                  const refundMsg = result?.refunded
+                    ? `Your subscription has been cancelled and a refund of $${result.refund_amount} has been issued.`
+                    : 'Your subscription has been cancelled.';
+                  setSubMsg({ type: 'success', text: refundMsg });
                 } catch {
                   setSubMsg({ type: 'error', text: 'Failed to cancel subscription. Please try again.' });
                 } finally {

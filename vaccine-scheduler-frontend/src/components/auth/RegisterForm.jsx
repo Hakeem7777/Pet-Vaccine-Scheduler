@@ -195,7 +195,7 @@ function RegisterForm({ onSuccess }) {
 
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="phone">Phone</label>
+          <label htmlFor="phone">Phone (optional)</label>
           <div className="input-phone-wrapper">
             <span className="input-phone-prefix">US</span>
             <input
@@ -210,7 +210,7 @@ function RegisterForm({ onSuccess }) {
         </div>
 
         <div className="form-group">
-          <label htmlFor="referral_code">Referral Code</label>
+          <label htmlFor="referral_code">Referral Code (optional)</label>
           <input
             type="text"
             id="referral_code"

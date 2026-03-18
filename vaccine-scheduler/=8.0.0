@@ -1,0 +1,18 @@
+WARNING: Ignoring invalid distribution ~penai (C:\Users\Subhan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages)
+Collecting stripe
+  Downloading stripe-14.4.1-py3-none-any.whl.metadata (18 kB)
+Requirement already satisfied: typing_extensions>=4.5.0 in c:\users\subhan\appdata\local\packages\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\localcache\local-packages\python311\site-packages (from stripe) (4.15.0)
+Requirement already satisfied: requests>=2.20 in c:\users\subhan\appdata\local\packages\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\localcache\local-packages\python311\site-packages (from stripe) (2.32.5)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\users\subhan\appdata\local\packages\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\localcache\local-packages\python311\site-packages (from requests>=2.20->stripe) (3.4.3)
+Requirement already satisfied: idna<4,>=2.5 in c:\users\subhan\appdata\local\packages\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\localcache\local-packages\python311\site-packages (from requests>=2.20->stripe) (3.10)
+Requirement already satisfied: urllib3<3,>=1.21.1 in c:\users\subhan\appdata\local\packages\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\localcache\local-packages\python311\site-packages (from requests>=2.20->stripe) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in c:\users\subhan\appdata\local\packages\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\localcache\local-packages\python311\site-packages (from requests>=2.20->stripe) (2025.11.12)
+Downloading stripe-14.4.1-py3-none-any.whl (2.1 MB)
+   ---------------------------------------- 2.1/2.1 MB 4.9 MB/s eta 0:00:00
+WARNING: Ignoring invalid distribution ~penai (C:\Users\Subhan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages)
+Installing collected packages: stripe
+WARNING: Ignoring invalid distribution ~penai (C:\Users\Subhan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages)
+Successfully installed stripe-14.4.1
+
+[notice] A new release of pip is available: 25.1.1 -> 26.0.1
+[notice] To update, run: C:\Users\Subhan\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\python.exe -m pip install --upgrade pip
