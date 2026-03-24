@@ -6,11 +6,15 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from .views import serve_react_app, health_check
+from .views import serve_react_app, health_check, robots_txt, security_txt
 
 urlpatterns = [
     # Health check endpoint (for Render)
     path('api/health/', health_check, name='health_check'),
+
+    # Security / SEO files (must be before the catch-all SPA route)
+    path('robots.txt', robots_txt, name='robots_txt'),
+    path('.well-known/security.txt', security_txt, name='security_txt'),
 
     # Admin
     path('admin/', admin.site.urls),

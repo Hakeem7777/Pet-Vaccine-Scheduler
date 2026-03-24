@@ -34,3 +34,30 @@ def health_check(request):
     return HttpResponse("OK", content_type="text/plain")
 
 
+def robots_txt(request):
+    """Serve robots.txt to discourage crawling of sensitive paths."""
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "",
+        "# Block sensitive paths",
+        "Disallow: /api/",
+        "Disallow: /admin/",
+        "Disallow: /.env",
+        "Disallow: /.git/",
+        "Disallow: /static/",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def security_txt(request):
+    """Serve /.well-known/security.txt per RFC 9116."""
+    lines = [
+        "Contact: mailto:raufsubhan45@gmail.com",
+        "Preferred-Languages: en",
+        "Canonical: https://petvaxcalendar.com/.well-known/security.txt",
+        "Expires: 2027-03-24T00:00:00.000Z",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+

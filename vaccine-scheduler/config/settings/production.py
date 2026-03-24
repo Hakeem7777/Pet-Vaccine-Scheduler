@@ -62,11 +62,15 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS if o.strip()]
 
 # Content Security Policy (requires django-csp)
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "https://*.paypal.com", "https://*.paypalobjects.com")
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com")
 CSP_IMG_SRC = ("'self'", "data:", "https:")
 CSP_FONT_SRC = ("'self'", "data:", "https://fonts.gstatic.com")
-CSP_CONNECT_SRC = ("'self'",)
+CSP_CONNECT_SRC = ("'self'", "https://*.paypal.com", "https://*.paypalobjects.com")
+CSP_FRAME_SRC = ("'self'", "https://*.paypal.com", "https://*.paypalobjects.com")
+
+# Security: Block known-malicious paths before any processing
+MIDDLEWARE.insert(0, 'config.middleware.SecurityBlockMiddleware')
 
 # WhiteNoise for static file serving
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')

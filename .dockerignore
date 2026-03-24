@@ -36,6 +36,9 @@ htmlcov
 venv
 .venv
 env
+.env
+**/.env
+*.env
 .env.local
 .env.*.local
 

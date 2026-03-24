@@ -113,11 +113,14 @@ class CreateSubscriptionView(APIView):
             )
 
         pp_status = pp_data.get('status', '').upper()
-        if pp_status not in ('ACTIVE', 'APPROVED'):
+        if pp_status not in ('ACTIVE', 'APPROVED', 'PENDING'):
             return Response(
                 {'error': f'Subscription is not active (status: {pp_status}).'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # Credit card payments may start as PENDING until verified
+        sub_status = 'active' if pp_status in ('ACTIVE', 'APPROVED') else 'pending'
 
         # Parse billing dates
         start_time = pp_data.get('start_time')
@@ -133,7 +136,7 @@ class CreateSubscriptionView(APIView):
             defaults={
                 'plan': 'pro',
                 'billing_cycle': 'monthly',
-                'status': 'active',
+                'status': sub_status,
                 'payment_provider': 'paypal',
                 'paypal_subscription_id': paypal_sub_id,
                 'stripe_subscription_id': None,

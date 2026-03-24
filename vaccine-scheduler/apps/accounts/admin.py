@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .models import User, PendingRegistration
+from .audit import AuditLog
 
 
 @admin.register(User)
@@ -36,3 +37,22 @@ class PendingRegistrationAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
     search_fields = ['email', 'username']
     readonly_fields = ['password_hash', 'otp']
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    """Read-only admin view for security audit logs."""
+    list_display = ['action', 'ip_address', 'user', 'created_at']
+    list_filter = ['action', 'created_at']
+    search_fields = ['ip_address', 'user__email', 'details']
+    readonly_fields = ['user', 'action', 'ip_address', 'user_agent', 'details', 'created_at']
+    ordering = ['-created_at']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

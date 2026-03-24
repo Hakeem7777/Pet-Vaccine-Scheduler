@@ -51,6 +51,9 @@ RUN pip install --no-cache-dir whitenoise
 # Copy backend project files
 COPY vaccine-scheduler/ .
 
+# Defense-in-depth: remove sensitive files that may have been copied
+RUN rm -f .env .env.local && rm -rf .git .svn .hg
+
 # Copy built frontend to staticfiles/frontend directory
 COPY --from=frontend-builder /frontend/dist /app/frontend_build
 

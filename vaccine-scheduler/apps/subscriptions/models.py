@@ -53,7 +53,7 @@ class Subscription(models.Model):
 
     @property
     def is_active(self):
-        if self.status != 'active':
+        if self.status not in ('active', 'pending'):
             return False
         if self.current_period_end and self.current_period_end < timezone.now():
             return False

@@ -26,15 +26,15 @@ langchain-text-splitters==1.1.0
 langgraph==1.0.8
 
 # Vector DB
-faiss-cpu==1.7.4
+faiss-cpu>=1.12.0
 
 # Security
 django-csp>=3.8
 
 # Utilities
-python-dotenv==1.0.1
-pypdf==4.0.1
-numpy==1.26.4
+python-dotenv>=1.0.1
+pypdf>=4.0.1
+numpy>=1.26.4
 requests>=2.31.0
 python-dateutil>=2.8.2
 
