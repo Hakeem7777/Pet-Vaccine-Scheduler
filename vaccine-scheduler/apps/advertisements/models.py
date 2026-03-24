@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from apps.storage.validators import validate_image_file
@@ -31,3 +32,19 @@ class Advertisement(models.Model):
 
     def __str__(self):
         return f'{self.title} ({self.get_position_display()})'
+
+
+class AdClick(models.Model):
+    advertisement = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name='clicks')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    clicked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ad_clicks'
+        indexes = [
+            models.Index(fields=['advertisement', 'clicked_at']),
+        ]
+
+    def __str__(self):
+        return f'Click on {self.advertisement.title} at {self.clicked_at}'

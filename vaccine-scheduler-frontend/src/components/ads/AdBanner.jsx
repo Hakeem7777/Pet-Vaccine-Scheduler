@@ -1,3 +1,4 @@
+import { trackAdClick } from '../../api/advertisements';
 import './AdBanner.css';
 
 function AdBanner({ ads, position }) {
@@ -5,6 +6,14 @@ function AdBanner({ ads, position }) {
   if (filtered.length === 0) return null;
 
   const isHorizontal = position === 'top' || position === 'bottom';
+
+  function handleClick(ad, e) {
+    if (!ad.link_url) {
+      e.preventDefault();
+      return;
+    }
+    trackAdClick(ad.id);
+  }
 
   return (
     <div className={`ad-banner ad-banner--${position}`}>
@@ -16,7 +25,7 @@ function AdBanner({ ads, position }) {
             target="_blank"
             rel="noopener noreferrer"
             className="ad-banner__link"
-            onClick={(e) => { if (!ad.link_url) e.preventDefault(); }}
+            onClick={(e) => handleClick(ad, e)}
           >
             <img
               src={ad.image_url}

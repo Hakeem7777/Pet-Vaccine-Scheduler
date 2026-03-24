@@ -111,6 +111,8 @@ function AdminDashboardPage() {
   const [adFormData, setAdFormData] = useState(null);
   const [adFormLoading, setAdFormLoading] = useState(false);
   const [openKebabAdId, setOpenKebabAdId] = useState(null);
+  const [adAnalytics, setAdAnalytics] = useState(null);
+  const [adAnalyticsLoading, setAdAnalyticsLoading] = useState(false);
   const [helpVideos, setHelpVideos] = useState(null);
   const [helpVideoFormOpen, setHelpVideoFormOpen] = useState(false);
   const [helpVideoFormData, setHelpVideoFormData] = useState(null);
@@ -2819,6 +2821,18 @@ function AdminDashboardPage() {
     );
   }
 
+  async function handleViewAdAnalytics(id) {
+    setAdAnalyticsLoading(true);
+    try {
+      const data = await adminApi.getAdminAdAnalytics(id);
+      setAdAnalytics(data);
+    } catch {
+      alert('Failed to load ad analytics.');
+    } finally {
+      setAdAnalyticsLoading(false);
+    }
+  }
+
   async function handleDeleteAd(id, title) {
     if (!window.confirm(`Are you sure you want to delete ad "${title}"?`)) return;
     try {
@@ -3085,8 +3099,71 @@ function AdminDashboardPage() {
     );
   }
 
+  function renderAdAnalytics() {
+    if (!adAnalytics) return null;
+    const maxCount = Math.max(...adAnalytics.daily_clicks.map((d) => d.count), 1);
+
+    return (
+      <div className="admin-tab-card">
+        <div className="admin-tab-card__header">
+          <div className="admin-tab-card__header-left">
+            <button className="btn btn-outline btn-sm" onClick={() => setAdAnalytics(null)}>
+              &larr; Back to List
+            </button>
+            <h2 className="admin-tab-card__title" style={{ marginLeft: '1rem' }}>
+              Analytics: {adAnalytics.ad_title}
+            </h2>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', padding: '1.5rem' }}>
+          {[
+            { label: 'Total Clicks', value: adAnalytics.total_clicks },
+            { label: 'Last 7 Days', value: adAnalytics.last_7_days },
+            { label: 'Last 30 Days', value: adAnalytics.last_30_days },
+            { label: 'Unique Users', value: adAnalytics.unique_users },
+            { label: 'Unique IPs', value: adAnalytics.unique_ips },
+          ].map((stat) => (
+            <div key={stat.label} style={{ background: 'var(--bg-secondary, #f8f9fa)', borderRadius: 8, padding: '1rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-primary, #4f46e5)' }}>{stat.value}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #6b7280)', marginTop: 4 }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {adAnalytics.daily_clicks.length > 0 && (
+          <div style={{ padding: '0 1.5rem 1.5rem' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem' }}>Clicks (Last 30 Days)</h3>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 120 }}>
+              {adAnalytics.daily_clicks.map((d) => (
+                <div
+                  key={d.date}
+                  title={`${d.date}: ${d.count} click${d.count !== 1 ? 's' : ''}`}
+                  style={{
+                    flex: 1,
+                    minWidth: 4,
+                    height: `${Math.max((d.count / maxCount) * 100, 4)}%`,
+                    background: 'var(--color-primary, #4f46e5)',
+                    borderRadius: '2px 2px 0 0',
+                    cursor: 'default',
+                  }}
+                />
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary, #6b7280)', marginTop: 4 }}>
+              <span>{adAnalytics.daily_clicks[0]?.date}</span>
+              <span>{adAnalytics.daily_clicks[adAnalytics.daily_clicks.length - 1]?.date}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function renderAds() {
     if (adFormOpen) return renderAdForm();
+    if (adAnalytics) return renderAdAnalytics();
+    if (adAnalyticsLoading) return <LoadingSpinner />;
 
     const positionLabels = { top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' };
 
@@ -3118,6 +3195,7 @@ function AdminDashboardPage() {
                   <th>Title</th>
                   <th>Position</th>
                   <th>Status</th>
+                  <th>Clicks</th>
                   <th>Order</th>
                   <th>Date Range</th>
                   <th></th>
@@ -3125,7 +3203,7 @@ function AdminDashboardPage() {
               </thead>
               <tbody>
                 {adsList.length === 0 ? (
-                  <tr><td colSpan="7" className="admin-table__empty">No advertisements found.</td></tr>
+                  <tr><td colSpan="8" className="admin-table__empty">No advertisements found.</td></tr>
                 ) : adsList.map((ad) => (
                   <tr key={ad.id}>
                     <td>
@@ -3139,6 +3217,16 @@ function AdminDashboardPage() {
                       <span className={`admin-badge ${ad.is_active ? 'admin-badge--active' : 'admin-badge--draft'}`}>
                         {ad.is_active ? 'Active' : 'Inactive'}
                       </span>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => handleViewAdAnalytics(ad.id)}
+                        title="View analytics"
+                        style={{ minWidth: 48 }}
+                      >
+                        {ad.click_count || 0}
+                      </button>
                     </td>
                     <td>{ad.order}</td>
                     <td>
@@ -3163,6 +3251,9 @@ function AdminDashboardPage() {
                       </button>
                       {openKebabAdId === ad.id && (
                         <div className="admin-kebab-menu" ref={kebabMenuRef}>
+                          <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabAdId(null); handleViewAdAnalytics(ad.id); }}>
+                            Analytics
+                          </button>
                           <button className="admin-kebab-menu__item" onClick={() => { setOpenKebabAdId(null); handleEditAd(ad.id); }}>
                             Edit
                           </button>
