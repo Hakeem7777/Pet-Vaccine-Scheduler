@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { extractFromDocument, applyExtraction, extractFromDocumentNew, createDog } from '../../api/dogs';
+import { extractFromDocument, applyExtraction, extractFromDocumentNew, createDog, resolveVaccines } from '../../api/dogs';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { formatDate, getToday } from '../../utils/dateUtils';
 import { SEX_CHOICES } from '../../utils/constants';
@@ -33,6 +33,8 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
   const [applyResult, setApplyResult] = useState(null);
   const [requiredFields, setRequiredFields] = useState({ name: '', birth_date: '' });
   const [editableLifestyle, setEditableLifestyle] = useState({});
+  const [vaccineResolutions, setVaccineResolutions] = useState([]);
+  const [resolvedVaccineChoices, setResolvedVaccineChoices] = useState({});
   const fileInputRef = useRef(null);
 
   async function handleFileSelect(e) {
@@ -99,6 +101,18 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
       });
       setEditableLifestyle(initialLifestyle);
 
+      // Resolve vaccine names to detect ambiguous ones
+      if (result.vaccinations?.length) {
+        try {
+          const uniqueNames = [...new Set(result.vaccinations.map(v => v.vaccine_name).filter(Boolean))];
+          const resolutions = await resolveVaccines(uniqueNames);
+          setVaccineResolutions(resolutions);
+        } catch {
+          // Non-critical — continue without resolution info
+          setVaccineResolutions([]);
+        }
+      }
+
       setState(UPLOAD_STATES.REVIEWING);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to process document');
@@ -141,6 +155,30 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
       vaccinations: [],
     };
 
+    // Check that all selected ambiguous vaccines have been resolved
+    const unresolvedAmbiguous = [];
+    Object.entries(selectedFields).forEach(([key, selected]) => {
+      if (!selected) return;
+      const [category, field] = key.split('.');
+      if (category === 'vaccination') {
+        const idx = parseInt(field, 10);
+        const vax = extractedData.vaccinations?.[idx];
+        if (vax) {
+          const resolution = vaccineResolutions.find(
+            r => r.name?.toLowerCase() === vax.vaccine_name?.toLowerCase()
+          );
+          if (resolution?.status === 'ambiguous' && !resolvedVaccineChoices[vax.vaccine_name?.toLowerCase()]) {
+            unresolvedAmbiguous.push(vax.vaccine_name);
+          }
+        }
+      }
+    });
+
+    if (unresolvedAmbiguous.length > 0) {
+      setError(`Please select a vaccine type for: ${[...new Set(unresolvedAmbiguous)].join(', ')}`);
+      return;
+    }
+
     Object.entries(selectedFields).forEach(([key, selected]) => {
       if (!selected) return;
 
@@ -151,7 +189,20 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
       } else if (category === 'vaccination') {
         const idx = parseInt(field, 10);
         if (extractedData.vaccinations?.[idx]) {
-          payload.vaccinations.push(extractedData.vaccinations[idx]);
+          const vax = { ...extractedData.vaccinations[idx] };
+          // Attach resolved vaccine_id if user picked one
+          const resolvedId = resolvedVaccineChoices[vax.vaccine_name?.toLowerCase()];
+          if (resolvedId) {
+            vax.vaccine_id = resolvedId;
+          }
+          // Also attach vaccine_id from resolution for non-ambiguous matched vaccines
+          const resolution = vaccineResolutions.find(
+            r => r.name?.toLowerCase() === vax.vaccine_name?.toLowerCase()
+          );
+          if (!vax.vaccine_id && resolution?.status === 'matched' && resolution.vaccine_id) {
+            vax.vaccine_id = resolution.vaccine_id;
+          }
+          payload.vaccinations.push(vax);
         }
       }
     });
@@ -533,6 +584,11 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
               {extractedData.vaccinations.map((vax, idx) => {
                 const vaxWarning = !isCreateMode ? getVaccinationWarning(vax) : null;
                 const hasError = vaxWarning?.severity === 'error';
+                const resolution = vaccineResolutions.find(
+                  r => r.name?.toLowerCase() === vax.vaccine_name?.toLowerCase()
+                );
+                const isAmbiguous = resolution?.status === 'ambiguous';
+                const isChecked = selectedFields[`vaccination.${idx}`] || false;
                 return (
                   <label
                     key={idx}
@@ -540,7 +596,7 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
                   >
                     <input
                       type="checkbox"
-                      checked={selectedFields[`vaccination.${idx}`] || false}
+                      checked={isChecked}
                       onChange={() => toggleField(`vaccination.${idx}`)}
                     />
                     <div className="vaccination-details">
@@ -553,6 +609,30 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
                       )}
                       {vax.dose_number && <span className="vax-dose">Dose #{vax.dose_number}</span>}
                       {vax.administered_by && <span className="vax-by">by {vax.administered_by}</span>}
+                      {isAmbiguous && (
+                        <select
+                          className="vax-type-select"
+                          value={resolvedVaccineChoices[vax.vaccine_name?.toLowerCase()] || ''}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setResolvedVaccineChoices(prev => ({
+                              ...prev,
+                              [vax.vaccine_name?.toLowerCase()]: e.target.value,
+                            }));
+                          }}
+                        >
+                          <option value="">-- Select type --</option>
+                          {resolution.options.map(opt => (
+                            <option key={opt.vaccine_id} value={opt.vaccine_id}>
+                              {opt.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {isAmbiguous && isChecked && !resolvedVaccineChoices[vax.vaccine_name?.toLowerCase()] && (
+                        <span className="vax-warning">Please select a type</span>
+                      )}
                     </div>
                   </label>
                 );

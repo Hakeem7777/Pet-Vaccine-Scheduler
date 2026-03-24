@@ -181,6 +181,7 @@ class ExtractedLifestyleSerializer(serializers.Serializer):
 class ExtractedVaccinationSerializer(serializers.Serializer):
     """Serializer for a single extracted vaccination record."""
     vaccine_name = serializers.CharField()
+    vaccine_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     date_administered = serializers.DateField(allow_null=True, required=False)
     dose_number = serializers.IntegerField(allow_null=True, required=False)
     administered_by = serializers.CharField(allow_null=True, required=False)

@@ -137,6 +137,86 @@ Do not include any explanation, just the vaccine_id or NONE."""
 # Global singleton instance
 vaccine_matcher_ai = VaccineMatcherAI()
 
+# Ambiguous vaccine names that map to multiple DB entries.
+# Key: lowercased extracted name, Value: list of vaccine_ids the user must choose from.
+AMBIGUOUS_VACCINES = {
+    'bordetella': ['noncore_bord_inj', 'noncore_bord_in'],
+    'kennel cough': ['noncore_bord_inj', 'noncore_bord_in'],
+}
+
+
+class ResolveVaccinesView(APIView):
+    """
+    Pre-match extracted vaccine names to database vaccines.
+    Returns match status for each: matched, ambiguous (needs user choice), or unknown.
+
+    POST /api/ai/resolve-vaccines/
+    """
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [AIRateThrottle]
+
+    def post(self, request):
+        vaccine_names = request.data.get('vaccine_names', [])
+        if not isinstance(vaccine_names, list):
+            return Response(
+                {'error': 'vaccine_names must be a list of strings'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = []
+        for name in vaccine_names:
+            if not isinstance(name, str) or not name.strip():
+                results.append({'name': name, 'status': 'unknown', 'vaccine_id': None, 'options': None})
+                continue
+
+            normalized = name.lower().strip()
+
+            # Check if this is an ambiguous name
+            if normalized in AMBIGUOUS_VACCINES:
+                option_ids = AMBIGUOUS_VACCINES[normalized]
+                options = []
+                for vid in option_ids:
+                    try:
+                        v = Vaccine.objects.get(vaccine_id=vid, is_active=True)
+                        options.append({'vaccine_id': v.vaccine_id, 'name': v.name})
+                    except Vaccine.DoesNotExist:
+                        pass
+                if len(options) > 1:
+                    results.append({
+                        'name': name,
+                        'status': 'ambiguous',
+                        'vaccine_id': None,
+                        'options': options,
+                    })
+                    continue
+                elif len(options) == 1:
+                    results.append({
+                        'name': name,
+                        'status': 'matched',
+                        'vaccine_id': options[0]['vaccine_id'],
+                        'options': None,
+                    })
+                    continue
+
+            # Try AI matching for non-ambiguous names
+            vaccine = vaccine_matcher_ai.match_vaccine(name, user=request.user)
+            if vaccine:
+                results.append({
+                    'name': name,
+                    'status': 'matched',
+                    'vaccine_id': vaccine.vaccine_id,
+                    'options': None,
+                })
+            else:
+                results.append({
+                    'name': name,
+                    'status': 'unknown',
+                    'vaccine_id': None,
+                    'options': None,
+                })
+
+        return Response({'results': results}, status=status.HTTP_200_OK)
+
 
 class AIStatusView(APIView):
     """
@@ -964,8 +1044,18 @@ class ApplyExtractionView(APIView):
         # Add vaccinations
         vaccinations = data.get('vaccinations', [])
         for vax in vaccinations:
-            # Try to match vaccine by name
-            vaccine = self._find_vaccine(vax.get('vaccine_name', ''), user=request.user)
+            # If frontend resolved the vaccine_id, use it directly
+            vaccine = None
+            resolved_id = vax.get('vaccine_id')
+            if resolved_id:
+                try:
+                    vaccine = Vaccine.objects.get(vaccine_id=resolved_id, is_active=True)
+                except Vaccine.DoesNotExist:
+                    pass
+
+            # Fall back to AI matching
+            if not vaccine:
+                vaccine = self._find_vaccine(vax.get('vaccine_name', ''), user=request.user)
 
             if not vaccine:
                 vaccinations_skipped += 1

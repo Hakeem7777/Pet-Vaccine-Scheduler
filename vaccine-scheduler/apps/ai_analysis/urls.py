@@ -11,6 +11,7 @@ from .views import (
     DocumentExtractView,
     DocumentExtractNewDogView,
     ApplyExtractionView,
+    ResolveVaccinesView,
 )
 from .health import HealthCheckView
 
@@ -38,4 +39,7 @@ urlpatterns = [
 
     # Document extraction for new dog (no existing dog required)
     path('ai/extract-document-new/', DocumentExtractNewDogView.as_view(), name='extract-document-new'),
+
+    # Resolve extracted vaccine names to database vaccines
+    path('ai/resolve-vaccines/', ResolveVaccinesView.as_view(), name='resolve-vaccines'),
 ]

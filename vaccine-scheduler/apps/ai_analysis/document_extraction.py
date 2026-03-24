@@ -109,23 +109,27 @@ class DocumentExtractionService:
         Returns:
             Dict containing extracted information
         """
-        base64_data = base64.standard_b64encode(file_data).decode('utf-8')
         mime_type = self._get_mime_type_from_name(filename)
 
-        message = HumanMessage(
-            content=[
+        if mime_type == 'application/pdf':
+            content_parts = self._pdf_to_image_parts(file_data)
+        else:
+            base64_data = base64.standard_b64encode(file_data).decode('utf-8')
+            content_parts = [
                 {
                     "type": "image_url",
                     "image_url": {
                         "url": f"data:{mime_type};base64,{base64_data}"
                     }
-                },
-                {
-                    "type": "text",
-                    "text": EXTRACTION_PROMPT
                 }
             ]
-        )
+
+        content_parts.append({
+            "type": "text",
+            "text": EXTRACTION_PROMPT
+        })
+
+        message = HumanMessage(content=content_parts)
 
         try:
             response = self.llm.invoke([message])
@@ -137,6 +141,38 @@ class DocumentExtractionService:
         except Exception as e:
             logger.error(f"Document extraction failed: {e}", exc_info=True)
             raise
+
+    def _pdf_to_image_parts(self, pdf_data: bytes) -> list:
+        """Convert PDF pages to image content parts for the vision API."""
+        try:
+            import pymupdf
+        except ImportError:
+            raise ImportError(
+                "pymupdf is required for PDF extraction. "
+                "Install it with: pip install pymupdf"
+            )
+
+        image_parts = []
+        doc = pymupdf.open(stream=pdf_data, filetype="pdf")
+        try:
+            for page_num in range(min(len(doc), 5)):  # Limit to 5 pages
+                page = doc[page_num]
+                pix = page.get_pixmap(dpi=200)
+                img_data = pix.tobytes("png")
+                base64_data = base64.standard_b64encode(img_data).decode('utf-8')
+                image_parts.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{base64_data}"
+                    }
+                })
+        finally:
+            doc.close()
+
+        if not image_parts:
+            raise ValueError("PDF contains no pages")
+
+        return image_parts
 
     def _get_mime_type_from_name(self, filename: str) -> str:
         """Get MIME type from filename."""

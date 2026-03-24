@@ -93,6 +93,13 @@ export async function extractFromDocumentNew(file) {
   return response.data;
 }
 
+export async function resolveVaccines(vaccineNames) {
+  const response = await client.post('/ai/resolve-vaccines/', {
+    vaccine_names: vaccineNames,
+  });
+  return response.data.results;
+}
+
 export async function createDogFromExtraction(extractionData, additionalData) {
   // Merge extracted data with user-provided data
   const dogData = {

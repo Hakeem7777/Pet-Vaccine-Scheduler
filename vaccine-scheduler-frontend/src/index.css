@@ -4745,6 +4745,24 @@ a:hover {
   border-radius: 4px;
 }
 
+.vax-type-select {
+  font-size: 0.85rem;
+  padding: 3px 6px;
+  border: 1px solid var(--color-primary);
+  border-radius: 4px;
+  background: white;
+  color: var(--color-neutral-dark);
+  cursor: pointer;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.vax-warning {
+  font-size: 0.8rem;
+  color: var(--color-warning, #e67e22);
+  font-style: italic;
+}
+
 /* Apply Results */
 .apply-results {
   padding: var(--spacing-md);
