@@ -3332,6 +3332,15 @@ a:hover {
   padding: var(--spacing-lg);
   min-width: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.vaccination-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Email Capture Gate */
@@ -4243,7 +4252,8 @@ a:hover {
   flex-direction: column;
   gap: var(--spacing-md);
   overflow-y: auto;
-  max-height: 500px;
+  flex: 1;
+  min-height: 0;
 }
 
 .vaccination-card {
