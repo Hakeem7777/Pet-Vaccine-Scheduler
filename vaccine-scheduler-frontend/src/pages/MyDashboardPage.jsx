@@ -406,7 +406,7 @@ function MyDashboardPage() {
           </div>
         ) : (
           <div className="my-dashboard__subscription my-dashboard__subscription--inactive">
-            <p>You&apos;re on the free plan. Upgrade to unlock PDF downloads, calendar export, AI chatbot, and more.</p>
+            <p>You&apos;re on the free plan. Upgrade to unlock PDF downloads, automatic reminders, calendar exports, AI chatbot, and more.</p>
             <button className="btn btn-primary btn-pill" onClick={() => navigate('/pricing')}>
               View Plans
             </button>

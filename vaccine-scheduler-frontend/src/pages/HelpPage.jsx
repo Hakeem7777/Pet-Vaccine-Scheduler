@@ -36,7 +36,7 @@ function HelpPage() {
     <PageTransition className="help-page">
       <div className="help-header">
         <h1>Help Videos</h1>
-        <p>Watch tutorials to learn how to use the application</p>
+        <p>Watch tutorials to learn how to use PetVaxCalendar</p>
       </div>
 
       {loading ? <LoadingSpinner /> : (
