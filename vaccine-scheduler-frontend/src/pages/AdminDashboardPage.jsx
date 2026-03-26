@@ -3013,6 +3013,11 @@ function AdminDashboardPage() {
                 alt="Preview"
               />
             )}
+            <p className="ad-form__size-hint">
+              {fd.position === 'left' || fd.position === 'right'
+                ? 'Recommended size: 160 x 600 px (vertical sidebar)'
+                : 'Recommended size: 1200 x 120 px (horizontal banner)'}
+            </p>
           </div>
 
           <div className="blog-form__field">

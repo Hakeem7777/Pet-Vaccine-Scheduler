@@ -1370,6 +1370,13 @@
   color: var(--color-neutral-dark);
 }
 
+.ad-form__size-hint {
+  margin: 0.375rem 0 0;
+  font-size: 0.75rem;
+  color: #5f6b76;
+  font-style: italic;
+}
+
 .blog-form__input,
 .blog-form__textarea,
 .blog-form__select {
