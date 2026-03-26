@@ -44,10 +44,11 @@ export default function LandingPageB2B() {
                 return;
             }
 
-            // Hero Section: Staggered Fade Up + Background Zoom
-            gsap.from('.b2b-hero-bg', {
-                scale: 1.1,
-                duration: 3,
+            // Hero Section: Staggered Fade Up + Image Zoom
+            gsap.from('.b2b-hero-visual img', {
+                scale: 1.05,
+                opacity: 0,
+                duration: 1.5,
                 ease: "power2.out"
             });
 
@@ -203,23 +204,6 @@ export default function LandingPageB2B() {
 
             {/* Hero Section */}
             <section className="b2b-hero-section">
-                <div className="b2b-hero-bg">
-                    <picture>
-                        <source
-                            type="image/webp"
-                            srcSet="/Images/landing_page/puppy-vaccine-shot-1-480w.webp 480w, /Images/landing_page/puppy-vaccine-shot-1-768w.webp 768w"
-                            sizes="100vw"
-                        />
-                        <img
-                            src="/Images/landing_page/Puppy vaccine shot 1.png"
-                            alt="Puppy receiving a vaccine shot"
-                            loading="eager"
-                            fetchPriority="high"
-                            width="1023"
-                            height="365"
-                        />
-                    </picture>
-                </div>
                 <div className="b2b-hero-content b2b-hero-text">
                     <h1>Vaccine Compliance Software for Veterinary Clinics</h1>
                     <p className="b2b-hero-sub">PetVaxCalendar helps veterinary practices improve booster compliance, reduce missed appointments, and enhance client retention with structured vaccination tracking.</p>
@@ -227,6 +211,14 @@ export default function LandingPageB2B() {
                         <Link to="/contact" className="btn btn-primary btn-lg">Request Clinic Access</Link>
                         <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}?subject=Demo%20Request`} className="btn btn-outline btn-lg" style={{ backgroundColor: 'white' }}>Schedule a Demo</a>
                     </div>
+                </div>
+                <div className="b2b-hero-visual">
+                    <img
+                        src="/Images/landing_page/Puppy vaccine shot 1.png"
+                        alt="Vaccine Compliance Software for Veterinary Clinics"
+                        loading="eager"
+                        fetchPriority="high"
+                    />
                 </div>
             </section>
 
@@ -357,6 +349,15 @@ export default function LandingPageB2B() {
                 <div className="container">
                     <h2 className="text-center">Increase Compliance. Strengthen Retention.</h2>
                     <p className="text-center b2b-subtext">Prevention isn’t just good medicine, it’s good business.</p>
+
+                    <div className="b2b-benefits-visual">
+                        <img
+                            src="/Images/landing_page/Puppy vaccine shot 5.png"
+                            alt="Increase compliance and retention — automated reminders, reduce no-shows, digital records access, strengthen client loyalty"
+                            loading="lazy"
+                            className="b2b-benefits-img"
+                        />
+                    </div>
 
                     <div className="b2b-benefits-grid">
                         <div className="b2b-benefit-item">
