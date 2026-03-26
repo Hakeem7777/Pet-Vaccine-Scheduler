@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getSchedule } from '../../api/vaccines';
 import NoncoreSelector from './NoncoreSelector';
 import ScheduleCategory from './ScheduleCategory';
@@ -7,7 +7,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import ExportModal from '../export/ExportModal';
 import { useAuth } from '../../context/AuthContext';
 
-function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded }) {
+function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded, onExportReady }) {
   const { isPro, canExportPdf } = useAuth();
   const [schedule, setSchedule] = useState(null);
   const [dogInfo, setDogInfo] = useState(null);
@@ -91,6 +91,12 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
 
   const hasVaccines = filteredSchedule && !hasNoVaccines;
 
+  // Expose export trigger to parent
+  const openExport = useCallback(() => setIsExportModalOpen(true), []);
+  useEffect(() => {
+    onExportReady?.(hasVaccines ? openExport : null);
+  }, [hasVaccines, openExport, onExportReady]);
+
   // Find the first category that has a non-contraindicated item for the tour target,
   // since contraindicated items don't have a "Mark as Done" button
   const hasNonContraindicated = (items) => items.some(item => !item.contraindicated);
@@ -105,15 +111,6 @@ function ScheduleView({ dogId, dogName, dog, onScheduleLoad, onVaccinationAdded 
     <div className="schedule-view">
       <div className="schedule-view__header">
         <h3>Vaccination Schedule</h3>
-        {hasVaccines && (
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => setIsExportModalOpen(true)}
-            data-tour="export-btn"
-          >
-            Export All
-          </button>
-        )}
       </div>
 
       <ExportModal

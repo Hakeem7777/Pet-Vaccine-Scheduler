@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
 import { getDog, updateDog, deleteDog } from '../api/dogs';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +35,8 @@ function DogDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentSelectedNoncore, setCurrentSelectedNoncore] = useState([]);
+  const [triggerExport, setTriggerExport] = useState(null);
+  const handleExportReady = useCallback((fn) => setTriggerExport(() => fn), []);
 
   useEffect(() => {
     if (isGuestDog) {
@@ -170,6 +172,15 @@ function DogDetailPage() {
           <button className="btn btn-outline btn-pill" onClick={() => setShowEditModal(true)}>
             Edit <img src="/Images/generic_icons/Edit-Icon.svg" alt="" width="16" height="16" style={{marginLeft:"5px"}} />
           </button>
+          {triggerExport && (
+            <button
+              className="btn btn-outline btn-pill"
+              onClick={triggerExport}
+              data-tour="export-btn"
+            >
+              Export All <img src="/Images/generic_icons/export-icon.svg" alt="" width="16" height="16" style={{marginLeft:"5px"}} />
+            </button>
+          )}
           {!isGuestDog && (
             <button className="btn btn-outline btn-pill" onClick={() => setShowUploadModal(true)}>
               Upload Document <img src="/Images/generic_icons/export-icon.svg" alt="" width="16" height="16" style={{marginLeft:"5px"}} />
@@ -377,6 +388,7 @@ function DogDetailPage() {
               dog={dog}
               onVaccinationAdded={handleVaccinationUpdate}
               onScheduleLoad={setCurrentSelectedNoncore}
+              onExportReady={handleExportReady}
             />
           )}
         </div>

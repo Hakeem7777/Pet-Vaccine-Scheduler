@@ -104,7 +104,7 @@ function TermsPage() {
           <h2>Contact</h2>
           <p>For questions, contact:</p>
           <p>
-            Email: <a href="mailto:support@petvaxcalendar.com">support@petvaxcalendar.com</a>
+            Email: <a href={`mailto:${import.meta.env.VITE_SUPPORT_EMAIL || 'support@petvaxcalendar.com'}`}>{import.meta.env.VITE_SUPPORT_EMAIL || 'support@petvaxcalendar.com'}</a>
           </p>
         </div>
       </motion.div>

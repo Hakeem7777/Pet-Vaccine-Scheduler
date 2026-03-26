@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useAuth } from '../context/AuthContext';
 import Footer from '../components/layout/Footer';
 import './LandingPageB2C.css';
 
@@ -13,24 +12,8 @@ const CLOUDFLARE_VIDEO_ID = import.meta.env.VITE_CLOUDFLARE_B2C_VIDEO_ID;
 gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPageB2C() {
-    const { isAuthenticated, isAdmin } = useAuth();
     const container = useRef();
     const [openFaq, setOpenFaq] = useState(null);
-
-    if (isAuthenticated) {
-        return <Navigate to={isAdmin ? '/admin-panel' : '/home'} replace />;
-    }
-
-    const toggleFaq = (index) => {
-        setOpenFaq(openFaq === index ? null : index);
-    };
-
-    const b2cFAQs = [
-        { q: "Is PetVaxCalendar free to use?", a: "Yes. PetVaxCalendar offers a free version to track schedules and receive reminders." },
-        { q: "Does it replace my veterinarian?", a: "No. We help you stay organized but do not dispense medical advice." },
-        { q: "How accurate is the schedule?", a: "It's based on widely accepted veterinary guidelines, but your vet may adjust it." },
-        { q: "Is my data secure?", a: "Yes. We use secure data storage practices and do not sell your information." }
-    ];
 
     useGSAP(() => {
         // Media query for responsive and accessible animations
@@ -159,6 +142,18 @@ export default function LandingPageB2C() {
         return () => mm.revert();
     }, { scope: container });
 
+
+    const toggleFaq = (index) => {
+        setOpenFaq(openFaq === index ? null : index);
+    };
+
+    const b2cFAQs = [
+        { q: "Is PetVaxCalendar free to use?", a: "Yes. PetVaxCalendar offers a free version to track schedules and receive reminders." },
+        { q: "Does it replace my veterinarian?", a: "No. We help you stay organized but do not dispense medical advice." },
+        { q: "How accurate is the schedule?", a: "It's based on widely accepted veterinary guidelines, but your vet may adjust it." },
+        { q: "Is my data secure?", a: "Yes. We use secure data storage practices and do not sell your information." }
+    ];
+
     return (
         <div className="b2c-landing" ref={container}>
             {/* Header */}
@@ -227,7 +222,8 @@ export default function LandingPageB2C() {
                     <p>Watch how PetVaxCalendar keeps your pet's vaccinations on track.</p>
                     <div className="demo-video-wrapper">
                         <iframe
-                            src={`https://customer-${CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${CLOUDFLARE_VIDEO_ID}/iframe`}
+                            src={`https://customer-${CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${CLOUDFLARE_VIDEO_ID}/iframe?preload=true&defaultTextTrack=en&poster=https%3A%2F%2Fcustomer-${CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com%2F${CLOUDFLARE_VIDEO_ID}%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D0h0m17s%26height%3D600&primaryColor=%23f9f6f6`}
+                            loading="lazy"
                             className="demo-video"
                             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                             allowFullScreen

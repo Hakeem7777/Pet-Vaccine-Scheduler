@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useAuth } from '../context/AuthContext';
 import Footer from '../components/layout/Footer';
 import './LandingPageB2B.css';
 
@@ -13,14 +12,8 @@ const CLOUDFLARE_VIDEO_ID = import.meta.env.VITE_CLOUDFLARE_B2B_VIDEO_ID;
 gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPageB2B() {
-    const { isAuthenticated, isAdmin } = useAuth();
     const container = useRef();
     const [openFaq, setOpenFaq] = useState(null);
-
-    if (isAuthenticated) {
-        return <Navigate to={isAdmin ? '/admin-panel' : '/home'} replace />;
-    }
-
     const toggleFaq = (index) => {
         setOpenFaq(openFaq === index ? null : index);
     };
@@ -244,7 +237,8 @@ export default function LandingPageB2B() {
                     <p>See how PetVaxCalendar helps clinics streamline vaccine compliance and client retention.</p>
                     <div className="demo-video-wrapper">
                         <iframe
-                            src={`https://customer-${CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${CLOUDFLARE_VIDEO_ID}/iframe`}
+                            src={`https://customer-${CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com/${CLOUDFLARE_VIDEO_ID}/iframe?preload=true&poster=https%3A%2F%2Fcustomer-${CLOUDFLARE_ACCOUNT_ID}.cloudflarestream.com%2F${CLOUDFLARE_VIDEO_ID}%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D0h013s%26height%3D600`}
+                            loading="lazy"
                             className="demo-video"
                             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                             allowFullScreen
