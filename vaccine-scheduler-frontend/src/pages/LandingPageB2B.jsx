@@ -225,7 +225,7 @@ export default function LandingPageB2B() {
                     <p className="b2b-hero-sub">PetVaxCalendar helps veterinary practices improve booster compliance, reduce missed appointments, and enhance client retention with structured vaccination tracking.</p>
                     <div className="b2b-hero-actions">
                         <Link to="/contact" className="btn btn-primary btn-lg">Request Clinic Access</Link>
-                        <a href="mailto:sales@petvaxcalendar.com?subject=Demo%20Request" className="btn btn-outline btn-lg" style={{ backgroundColor: 'white' }}>Schedule a Demo</a>
+                        <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}?subject=Demo%20Request`} className="btn btn-outline btn-lg" style={{ backgroundColor: 'white' }}>Schedule a Demo</a>
                     </div>
                 </div>
             </section>
@@ -278,7 +278,7 @@ export default function LandingPageB2B() {
                             </div>
                         </div>
                         <div className="section-cta anim-fade-up">
-                            <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">Talk to Our Team</a>
+                            <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}`} className="btn btn-primary btn-lg">Talk to Our Team</a>
                         </div>
                     </div>
                 </div>
@@ -309,7 +309,7 @@ export default function LandingPageB2B() {
                     </div>
                 </div>
                 <div className="section-cta anim-fade-up">
-                    <a href="mailto:sales@petvaxcalendar.com?subject=Walkthrough%20Request" className="btn btn-white btn-lg">Request a Walkthrough</a>
+                    <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}?subject=Walkthrough%20Request`} className="btn btn-white btn-lg">Request a Walkthrough</a>
                 </div>
             </section>
 
@@ -347,7 +347,7 @@ export default function LandingPageB2B() {
                         </div>
                     </div>
                     <div className="section-cta anim-fade-up">
-                        <a href="mailto:sales@petvaxcalendar.com?subject=Clinic%20Enrollment" className="btn btn-primary btn-lg">Get Your Clinic Started</a>
+                        <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}?subject=Clinic%20Enrollment`} className="btn btn-primary btn-lg">Get Your Clinic Started</a>
                     </div>
                 </div>
             </section>
@@ -381,7 +381,7 @@ export default function LandingPageB2B() {
                         </div>
                     </div>
                     <div className="section-cta anim-fade-up">
-                        <a href="mailto:sales@petvaxcalendar.com" className="btn btn-primary btn-lg">See How It Works for Your Practice</a>
+                        <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}`} className="btn btn-primary btn-lg">See How It Works for Your Practice</a>
                     </div>
                 </div>
             </section>
@@ -435,7 +435,7 @@ export default function LandingPageB2B() {
                         ))}
                     </div>
                     <div className="section-cta anim-fade-up">
-                        <a href="mailto:sales@petvaxcalendar.com?subject=Question" className="btn btn-primary btn-lg">Still Have Questions? Contact Us</a>
+                        <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}?subject=Question`} className="btn btn-primary btn-lg">Still Have Questions? Contact Us</a>
                     </div>
                 </div>
             </section>
@@ -445,7 +445,7 @@ export default function LandingPageB2B() {
                 <h2>Improve Vaccine Compliance at Your Clinic</h2>
                 <div className="b2b-hero-actions justify-center">
                     <Link to="/contact" className="btn btn-primary btn-lg">Request Clinic Access</Link>
-                    <a href="mailto:sales@petvaxcalendar.com?subject=Demo%20Request" className="btn btn-outline btn-lg" style={{ borderColor: 'white', color: 'white' }}>Schedule a Demo</a>
+                    <a href={`mailto:${import.meta.env.VITE_SALES_EMAIL || 'sales@petvaxcalendar.com'}?subject=Demo%20Request`} className="btn btn-outline btn-lg" style={{ borderColor: 'white', color: 'white' }}>Schedule a Demo</a>
                 </div>
             </section>
 

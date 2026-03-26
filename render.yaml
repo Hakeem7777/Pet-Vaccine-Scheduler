@@ -71,6 +71,12 @@ services:
       - key: VITE_PAYPAL_CLIENT_ID
         sync: false  # Must be set manually in dashboard
 
+      # Email addresses
+      - key: VITE_SUPPORT_EMAIL
+        value: "support@petvaxcalendar.com"
+      - key: VITE_SALES_EMAIL
+        value: "sales@petvaxcalendar.com"
+
       # Python settings
       - key: PYTHONUNBUFFERED
         value: "1"

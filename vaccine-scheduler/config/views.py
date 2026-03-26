@@ -1,6 +1,7 @@
 """
 Views for serving the React SPA frontend.
 """
+import os
 from pathlib import Path
 from django.http import HttpResponse, Http404
 from django.conf import settings
@@ -53,7 +54,7 @@ def robots_txt(request):
 def security_txt(request):
     """Serve /.well-known/security.txt per RFC 9116."""
     lines = [
-        "Contact: mailto:raufsubhan45@gmail.com",
+        f"Contact: mailto:{os.environ.get('SUPPORT_EMAIL', 'support@petvaxcalendar.com')}",
         "Preferred-Languages: en",
         "Canonical: https://petvaxcalendar.com/.well-known/security.txt",
         "Expires: 2027-03-24T00:00:00.000Z",

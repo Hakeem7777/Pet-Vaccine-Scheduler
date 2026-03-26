@@ -98,7 +98,7 @@ function PrivacyPage() {
 
           <h2>Contact</h2>
           <p>
-            Email: <a href="mailto:privacy@petvaxcalendar.com">privacy@petvaxcalendar.com</a>
+            Email: <a href={`mailto:${import.meta.env.VITE_SUPPORT_EMAIL || 'support@petvaxcalendar.com'}`}>{import.meta.env.VITE_SUPPORT_EMAIL || 'support@petvaxcalendar.com'}</a>
           </p>
         </div>
       </motion.div>
