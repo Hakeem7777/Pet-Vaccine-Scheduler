@@ -434,17 +434,24 @@ class CancelSubscriptionView(APIView):
             update_fields += ['refunded_at', 'refund_amount', 'refund_id']
         sub.save(update_fields=update_fields)
 
-        # Send admin notification (non-blocking)
+        # Send email notifications (non-blocking)
         try:
             if os.environ.get('RESEND_API_KEY'):
                 from apps.email_service.services import EmailService
-                EmailService().send_cancellation_notification(
+                email_service = EmailService()
+                email_service.send_cancellation_notification(
                     user_email=request.user.email,
                     username=request.user.username,
                     reason=reason,
                 )
+                email_service.send_cancellation_confirmation_email(
+                    to_email=request.user.email,
+                    username=request.user.username,
+                    refunded=refunded,
+                    refund_amount=str(refund_amount) if refund_amount else None,
+                )
         except Exception:
-            logger.warning("Failed to send cancellation admin notification for user %s", request.user.email)
+            logger.warning("Failed to send cancellation emails for user %s", request.user.email)
 
         data = SubscriptionSerializer(sub).data
         data['refunded'] = refunded

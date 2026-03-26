@@ -1271,6 +1271,155 @@ PetVaxCalendar Admin Notification
                 'message': str(e)
             }
 
+    def send_cancellation_confirmation_email(
+        self,
+        to_email: str,
+        username: str,
+        refunded: bool = False,
+        refund_amount: str = None,
+    ) -> dict:
+        """Send cancellation confirmation email to the user."""
+        display_name = username or to_email
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://app.petvaxcalendar.com')
+
+        refund_row = ""
+        refund_plain = ""
+        if refunded and refund_amount:
+            refund_row = f"""
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px; width: 40%;">Refund</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 600; color: #2AB57F;">{refund_amount}</td>
+                    </tr>"""
+            refund_plain = f"\nRefund: {refund_amount}"
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Cancelled</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7fafc; color: #333f48;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td style="background-color: #E53E3E; padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                    Subscription Cancelled
+                </h1>
+                <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
+                    Your Pro Care plan has been cancelled
+                </p>
+            </td>
+        </tr>
+
+        <!-- Content -->
+        <tr>
+            <td style="padding: 30px 40px;">
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                    Hi {display_name},
+                </p>
+                <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6;">
+                    We're sorry to see you go. Your <strong>Pro Care</strong> subscription has been successfully cancelled.
+                </p>
+
+                <!-- Cancellation Details -->
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <tr>
+                        <td style="background-color: #f7fafc; padding: 12px 20px; font-weight: 600; font-size: 14px; color: #006D9C; border-bottom: 1px solid #e2e8f0;" colspan="2">
+                            Cancellation Details
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px; width: 40%;">Plan</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 600;">Pro Care</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px;">Status</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 600; color: #E53E3E;">Cancelled</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; color: #5f6b76; font-size: 14px;">Date</td>
+                        <td style="padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px;">{datetime.now().strftime("%B %d, %Y")}</td>
+                    </tr>{refund_row}
+                </table>
+
+                <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #5f6b76;">
+                    Your account has been downgraded to the free plan. You can still access your pets and vaccine records, but Pro features are no longer available.
+                </p>
+
+                <p style="margin: 0 0 25px; font-size: 14px; line-height: 1.6; color: #5f6b76;">
+                    You can resubscribe at any time to regain access to all Pro features.
+                </p>
+
+                <!-- CTA Button -->
+                <div style="text-align: center; margin: 30px 0 10px;">
+                    <a href="{frontend_url}/home" style="display: inline-block; padding: 14px 32px; background-color: #006D9C; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                        Go to Your Dashboard
+                    </a>
+                </div>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="background-color: #333f48; padding: 25px 40px; text-align: center;">
+                <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">
+                    PetVaxCalendar - Dog Vaccination Scheduler<br><br>
+                    Questions or need help?<br>
+                    <a href="mailto:{self._get_support_email()}" style="color: rgba(255,255,255,0.9);">{self._get_support_email()}</a>
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+        plain_content = f"""SUBSCRIPTION CANCELLED
+{'=' * 40}
+
+Hi {display_name},
+
+Your Pro Care subscription has been successfully cancelled.
+
+CANCELLATION DETAILS
+{'=' * 40}
+Plan: Pro Care
+Status: Cancelled
+Date: {datetime.now().strftime("%B %d, %Y")}{refund_plain}
+
+Your account has been downgraded to the free plan. You can still access your pets and vaccine records, but Pro features are no longer available.
+
+You can resubscribe at any time to regain access to all Pro features.
+
+Visit your dashboard: {frontend_url}/home
+
+---
+PetVaxCalendar - Dog Vaccination Scheduler
+"""
+
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": "Your Pro Care Subscription Has Been Cancelled - PetVaxCalendar",
+                "html": html_content,
+                "text": plain_content
+            })
+
+            return {
+                'success': True,
+                'message': "Cancellation confirmation email sent successfully",
+                'id': response.get('id')
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': str(e)
+            }
+
     def send_subscription_confirmation_email(
         self,
         to_email: str,
