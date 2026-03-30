@@ -100,6 +100,8 @@ function ContactPage() {
           <h1>Contact Us</h1>
           <p className="contact-subtitle">
             Have a question or feedback? We'd love to hear from you.
+            <br></br>
+            For direct contact, email us at <a href="mailto:Support@PetVaxCalender.com">Support@PetVaxCalender.com</a>.
           </p>
         </div>
 
