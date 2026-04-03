@@ -10,6 +10,7 @@ urlpatterns = [
     path('redeem-promo/', views.RedeemPromoCodeView.as_view(), name='redeem-promo'),
     path('webhook/', views.PayPalWebhookView.as_view(), name='paypal-webhook'),
     path('stripe/create-checkout/', views.CreateStripeCheckoutView.as_view(), name='stripe-create-checkout'),
+    path('stripe/verify-checkout/', views.VerifyStripeCheckoutView.as_view(), name='stripe-verify-checkout'),
     path('stripe/webhook/', views.StripeWebhookView.as_view(), name='stripe-webhook'),
     path('pdf-export/record/', views.RecordPdfExportView.as_view(), name='pdf-export-record'),
 ]

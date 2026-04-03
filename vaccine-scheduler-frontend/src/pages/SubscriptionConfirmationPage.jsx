@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-do
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
+import { verifyStripeCheckout } from '../api/subscriptions';
 import PageTransition from '../components/common/PageTransition';
 import './SubscriptionConfirmationPage.css';
 
@@ -58,12 +59,23 @@ function SubscriptionConfirmationPage() {
     isPromo: false,
   } : null);
 
-  // Refresh user data on Stripe redirect return
+  // Verify checkout session and refresh user data on Stripe redirect return
   useEffect(() => {
+    let cancelled = false;
     if (isStripeReturn && !stripeReady) {
-      refreshUser().then(() => setStripeReady(true));
+      const sessionId = searchParams.get('session_id');
+      verifyStripeCheckout(sessionId)
+        .catch((err) => {
+          console.warn('Stripe checkout verification failed (webhook may handle it):', err);
+        })
+        .finally(() => {
+          if (!cancelled) {
+            refreshUser().then(() => setStripeReady(true));
+          }
+        });
     }
-  }, [isStripeReturn, stripeReady, refreshUser]);
+    return () => { cancelled = true; };
+  }, [isStripeReturn, stripeReady, refreshUser, searchParams]);
 
   const fireConfetti = useCallback(() => {
     // Initial burst from center

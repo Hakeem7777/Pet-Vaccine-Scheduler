@@ -154,6 +154,15 @@ function MyDashboardPage() {
         </div>
       </div>
 
+
+      {/* Vaccination Reminders */}
+      {isPro && (
+        <div className="my-dashboard__section">
+          <h3 className="my-dashboard__section-title">Vaccination Reminders</h3>
+          <ReminderSettings />
+        </div>
+      )}
+
       {/* Refer a Friend */}
       <div className="my-dashboard__section">
         <div className="my-dashboard__section-header">
@@ -414,13 +423,7 @@ function MyDashboardPage() {
         )}
       </div>
 
-      {/* Vaccination Reminders */}
-      {isPro && (
-        <div className="my-dashboard__section">
-          <h3 className="my-dashboard__section-title">Vaccination Reminders</h3>
-          <ReminderSettings />
-        </div>
-      )}
+      
 
       {/* Cancel Subscription Modal */}
       {showCancelModal && (

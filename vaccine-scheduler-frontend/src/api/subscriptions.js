@@ -30,6 +30,13 @@ export async function createStripeCheckout(data) {
   return response.data;
 }
 
+export async function verifyStripeCheckout(sessionId) {
+  const response = await client.post('/subscriptions/stripe/verify-checkout/', {
+    session_id: sessionId,
+  });
+  return response.data;
+}
+
 export async function recordPdfExport() {
   const response = await client.post('/subscriptions/pdf-export/record/');
   return response.data;

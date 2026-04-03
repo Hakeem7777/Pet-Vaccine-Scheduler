@@ -29,6 +29,85 @@ from . import stripe_client
 logger = logging.getLogger(__name__)
 
 
+def _activate_subscription_from_checkout(session):
+    """
+    Create or update a Subscription from a completed Stripe checkout session.
+
+    Shared by StripeWebhookView._handle_checkout_completed and
+    VerifyStripeCheckoutView. Idempotent via update_or_create.
+
+    Returns (subscription, created) or (None, False) if data is invalid.
+    """
+    user_id = session.get('metadata', {}).get('user_id')
+    stripe_sub_id = session.get('subscription')
+    stripe_customer_id = session.get('customer')
+
+    if not user_id or not stripe_sub_id:
+        return None, False
+
+    User = get_user_model()
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        logger.warning("Stripe checkout: user %s not found", user_id)
+        return None, False
+
+    sub, created = Subscription.objects.update_or_create(
+        user=user,
+        defaults={
+            'plan': 'pro',
+            'billing_cycle': 'monthly',
+            'status': 'active',
+            'payment_provider': 'stripe',
+            'stripe_subscription_id': stripe_sub_id,
+            'stripe_customer_id': stripe_customer_id,
+            'paypal_subscription_id': None,
+            'paypal_order_id': None,
+            'current_period_start': timezone.now(),
+            'cancelled_at': None,
+            'refunded_at': None,
+            'refund_amount': None,
+            'refund_id': None,
+        },
+    )
+
+    if not created:
+        Subscription.objects.filter(pk=sub.pk).update(created_at=timezone.now())
+        sub.refresh_from_db()
+
+    # Send admin notification
+    try:
+        if os.environ.get('RESEND_API_KEY'):
+            from apps.email_service.services import EmailService
+            EmailService().send_subscription_notification(
+                user_email=user.email,
+                username=user.username,
+                plan='Pro Care',
+                paypal_subscription_id=f'stripe:{stripe_sub_id}',
+            )
+    except Exception:
+        logger.warning("Failed to send Stripe subscription admin notification for user %s", user.email)
+
+    # Send user confirmation email
+    try:
+        if os.environ.get('RESEND_API_KEY'):
+            from apps.email_service.services import EmailService
+            EmailService().send_subscription_confirmation_email(
+                to_email=user.email,
+                username=user.username,
+                plan='Pro Care',
+                price='$19.99',
+                billing_cycle='monthly',
+                period_start=timezone.now().strftime("%B %d, %Y"),
+                period_end=None,
+                is_promo=False,
+            )
+    except Exception:
+        logger.warning("Failed to send subscription confirmation email to %s", user.email)
+
+    return sub, created
+
+
 class SubscriptionPlansView(APIView):
     """Return available subscription plans with PayPal plan IDs and prices."""
     permission_classes = [AllowAny]
@@ -502,6 +581,62 @@ class CreateStripeCheckoutView(APIView):
         })
 
 
+class VerifyStripeCheckoutView(APIView):
+    """
+    Verify a completed Stripe Checkout Session and activate the subscription.
+
+    Called by the frontend on the success page to ensure the subscription
+    is created even if the webhook hasn't arrived yet. Idempotent.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        if not session_id:
+            return Response(
+                {'error': 'session_id is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            session = stripe_client.retrieve_checkout_session(session_id)
+        except Exception:
+            logger.exception("Failed to retrieve Stripe session %s", session_id)
+            return Response(
+                {'error': 'Could not retrieve checkout session.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        if session.get('status') != 'complete':
+            return Response(
+                {'error': 'Checkout session is not complete.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if session.get('mode') != 'subscription':
+            return Response(
+                {'error': 'Session is not a subscription checkout.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Security: verify the session belongs to this user
+        session_user_id = session.get('metadata', {}).get('user_id')
+        if str(request.user.pk) != str(session_user_id):
+            return Response(
+                {'error': 'Session does not belong to this user.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        sub, created = _activate_subscription_from_checkout(session)
+        if sub is None:
+            return Response(
+                {'error': 'Could not activate subscription.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(SubscriptionSerializer(sub).data)
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class StripeWebhookView(APIView):
     """
@@ -556,73 +691,7 @@ class StripeWebhookView(APIView):
             self._handle_invoice_paid(obj)
 
     def _handle_checkout_completed(self, session):
-        user_id = session.get('metadata', {}).get('user_id')
-        stripe_sub_id = session.get('subscription')
-        stripe_customer_id = session.get('customer')
-
-        if not user_id or not stripe_sub_id:
-            return
-
-        User = get_user_model()
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            logger.warning("Stripe checkout: user %s not found", user_id)
-            return
-
-        sub, created = Subscription.objects.update_or_create(
-            user=user,
-            defaults={
-                'plan': 'pro',
-                'billing_cycle': 'monthly',
-                'status': 'active',
-                'payment_provider': 'stripe',
-                'stripe_subscription_id': stripe_sub_id,
-                'stripe_customer_id': stripe_customer_id,
-                'paypal_subscription_id': None,
-                'paypal_order_id': None,
-                'current_period_start': timezone.now(),
-                'cancelled_at': None,
-                'refunded_at': None,
-                'refund_amount': None,
-                'refund_id': None,
-            },
-        )
-
-        # Reset created_at on re-subscription
-        if not created:
-            Subscription.objects.filter(pk=sub.pk).update(created_at=timezone.now())
-            sub.refresh_from_db()
-
-        # Send admin notification
-        try:
-            if os.environ.get('RESEND_API_KEY'):
-                from apps.email_service.services import EmailService
-                EmailService().send_subscription_notification(
-                    user_email=user.email,
-                    username=user.username,
-                    plan='Pro Care',
-                    paypal_subscription_id=f'stripe:{stripe_sub_id}',
-                )
-        except Exception:
-            logger.warning("Failed to send Stripe subscription admin notification for user %s", user.email)
-
-        # Send user confirmation email
-        try:
-            if os.environ.get('RESEND_API_KEY'):
-                from apps.email_service.services import EmailService
-                EmailService().send_subscription_confirmation_email(
-                    to_email=user.email,
-                    username=user.username,
-                    plan='Pro Care',
-                    price='$19.99',
-                    billing_cycle='monthly',
-                    period_start=timezone.now().strftime("%B %d, %Y"),
-                    period_end=None,
-                    is_promo=False,
-                )
-        except Exception:
-            logger.warning("Failed to send subscription confirmation email to %s", user.email)
+        _activate_subscription_from_checkout(session)
 
     def _handle_subscription_updated(self, subscription):
         stripe_sub_id = subscription.get('id')
