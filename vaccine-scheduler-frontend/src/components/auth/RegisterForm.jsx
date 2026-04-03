@@ -38,7 +38,12 @@ function RegisterForm({ onSuccess }) {
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (err) {
       if (err.response?.data) {
-        setErrors(err.response.data);
+        const data = err.response.data;
+        if (data.detail) {
+          setErrors({ general: data.detail });
+        } else {
+          setErrors(data);
+        }
       } else {
         setErrors({ general: 'Registration failed. Please try again.' });
       }
