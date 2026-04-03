@@ -101,7 +101,7 @@ function ContactPage() {
           <p className="contact-subtitle">
             Have a question or feedback? We'd love to hear from you.
             <br></br>
-            For direct contact, email us at <a href="mailto:Support@PetVaxCalendar.com">Support@PetVaxCalender.com</a>.
+            For direct contact, email us at <a href="mailto:Support@PetVaxCalendar.com">Support@PetVaxCalendar.com</a>.
           </p>
         </div>
 
