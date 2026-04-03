@@ -123,6 +123,19 @@ export default function LandingPageB2C() {
                 }
             });
 
+            // Solution list – staggered slide-in
+            gsap.from('.solution-list li', {
+                x: -40,
+                opacity: 0,
+                duration: 0.6,
+                stagger: 0.15,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: '.solution-list',
+                    start: "top 85%",
+                }
+            });
+
             // General Fade up with blur (Desktop) or just translateY (Mobile)
             gsap.utils.toArray('.anim-fade-up').forEach((el) => {
                 gsap.from(el, {
@@ -268,31 +281,13 @@ export default function LandingPageB2C() {
                 <div className="solution-content">
                     <h2>Your Complete Pet Vaccine Tracker & Reminder System</h2>
                     <p>PetVaxCalendar automatically generates a personalized puppy vaccination schedule, dog shot schedule based on your pet’s age.</p>
-                    <div className="solution-list-container">
-                        <ul className="solution-list">
-                            <li>Track core and non-core vaccines</li>
-                            <li>Receive automated vaccination reminders</li>
-                            <li>Store digital rabies and booster records</li>
-                            <li>Access printable vaccine reports anytime</li>
-                            <li>Manage multiple pets in one account</li>
-                        </ul>
-                        <div className="solution-visual">
-                            <picture>
-                                <source
-                                    type="image/webp"
-                                    srcSet="/Images/landing_page/puppy-vaccine-shot-5-480w.webp 480w"
-                                    sizes="(max-width: 991px) 80vw, 40vw"
-                                />
-                                <img
-                                    src="/Images/landing_page/Puppy vaccine shot 5.png"
-                                    alt="Digital vaccine records inside app"
-                                    loading="lazy"
-                                    width="510"
-                                    height="248"
-                                />
-                            </picture>
-                        </div>
-                    </div>
+                    <ul className="solution-list">
+                        <li>Track core and non-core vaccines</li>
+                        <li>Receive automated vaccination reminders</li>
+                        <li>Store digital rabies and booster records</li>
+                        <li>Access printable vaccine reports anytime</li>
+                        <li>Manage multiple pets in one account</li>
+                    </ul>
                     <div className="section-cta anim-fade-up">
                         <Link to="/pricing" className="btn btn-outline-light btn-lg">See Plans &amp; Pricing</Link>
                     </div>
