@@ -98,6 +98,13 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        # Check if email is already registered
+        if User.objects.filter(email__iexact=data['email']).exists():
+            return Response(
+                {'detail': 'An account with this email already exists. Please log in instead.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
         # Generate OTP upfront so it's included in the initial insert
         otp = ''.join(secrets.choice(string.digits) for _ in range(6))
         otp_expires_at = timezone.now() + timedelta(hours=1)
