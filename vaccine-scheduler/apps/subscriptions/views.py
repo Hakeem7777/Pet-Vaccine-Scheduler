@@ -607,27 +607,33 @@ class VerifyStripeCheckoutView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        if session.get('status') != 'complete':
+        # Convert StripeObject to dict so .get() works uniformly
+        # (webhook passes a dict, but retrieve returns a StripeObject)
+        session_data = dict(session)
+        if hasattr(session, 'metadata'):
+            session_data['metadata'] = dict(session.metadata)
+
+        if session_data.get('status') != 'complete':
             return Response(
                 {'error': 'Checkout session is not complete.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if session.get('mode') != 'subscription':
+        if session_data.get('mode') != 'subscription':
             return Response(
                 {'error': 'Session is not a subscription checkout.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Security: verify the session belongs to this user
-        session_user_id = session.get('metadata', {}).get('user_id')
+        session_user_id = session_data.get('metadata', {}).get('user_id')
         if str(request.user.pk) != str(session_user_id):
             return Response(
                 {'error': 'Session does not belong to this user.'},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        sub, created = _activate_subscription_from_checkout(session)
+        sub, created = _activate_subscription_from_checkout(session_data)
         if sub is None:
             return Response(
                 {'error': 'Could not activate subscription.'},
