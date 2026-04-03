@@ -609,9 +609,7 @@ class VerifyStripeCheckoutView(APIView):
 
         # Convert StripeObject to dict so .get() works uniformly
         # (webhook passes a dict, but retrieve returns a StripeObject)
-        session_data = dict(session)
-        if hasattr(session, 'metadata'):
-            session_data['metadata'] = dict(session.metadata)
+        session_data = session.to_dict()
 
         if session_data.get('status') != 'complete':
             return Response(
