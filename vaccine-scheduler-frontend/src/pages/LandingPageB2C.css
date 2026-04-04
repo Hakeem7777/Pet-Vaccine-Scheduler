@@ -52,7 +52,7 @@
 
 .hero-inner {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   max-width: 1440px;
   width: 100%;
@@ -116,12 +116,19 @@
   justify-content: center;
   align-items: center;
   perspective: 1000px;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .hero-mockup {
   transform-style: preserve-3d;
   width: 80%;
   max-width: 500px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hero-visual:hover .hero-mockup {
+  transform: scale(1.03);
 }
 
 .hero-mockup img {
@@ -129,6 +136,11 @@
   height: auto;
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.3s ease;
+}
+
+.hero-visual:hover .hero-mockup img {
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.35);
 }
 
 /* Demo Video Section */

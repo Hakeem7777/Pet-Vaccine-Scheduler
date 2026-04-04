@@ -56,14 +56,45 @@ export default function LandingPageB2C() {
             });
 
             gsap.from('.hero-mockup', {
-                rotationY: isDesktop ? -15 : 0,
-                rotationX: isDesktop ? 10 : 0,
                 y: 100,
                 opacity: 0,
                 duration: 1.5,
                 ease: "power3.out",
                 delay: 0.5
             });
+
+            // Hero image subtle tilt following mouse (desktop only)
+            if (isDesktop) {
+                const heroVisual = document.querySelector('.hero-visual');
+                const mockup = document.querySelector('.hero-mockup');
+                if (heroVisual && mockup) {
+                    const handleMouseMove = (e) => {
+                        const rect = heroVisual.getBoundingClientRect();
+                        const x = (e.clientX - rect.left) / rect.width - 0.5;  // -0.5 to 0.5
+                        const y = (e.clientY - rect.top) / rect.height - 0.5;
+                        gsap.to(mockup, {
+                            rotationY: x * 8,
+                            rotationX: -y * 6,
+                            duration: 0.4,
+                            ease: "power2.out",
+                        });
+                    };
+                    const handleMouseLeave = () => {
+                        gsap.to(mockup, {
+                            rotationY: 0,
+                            rotationX: 0,
+                            duration: 0.6,
+                            ease: "power2.out",
+                        });
+                    };
+                    heroVisual.addEventListener('mousemove', handleMouseMove);
+                    heroVisual.addEventListener('mouseleave', handleMouseLeave);
+                    context.add(() => {
+                        heroVisual.removeEventListener('mousemove', handleMouseMove);
+                        heroVisual.removeEventListener('mouseleave', handleMouseLeave);
+                    });
+                }
+            }
 
             // Problem Section Cards Staggered 3D Animation
             gsap.from('.problem-card', {
@@ -206,7 +237,7 @@ export default function LandingPageB2C() {
                         </div>
                     </div>
                 </div>
-                <div className="hero-visual perspective-container">
+                <Link to="/signup" className="hero-visual perspective-container">
                     <div className="hero-mockup">
                         <picture>
                             <source
@@ -216,7 +247,7 @@ export default function LandingPageB2C() {
                             />
                             <img
                                 src="/Images/landing_page/puppy-vaccine-reminder-1440w.jpg"
-                                alt="Puppy vaccine reminder"
+                                alt="Puppy vaccine reminder – click to sign up"
                                 loading="eager"
                                 fetchPriority="high"
                                 width="1440"
@@ -224,7 +255,7 @@ export default function LandingPageB2C() {
                             />
                         </picture>
                     </div>
-                </div>
+                </Link>
                 </div>
             </section>
 
