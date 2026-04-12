@@ -213,6 +213,10 @@ class VerifyOTPView(APIView):
 
         log_audit(request, 'otp_verified', user=user, details={'email': email})
 
+        # Add user to Brevo onboarding list (non-blocking)
+        from apps.brevo.services import sync_new_user
+        sync_new_user(user)
+
         # Generate JWT tokens and set as cookies
         refresh = RefreshToken.for_user(user)
         response = Response({

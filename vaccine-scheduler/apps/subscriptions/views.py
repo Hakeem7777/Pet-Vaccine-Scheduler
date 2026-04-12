@@ -105,6 +105,10 @@ def _activate_subscription_from_checkout(session):
     except Exception:
         logger.warning("Failed to send subscription confirmation email to %s", user.email)
 
+    # Sync plan change to Brevo (non-blocking)
+    from apps.brevo.services import sync_plan_change
+    sync_plan_change(user, "Pro")
+
     return sub, created
 
 
@@ -264,6 +268,10 @@ class CreateSubscriptionView(APIView):
         except Exception:
             logger.warning("Failed to send subscription confirmation email to %s", request.user.email)
 
+        # Sync plan change to Brevo (non-blocking)
+        from apps.brevo.services import sync_plan_change
+        sync_plan_change(request.user, "Pro")
+
         return Response(
             SubscriptionSerializer(sub).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
@@ -378,6 +386,10 @@ class RedeemPromoCodeView(APIView):
                 )
         except Exception:
             logger.warning("Failed to send subscription confirmation email to %s", request.user.email)
+
+        # Sync plan change to Brevo (non-blocking)
+        from apps.brevo.services import sync_plan_change
+        sync_plan_change(request.user, "Pro")
 
         return Response(
             SubscriptionSerializer(sub).data,
@@ -531,6 +543,10 @@ class CancelSubscriptionView(APIView):
                 )
         except Exception:
             logger.warning("Failed to send cancellation emails for user %s", request.user.email)
+
+        # Sync plan change to Brevo (non-blocking)
+        from apps.brevo.services import sync_plan_change
+        sync_plan_change(request.user, "Free")
 
         data = SubscriptionSerializer(sub).data
         data['refunded'] = refunded
@@ -744,6 +760,10 @@ class StripeWebhookView(APIView):
         sub.stripe_subscription_id = None
         sub.save(update_fields=['status', 'cancelled_at', 'stripe_subscription_id', 'updated_at'])
 
+        # Sync plan change to Brevo (non-blocking)
+        from apps.brevo.services import sync_plan_change
+        sync_plan_change(sub.user, "Free")
+
     def _handle_invoice_paid(self, invoice):
         stripe_sub_id = invoice.get('subscription')
         if not stripe_sub_id:
@@ -846,6 +866,10 @@ class PayPalWebhookView(APIView):
                 sub.cancelled_at = timezone.now()
                 sub.save(update_fields=['status', 'cancelled_at', 'updated_at'])
 
+                # Sync plan change to Brevo (non-blocking)
+                from apps.brevo.services import sync_plan_change
+                sync_plan_change(sub.user, "Free")
+
         elif event_type == 'BILLING.SUBSCRIPTION.SUSPENDED':
             sub.status = 'suspended'
             sub.save(update_fields=['status', 'updated_at'])
@@ -853,6 +877,10 @@ class PayPalWebhookView(APIView):
         elif event_type == 'BILLING.SUBSCRIPTION.EXPIRED':
             sub.status = 'expired'
             sub.save(update_fields=['status', 'updated_at'])
+
+            # Sync plan change to Brevo (non-blocking)
+            from apps.brevo.services import sync_plan_change
+            sync_plan_change(sub.user, "Free")
 
         elif event_type == 'PAYMENT.SALE.COMPLETED':
             billing_info = resource.get('billing_info', {})

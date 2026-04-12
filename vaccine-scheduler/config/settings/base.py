@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'apps.vaccinations',
     'apps.ai_analysis',
     'apps.email_service',
+    'apps.brevo',
     'apps.dashboard',
     'apps.subscriptions',
     'apps.blog',
