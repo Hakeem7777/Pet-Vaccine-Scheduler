@@ -12,7 +12,7 @@ from django.conf.urls.static import static
 from .views import serve_react_app, health_check, robots_txt, security_txt
 
 def sitemap_xml(request):
-    sitemap_path = Path(settings.BASE_DIR) / "sitemap.xml"
+    sitemap_path = Path(__file__).resolve().parent / "sitemap.xml"
     if not sitemap_path.exists():
         raise Http404("Sitemap not found.")
     return FileResponse(open(sitemap_path, "rb"), content_type="application/xml")
