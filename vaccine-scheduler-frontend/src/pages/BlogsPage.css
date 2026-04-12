@@ -163,10 +163,23 @@
   color: var(--color-text-main);
   overflow-wrap: break-word;
   word-break: normal;
+  white-space: normal;
 }
 
 .blog-detail__content span {
   display: inline;
+}
+
+.blog-detail__content *,
+.blog-detail__content span,
+.blog-detail__content a,
+.blog-detail__content strong,
+.blog-detail__content em,
+.blog-detail__content b,
+.blog-detail__content i {
+  word-break: normal !important;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .blog-detail__content iframe,
