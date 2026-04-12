@@ -74,18 +74,17 @@ function BlogDetailPage() {
           className="blog-detail__content"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preventSpanBreaks(post.content), {
             ALLOWED_TAGS: [
-              'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
-              'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
-              'a', 'img', 'video', 'audio', 'source', 'iframe',
-              'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
-              'span', 'div', 'figure', 'figcaption', 'sub', 'sup',
-            ],
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
+  'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
+  'a', 'img', 'video', 'audio', 'source', 'iframe',
+  'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
+  'div', 'figure', 'figcaption', 'sub', 'sup',
+],
             ALLOWED_ATTR: [
-              'href', 'target', 'rel', 'src', 'alt', 'width', 'height',
-              'controls', 'autoplay', 'loop', 'muted', 'preload', 'type',
-              'class', 'style', 'id',
-              'frameborder', 'allowfullscreen',
-            ],
+  'href', 'target', 'rel', 'src', 'alt', 'width', 'height',
+  'controls', 'autoplay', 'loop', 'muted', 'preload', 'type',
+  'frameborder', 'allowfullscreen',
+],
           }) }}
         />
       </article>
