@@ -1,3 +1,6 @@
+from django.http import FileResponse, Http404
+from django.conf import settings
+from pathlib import Path
 """
 URL configuration for vaccine-scheduler project.
 """
@@ -8,6 +11,12 @@ from django.conf.urls.static import static
 
 from .views import serve_react_app, health_check, robots_txt, security_txt
 
+def sitemap_xml(request):
+    sitemap_path = Path(settings.BASE_DIR) / "sitemap.xml"
+    if not sitemap_path.exists():
+        raise Http404("Sitemap not found.")
+    return FileResponse(open(sitemap_path, "rb"), content_type="application/xml")
+    
 urlpatterns = [
     # Health check endpoint (for Render)
     path('api/health/', health_check, name='health_check'),
@@ -18,6 +27,7 @@ urlpatterns = [
 
     # Admin
     path('admin/', admin.site.urls),
+    path("sitemap.xml", sitemap_xml),
 
     # API endpoints
     path('api/auth/', include('apps.accounts.urls')),
