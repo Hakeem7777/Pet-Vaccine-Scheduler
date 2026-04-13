@@ -8,16 +8,12 @@ import './BlogsPage.css';
 
 // Insert word-joiner (U+2060) between adjacent inline elements where
 // there is no whitespace, preventing the browser from breaking mid-word.
-function cleanQuillHtml(html) {
+function cleanQuillHtml(html = '') {
   return html
-    .replace(/<\/span>\s*<span/g, '</span> <span')
-    .replace(/<\/strong>\s*<strong/g, '</strong> <strong')
-    .replace(/<\/em>\s*<em/g, '</em> <em')
-    .replace(/<\/b>\s*<b/g, '</b> <b')
-    .replace(/<\/i>\s*<i/g, '</i> <i')
-    .replace(/\u200B/g, '')   // zero-width space
-    .replace(/\u2060/g, '')   // word joiner
-    .replace(/\uFEFF/g, '');  // zero-width no-break space
+    .replace(/<\/(span|strong|em|b|i)>\s*<(span|strong|em|b|i)\b/g, '</$1> <$2')
+    .replace(/[\u200B\u2060\uFEFF]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function BlogDetailPage() {
@@ -80,21 +76,23 @@ function BlogDetailPage() {
         </div>
         <div
   className="blog-detail__content"
-  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(cleanQuillHtml(post.content), {
-            ALLOWED_TAGS: [
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
-  'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
-  'a', 'img', 'video', 'audio', 'source', 'iframe',
-  'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
-  'div', 'figure', 'figcaption', 'sub', 'sup','span'
-],
-            ALLOWED_ATTR: [
-  'href', 'target', 'rel', 'src', 'alt', 'width', 'height',
-  'controls', 'autoplay', 'loop', 'muted', 'preload', 'type',
-  'frameborder', 'allowfullscreen',
-],
-          }) }}
-        />
+  dangerouslySetInnerHTML={{
+    __html: DOMPurify.sanitize(cleanQuillHtml(post.content), {
+      ALLOWED_TAGS: [
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
+        'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
+        'a', 'img', 'video', 'audio', 'source', 'iframe',
+        'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
+        'div', 'figure', 'figcaption', 'sub', 'sup', 'span',
+      ],
+      ALLOWED_ATTR: [
+        'href', 'target', 'rel', 'src', 'alt', 'width', 'height',
+        'controls', 'autoplay', 'loop', 'muted', 'preload', 'type',
+        'frameborder', 'allowfullscreen',
+      ],
+    }),
+  }}
+/>
       </article>
     </PageTransition>
   );
