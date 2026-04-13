@@ -10,10 +10,18 @@ import './BlogsPage.css';
 // there is no whitespace, preventing the browser from breaking mid-word.
 function cleanQuillHtml(html = '') {
   return html
-    .replace(/<\/(span|strong|em|b|i)>\s*<(span|strong|em|b|i)\b/g, '</$1> <$2')
+    // Remove zero-width characters that can cause weird rendering
     .replace(/[\u200B\u2060\uFEFF]/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+
+    // Remove all span tags but keep their text/content
+    .replace(/<span\b[^>]*>/gi, '')
+    .replace(/<\/span>/gi, '')
+
+    // Add a normal space between adjacent inline tags when needed
+    .replace(/<\/strong>\s*<strong/g, '</strong> <strong')
+    .replace(/<\/em>\s*<em/g, '</em> <em')
+    .replace(/<\/b>\s*<b/g, '</b> <b')
+    .replace(/<\/i>\s*<i/g, '</i> <i');
 }
 
 function BlogDetailPage() {
@@ -83,7 +91,7 @@ function BlogDetailPage() {
         'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
         'a', 'img', 'video', 'audio', 'source', 'iframe',
         'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
-        'div', 'figure', 'figcaption', 'sub', 'sup', 'span',
+        'div', 'figure', 'figcaption', 'sub', 'sup'
       ],
       ALLOWED_ATTR: [
         'href', 'target', 'rel', 'src', 'alt', 'width', 'height',
