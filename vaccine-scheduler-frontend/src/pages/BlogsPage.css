@@ -161,25 +161,26 @@
   font-size: 1rem;
   line-height: 1.8;
   color: var(--color-text-main);
-  overflow-wrap: break-word;
-  word-break: normal;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
   white-space: normal;
+  hyphens: none;
 }
 
-.blog-detail__content span {
-  display: inline;
+.blog-detail__content * {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  white-space: normal;
+  hyphens: none;
 }
 
-.blog-detail__content *,
 .blog-detail__content span,
 .blog-detail__content a,
 .blog-detail__content strong,
 .blog-detail__content em,
 .blog-detail__content b,
 .blog-detail__content i {
-  word-break: normal !important;
-  overflow-wrap: break-word;
-  white-space: normal;
+  display: inline !important;
 }
 
 .blog-detail__content iframe,
@@ -196,6 +197,7 @@
 .blog-detail__content h3 {
   font-family: var(--font-heading);
   margin: 1.5em 0 0.5em;
+  line-height: 1.3;
 }
 
 .blog-detail__content p {
@@ -225,6 +227,7 @@
 
 .blog-detail__content a {
   color: var(--color-primary);
+  overflow-wrap: anywhere;
 }
 
 .blog-detail__content ul,
@@ -260,6 +263,9 @@
 /* ── Responsive ──────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
+  .blog-detail-page {
+  padding: var(--spacing-md) var(--spacing-sm);
+}
   .blogs-page {
     padding: var(--spacing-md) var(--spacing-sm);
   }
