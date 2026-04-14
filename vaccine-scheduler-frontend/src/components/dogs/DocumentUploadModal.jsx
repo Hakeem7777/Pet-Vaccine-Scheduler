@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { extractFromDocument, applyExtraction, extractFromDocumentNew, createDog, resolveVaccines } from '../../api/dogs';
+import { extractFromDocument, applyExtraction, extractFromDocumentNew, createDog, resolveVaccines, uploadDogDocument } from '../../api/dogs';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { formatDate, getToday } from '../../utils/dateUtils';
 import { SEX_CHOICES } from '../../utils/constants';
@@ -35,6 +35,7 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
   const [editableLifestyle, setEditableLifestyle] = useState({});
   const [vaccineResolutions, setVaccineResolutions] = useState([]);
   const [resolvedVaccineChoices, setResolvedVaccineChoices] = useState({});
+  const [uploadedFile, setUploadedFile] = useState(null);
   const fileInputRef = useRef(null);
 
   async function handleFileSelect(e) {
@@ -56,6 +57,7 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
 
     setState(UPLOAD_STATES.UPLOADING);
     setError(null);
+    setUploadedFile(file);
 
     try {
       let result;
@@ -247,6 +249,15 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
           } catch (vacErr) {
             // Dog was created, but vaccinations failed
             skippedReasons.push('Failed to add vaccinations: ' + (vacErr.response?.data?.error || vacErr.message));
+          }
+        }
+
+        // 4. Save the uploaded document for the new dog
+        if (uploadedFile) {
+          try {
+            await uploadDogDocument(newDog.id, uploadedFile);
+          } catch {
+            // Non-critical -- document storage may fail for free users
           }
         }
 
@@ -659,6 +670,7 @@ function DocumentUploadModal({ dogId, dog, onClose, onSuccess, mode = 'update' }
               setExtractedData(null);
               setSelectedFields({});
               setEditableLifestyle({});
+              setUploadedFile(null);
               setError(null);
             }}
           >

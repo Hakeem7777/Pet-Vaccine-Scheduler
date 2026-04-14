@@ -3194,6 +3194,194 @@ a:hover {
   border-top: none;
 }
 
+/* Dog Documents Section (Accordion) */
+.dog-documents-section {
+  background: #FBFBFB;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--spacing-lg);
+  overflow: hidden;
+}
+
+.dog-documents-accordion-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  user-select: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.dog-documents-accordion-toggle:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.dog-documents-accordion-toggle h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.dog-documents-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.accordion-chevron {
+  transition: transform 0.2s ease;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.accordion-chevron--open {
+  transform: rotate(180deg);
+}
+
+.dog-documents-body {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+}
+
+.dog-documents-accordion-toggle .doc-count {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.dog-documents-empty {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: var(--spacing-md) 0;
+}
+
+.dog-documents-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.dog-document-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border, #e5e7eb);
+  transition: box-shadow 0.15s ease;
+}
+
+.dog-document-item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.dog-document-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.doc-icon--pdf {
+  color: #E53E3E;
+}
+
+.doc-icon--image {
+  color: var(--color-primary);
+}
+
+.dog-document-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dog-document-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dog-document-meta {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.dog-document-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.dog-document-actions .btn-sm {
+  padding: 6px 8px;
+  min-width: unset;
+}
+
+.dog-document-actions a.btn {
+  text-decoration: none;
+}
+
+.dog-documents-limit-note {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+  margin-top: var(--spacing-sm);
+  font-style: italic;
+}
+
+/* Delete Document Modal */
+.doc-delete-modal p {
+  margin: 0 0 var(--spacing-sm);
+  line-height: 1.5;
+}
+
+.doc-delete-modal__note {
+  background: #FFF8E1;
+  border-left: 3px solid #FF9C3B;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: #7B5B00;
+  margin-bottom: var(--spacing-md) !important;
+}
+
+.doc-delete-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  background: #E53E3E;
+  color: white;
+  border: 1px solid #E53E3E;
+}
+
+.btn-danger:hover {
+  background: #C53030;
+  border-color: #C53030;
+}
+
 /* Vaccination Progress Card */
 .vaccination-progress-card {
   background: white;

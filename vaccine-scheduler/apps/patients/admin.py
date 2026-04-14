@@ -3,7 +3,7 @@ Admin configuration for patients app.
 """
 from django.contrib import admin
 
-from .models import Dog
+from .models import Dog, DogDocument
 
 
 @admin.register(Dog)
@@ -27,3 +27,13 @@ class DogAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(DogDocument)
+class DogDocumentAdmin(admin.ModelAdmin):
+    """Admin configuration for DogDocument model."""
+
+    list_display = ['original_filename', 'dog', 'content_type', 'file_size', 'uploaded_at']
+    list_filter = ['content_type', 'uploaded_at']
+    search_fields = ['original_filename', 'dog__name']
+    readonly_fields = ['uploaded_at']

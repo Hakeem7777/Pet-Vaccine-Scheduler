@@ -50,6 +50,29 @@ def validate_video_file(value):
         raise ValidationError(f'Video file size cannot exceed {max_mb}MB.')
 
 
+ALLOWED_DOCUMENT_TYPES = {
+    'application/pdf',
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+}
+MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def validate_document_file(value):
+    """Validate uploaded document (PDF or image) type and size."""
+    if not value:
+        return
+
+    content_type = getattr(value, 'content_type', None)
+    if content_type and content_type not in ALLOWED_DOCUMENT_TYPES:
+        raise ValidationError(
+            f'Unsupported document type: {content_type}. '
+            f'Allowed: {", ".join(sorted(ALLOWED_DOCUMENT_TYPES))}'
+        )
+
+    if value.size > MAX_DOCUMENT_SIZE:
+        raise ValidationError('Document file size cannot exceed 10MB.')
+
+
 def validate_media_file(value):
     """Validate uploaded media file (image, video, or PDF) type and size."""
     if not value:

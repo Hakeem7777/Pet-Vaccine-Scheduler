@@ -4,7 +4,7 @@ Serializers for patient (dog) management.
 from rest_framework import serializers
 
 from core.contraindications import VALID_CONDITIONS, MEDICATION_CATALOG
-from .models import Dog
+from .models import Dog, DogDocument
 
 
 class DogSerializer(serializers.ModelSerializer):
@@ -181,17 +181,56 @@ class DogCreateSerializer(serializers.ModelSerializer):
         return value
 
 
+class DogDocumentSerializer(serializers.ModelSerializer):
+    """Read serializer for dog documents. File URL is a presigned R2 URL."""
+    download_url = serializers.SerializerMethodField()
+    has_extraction_data = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = DogDocument
+        fields = [
+            'id', 'original_filename', 'file_size', 'content_type',
+            'download_url', 'uploaded_at', 'has_extraction_data',
+        ]
+        read_only_fields = fields
+
+    def get_download_url(self, obj):
+        if obj.file:
+            return obj.file.url
+        return None
+
+
+class DogDocumentUploadSerializer(serializers.Serializer):
+    """Write serializer for uploading a document."""
+    document = serializers.FileField()
+
+    def validate_document(self, value):
+        from apps.storage.validators import validate_document_file
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        try:
+            validate_document_file(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(e.message)
+        return value
+
+
 class DogDetailSerializer(DogSerializer):
     """
-    Detailed serializer for a single dog, including recent vaccinations.
+    Detailed serializer for a single dog, including recent vaccinations and documents.
     """
     recent_vaccinations = serializers.SerializerMethodField()
+    documents = serializers.SerializerMethodField()
 
     class Meta(DogSerializer.Meta):
-        fields = DogSerializer.Meta.fields + ['recent_vaccinations']
+        fields = DogSerializer.Meta.fields + ['recent_vaccinations', 'documents']
 
     def get_recent_vaccinations(self, obj: Dog) -> list:
         """Get the 5 most recent vaccination records."""
         from apps.vaccinations.serializers import VaccinationRecordSerializer
         records = obj.vaccination_records.select_related('vaccine').order_by('-date_administered')[:5]
         return VaccinationRecordSerializer(records, many=True).data
+
+    def get_documents(self, obj: Dog) -> list:
+        """Get all documents for this dog (max 10)."""
+        docs = obj.documents.all()[:10]
+        return DogDocumentSerializer(docs, many=True).data

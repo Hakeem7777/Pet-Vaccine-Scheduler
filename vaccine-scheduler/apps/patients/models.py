@@ -5,7 +5,7 @@ import datetime
 from django.conf import settings
 from django.db import models
 
-from apps.storage.validators import validate_image_file
+from apps.storage.validators import validate_image_file, validate_document_file
 
 
 class Dog(models.Model):
@@ -192,3 +192,56 @@ class Dog(models.Model):
             return 'adult'
         else:
             return 'senior'
+
+
+def dog_document_upload_path(instance, filename):
+    """Upload documents to dogs/<dog_id>/documents/."""
+    return f'dogs/{instance.dog.id}/documents/{filename}'
+
+
+class DogDocument(models.Model):
+    """A document (PDF or image) stored for a dog."""
+
+    dog = models.ForeignKey(
+        Dog,
+        on_delete=models.CASCADE,
+        related_name='documents',
+    )
+    file = models.FileField(
+        upload_to=dog_document_upload_path,
+        validators=[validate_document_file],
+    )
+    original_filename = models.CharField(max_length=255)
+    file_size = models.PositiveBigIntegerField()
+    content_type = models.CharField(max_length=100)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    # Tracks what the extraction from this document changed, so it can be reverted.
+    # Structure: {
+    #   "previous_fields": {"name": "old_name", "breed": "old_breed", ...},
+    #   "vaccination_record_ids": [1, 2, 3]
+    # }
+    extraction_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Tracks fields changed and vaccination records added by this document's extraction.",
+    )
+
+    class Meta:
+        db_table = 'dog_documents'
+        ordering = ['-uploaded_at']
+        verbose_name = 'Dog Document'
+        verbose_name_plural = 'Dog Documents'
+
+    def __str__(self):
+        return f'{self.original_filename} for {self.dog.name}'
+
+    @property
+    def has_extraction_data(self):
+        """Whether this document has associated extraction data that can be reverted."""
+        if not self.extraction_data:
+            return False
+        return bool(
+            self.extraction_data.get('previous_fields')
+            or self.extraction_data.get('vaccination_record_ids')
+        )

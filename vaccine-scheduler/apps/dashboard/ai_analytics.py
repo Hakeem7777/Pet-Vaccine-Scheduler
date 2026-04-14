@@ -17,7 +17,7 @@ from django.db.models.functions import TruncMonth, TruncWeek, TruncDay, TruncYea
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.tools import tool
 
-from apps.patients.models import Dog
+from apps.patients.models import Dog, DogDocument
 from apps.vaccinations.models import Vaccine, VaccinationRecord
 from apps.dashboard.models import (
     ContactSubmission, TokenUsage, ReminderPreference, ReminderLog,
@@ -52,6 +52,7 @@ AVAILABLE_MODELS = [
 MODEL_MAP = {
     'User': User,
     'Dog': Dog,
+    'DogDocument': DogDocument,
     'Vaccine': Vaccine,
     'VaccinationRecord': VaccinationRecord,
     'ContactSubmission': ContactSubmission,
@@ -82,7 +83,11 @@ ALLOWED_FIELDS = {
         'id', 'owner', 'owner_id', 'name', 'breed', 'sex', 'birth_date',
         'weight_kg', 'env_indoor_only', 'env_dog_parks', 'env_daycare_boarding',
         'env_travel_shows', 'env_tick_exposure', 'created_at', 'updated_at',
-        'vaccination_records',  # reverse relation
+        'vaccination_records', 'documents',  # reverse relations
+    },
+    'DogDocument': {
+        'id', 'dog', 'dog_id', 'original_filename', 'file_size',
+        'content_type', 'uploaded_at',
     },
     'Vaccine': {
         'id', 'vaccine_id', 'name', 'vaccine_type', 'min_start_age_weeks',
@@ -117,6 +122,7 @@ _RELATION_TARGET = {
     'dog': 'Dog', 'dogs': 'Dog',
     'vaccine': 'Vaccine',
     'vaccination_records': 'VaccinationRecord',
+    'documents': 'DogDocument',
     'token_usages': 'TokenUsage',
     'reminder_preference': 'ReminderPreference',
 }
@@ -363,7 +369,7 @@ def run_database_query(query_plan_json: str) -> str:
     """Run a Django ORM query. Input: JSON string.
 
     Keys: model (required), filters, trunc_annotations, annotations, post_filters, values, aggregate, order_by, limit, distinct.
-    Models: User, Dog, Vaccine, VaccinationRecord, ContactSubmission, TokenUsage, ReminderPreference, ReminderLog.
+    Models: User, Dog, DogDocument, Vaccine, VaccinationRecord, ContactSubmission, TokenUsage, ReminderPreference, ReminderLog.
     Funcs: Count, Sum, Avg, Min, Max, TruncMonth, TruncWeek, TruncDay, TruncYear.
 
     Order: filters → trunc_annotations → aggregate (returns dict) OR values+annotations (returns rows) → post_filters → order_by → limit.
@@ -398,7 +404,7 @@ def run_database_query(query_plan_json: str) -> str:
 
 @tool
 def get_model_fields(model_name: str) -> str:
-    """Get field names and types for a model. Models: User, Dog, Vaccine, VaccinationRecord, ContactSubmission, TokenUsage, ReminderPreference, ReminderLog."""
+    """Get field names and types for a model. Models: User, Dog, DogDocument, Vaccine, VaccinationRecord, ContactSubmission, TokenUsage, ReminderPreference, ReminderLog."""
     if model_name not in MODEL_MAP:
         return f"ERROR: Unknown model '{model_name}'. Choose from: {', '.join(MODEL_MAP)}"
 
@@ -428,7 +434,8 @@ CRITICAL: You MUST finish within 3-4 tool calls. After gathering enough data, ST
 
 ## Schema
 - User: email, username, first_name, last_name, clinic_name, phone, is_staff, is_active, date_joined | rev: dogs, token_usages
-- Dog: owner(FK→User,'dogs'), name, breed, sex, birth_date, weight_kg, env_indoor_only, env_dog_parks, env_daycare_boarding, env_travel_shows, env_tick_exposure | rev: vaccination_records
+- Dog: owner(FK→User,'dogs'), name, breed, sex, birth_date, weight_kg, env_indoor_only, env_dog_parks, env_daycare_boarding, env_travel_shows, env_tick_exposure | rev: vaccination_records, documents
+- DogDocument: dog(FK→Dog,'documents'), original_filename, file_size, content_type, uploaded_at
 - Vaccine: vaccine_id, name, vaccine_type(core/core_conditional/noncore), min_start_age_weeks, is_active | rev: vaccination_records
 - VaccinationRecord: dog(FK→Dog), vaccine(FK→Vaccine), date_administered, dose_number, notes, administered_by, created_at
 - ContactSubmission: name, email, subject, message, is_read, created_at
@@ -491,6 +498,14 @@ SIMPLE_PATTERNS = [
         'order_by': ['-count'], 'limit': 10,
     }, 'pie', 'Top Dog Breeds'),
     # Vaccine type distribution
+    (r'\bhow many documents?\b', {
+        'model': 'DogDocument', 'aggregate': {'total': {'func': 'Count', 'field': 'id'}}
+    }, 'number', 'Total Documents Uploaded'),
+    (r'\bdocument.*(type|format).*distribution\b', {
+        'model': 'DogDocument', 'values': ['content_type'],
+        'annotations': {'count': {'func': 'Count', 'field': 'id'}},
+        'order_by': ['-count'],
+    }, 'pie', 'Document Type Distribution'),
     (r'\b(distribution|breakdown).*(vaccine types?|types? of vaccines?)\b', {
         'model': 'Vaccine', 'values': ['vaccine_type'],
         'annotations': {'count': {'func': 'Count', 'field': 'id'}},

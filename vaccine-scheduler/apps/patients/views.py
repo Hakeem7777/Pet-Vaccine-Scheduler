@@ -1,12 +1,19 @@
 """
 Views for patient (dog) management.
 """
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Dog
-from .serializers import DogSerializer, DogCreateSerializer, DogDetailSerializer
+from apps.subscriptions.permissions import HasActiveSubscription
+from apps.vaccinations.models import VaccinationRecord
+from .models import Dog, DogDocument
+from .serializers import (
+    DogSerializer, DogCreateSerializer, DogDetailSerializer,
+    DogDocumentSerializer, DogDocumentUploadSerializer,
+)
 
 
 def get_visible_dogs_queryset(user):
@@ -98,3 +105,86 @@ class DogViewSet(viewsets.ModelViewSet):
             pass
         # No active subscription - free tier limit
         return 1
+
+
+class DogDocumentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing documents for a specific dog.
+
+    Endpoints:
+    - GET    /api/dogs/{dog_id}/documents/      - List documents
+    - POST   /api/dogs/{dog_id}/documents/      - Upload document
+    - GET    /api/dogs/{dog_id}/documents/{id}/  - Get document detail
+    - DELETE /api/dogs/{dog_id}/documents/{id}/  - Delete document
+    """
+    permission_classes = [IsAuthenticated, HasActiveSubscription]
+    parser_classes = [MultiPartParser, FormParser]
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
+    def get_dog(self):
+        dog_id = self.kwargs.get('dog_id')
+        return get_object_or_404(
+            Dog.objects.filter(owner=self.request.user),
+            pk=dog_id
+        )
+
+    def get_queryset(self):
+        dog = self.get_dog()
+        return DogDocument.objects.filter(dog=dog)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return DogDocumentUploadSerializer
+        return DogDocumentSerializer
+
+    def create(self, request, *args, **kwargs):
+        dog = self.get_dog()
+
+        # Enforce 10-document limit
+        current_count = DogDocument.objects.filter(dog=dog).count()
+        if current_count >= 10:
+            return Response(
+                {'error': 'Maximum of 10 documents per dog reached.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uploaded_file = serializer.validated_data['document']
+        doc = DogDocument.objects.create(
+            dog=dog,
+            file=uploaded_file,
+            original_filename=uploaded_file.name[:255],
+            file_size=uploaded_file.size,
+            content_type=getattr(uploaded_file, 'content_type', 'application/octet-stream'),
+        )
+
+        output_serializer = DogDocumentSerializer(doc)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        revert = request.query_params.get('revert_extraction', '').lower() == 'true'
+
+        if revert and instance.has_extraction_data:
+            dog = instance.dog
+            ext = instance.extraction_data
+
+            # Revert dog fields to their previous values
+            previous = ext.get('previous_fields', {})
+            if previous:
+                for field, old_value in previous.items():
+                    if hasattr(dog, field):
+                        setattr(dog, field, old_value)
+                dog.save()
+
+            # Delete vaccination records that were added from this document
+            vax_ids = ext.get('vaccination_record_ids', [])
+            if vax_ids:
+                VaccinationRecord.objects.filter(
+                    id__in=vax_ids, dog=dog
+                ).delete()
+
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

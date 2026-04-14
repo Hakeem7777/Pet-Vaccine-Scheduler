@@ -23,7 +23,7 @@ from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
-from apps.patients.models import Dog
+from apps.patients.models import Dog, DogDocument
 from apps.patients.views import get_visible_dogs_queryset
 from apps.subscriptions.models import PromoCode, PromoCodeRedemption
 from apps.vaccinations.models import VaccinationRecord
@@ -132,6 +132,11 @@ class AdminStatsView(APIView):
             total_calls=Count('id'),
         )
 
+        doc_totals = DogDocument.objects.aggregate(
+            total_count=Count('id'),
+            total_size=Sum('file_size'),
+        )
+
         return Response({
             'total_users': User.objects.count(),
             'total_dogs': Dog.objects.count(),
@@ -140,6 +145,8 @@ class AdminStatsView(APIView):
             'total_ai_tokens': token_totals['total_tokens'] or 0,
             'total_ai_calls': token_totals['total_calls'] or 0,
             'total_referrals': User.objects.filter(referred_by__isnull=False).count(),
+            'total_documents': doc_totals['total_count'] or 0,
+            'total_document_storage_bytes': doc_totals['total_size'] or 0,
             'recent_registrations': AdminUserSerializer(recent_users, many=True).data,
         })
 
@@ -547,6 +554,23 @@ class AdminGraphDataView(APIView):
                 {'classification': k, 'count': v}
                 for k, v in age_counts.items()
             ]
+
+        # 6. Document uploads over time (time-filtered, adaptive)
+        if chart is None or chart == 'documents_over_time':
+            docs_qs = DogDocument.objects.all()
+            if date_from:
+                docs_qs = docs_qs.filter(uploaded_at__gte=date_from)
+            if date_to:
+                docs_qs = docs_qs.filter(uploaded_at__lt=date_to)
+            trunc_fn, docs_granularity = _resolve_granularity(request, docs_qs, 'uploaded_at')
+            result['documents_over_time'] = list(
+                docs_qs
+                .annotate(date=trunc_fn('uploaded_at'))
+                .values('date')
+                .annotate(count=Count('id'))
+                .order_by('date')
+            )
+            result['documents_granularity'] = docs_granularity
 
         return Response(result)
 

@@ -3,6 +3,7 @@ Views for AI-powered analysis endpoints.
 """
 import logging
 import datetime
+from decimal import Decimal
 from typing import Optional, Dict
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -11,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.patients.models import Dog
+from apps.patients.models import Dog, DogDocument
 from apps.vaccinations.models import Vaccine, VaccinationRecord
 from apps.vaccinations.services import scheduler_service
 from .serializers import (
@@ -762,6 +763,23 @@ class DocumentExtractView(APIView):
             # Validate extracted data against current dog info
             warnings = self._validate_extraction(extraction_result, dog)
 
+            # Save document to R2 if user has active subscription and under limit
+            document_saved = False
+            try:
+                has_active_sub = getattr(request.user, 'subscription', None) and request.user.subscription.is_active
+                if has_active_sub and DogDocument.objects.filter(dog=dog).count() < 10:
+                    uploaded_file.seek(0)
+                    DogDocument.objects.create(
+                        dog=dog,
+                        file=uploaded_file,
+                        original_filename=uploaded_file.name[:255],
+                        file_size=uploaded_file.size,
+                        content_type=getattr(uploaded_file, 'content_type', 'application/octet-stream'),
+                    )
+                    document_saved = True
+            except Exception:
+                logger.warning("Failed to save document to R2 during extraction", exc_info=True)
+
             # Validate and serialize response
             response_serializer = DocumentExtractionResponseSerializer(
                 data=extraction_result
@@ -770,6 +788,7 @@ class DocumentExtractView(APIView):
             if response_serializer.is_valid():
                 response_data = response_serializer.data
                 response_data['warnings'] = warnings
+                response_data['document_saved'] = document_saved
                 response_data['current_dog'] = {
                     'name': dog.name,
                     'breed': dog.breed,
@@ -783,6 +802,7 @@ class DocumentExtractView(APIView):
                     'extraction': extraction_result,
                     'validation_errors': response_serializer.errors,
                     'warnings': warnings,
+                    'document_saved': document_saved,
                     'confidence': extraction_result.get('confidence', {
                         'overall': 'low',
                         'notes': 'Validation errors occurred'
@@ -1024,10 +1044,21 @@ class ApplyExtractionView(APIView):
         vaccinations_skipped = 0
         skipped_reasons = []
 
+        # Snapshot current field values before overwriting (for revert on doc delete)
+        previous_fields = {}
+
         # Update dog info
         dog_info = data.get('dog_info', {})
         for field, value in dog_info.items():
             if value is not None and hasattr(dog, field):
+                old_val = getattr(dog, field)
+                # Serialize for JSON storage
+                if hasattr(old_val, 'isoformat'):
+                    previous_fields[field] = old_val.isoformat()
+                elif isinstance(old_val, Decimal):
+                    previous_fields[field] = str(old_val)
+                else:
+                    previous_fields[field] = old_val
                 setattr(dog, field, value)
                 fields_updated.append(field)
 
@@ -1035,6 +1066,7 @@ class ApplyExtractionView(APIView):
         lifestyle = data.get('lifestyle', {})
         for field, value in lifestyle.items():
             if value is not None and hasattr(dog, field):
+                previous_fields[field] = getattr(dog, field)
                 setattr(dog, field, value)
                 fields_updated.append(field)
 
@@ -1042,6 +1074,7 @@ class ApplyExtractionView(APIView):
             dog.save()
 
         # Add vaccinations
+        added_vaccination_ids = []
         vaccinations = data.get('vaccinations', [])
         for vax in vaccinations:
             # If frontend resolved the vaccine_id, use it directly
@@ -1088,7 +1121,7 @@ class ApplyExtractionView(APIView):
                 continue
 
             # Create vaccination record
-            VaccinationRecord.objects.create(
+            record = VaccinationRecord.objects.create(
                 dog=dog,
                 vaccine=vaccine,
                 date_administered=date_administered,
@@ -1096,7 +1129,22 @@ class ApplyExtractionView(APIView):
                 notes=vax.get('notes') or '',
                 administered_by=vax.get('administered_by') or ''
             )
+            added_vaccination_ids.append(record.id)
             vaccinations_added += 1
+
+        # Stamp extraction metadata onto the most recent DogDocument for this dog
+        if previous_fields or added_vaccination_ids:
+            latest_doc = (
+                DogDocument.objects.filter(dog=dog)
+                .order_by('-uploaded_at')
+                .first()
+            )
+            if latest_doc:
+                latest_doc.extraction_data = {
+                    'previous_fields': previous_fields,
+                    'vaccination_record_ids': added_vaccination_ids,
+                }
+                latest_doc.save(update_fields=['extraction_data'])
 
         return Response({
             'dog_updated': len(fields_updated) > 0,

@@ -15,6 +15,7 @@ import {
   TokenUsageOverTimeChart,
   TokenUsageByUserChart,
   TokensByModelChart,
+  DocumentUploadsChart,
 } from '../components/admin/AdminCharts';
 import ChartCard from '../components/admin/ChartCard';
 import {
@@ -53,9 +54,11 @@ const AI_SUGGESTIONS = [
   'Show monthly vaccination trends for the last year',
   'What is the distribution of vaccine types?',
   'Which users have used the most AI tokens?',
+  'How many documents have been uploaded?',
+  'Show document type distribution',
 ];
 
-const GRAPH_CHARTS = ['user_registrations', 'vaccinations_over_time', 'vaccine_type_distribution', 'top_breeds', 'age_distribution'];
+const GRAPH_CHARTS = ['user_registrations', 'vaccinations_over_time', 'vaccine_type_distribution', 'top_breeds', 'age_distribution', 'documents_over_time'];
 const TOKEN_CHART_MAP = { token_over_time: 'over_time', token_per_user: 'per_user', per_model_over_time: 'per_model_over_time' };
 const PAGE_SIZE = 20;
 const MAX_IMAGE_SIZE = 50 * 1024 * 1024;  // 50 MB
@@ -203,6 +206,7 @@ function AdminDashboardPage() {
       vaccine_type_distribution: { data: graphResult.vaccine_type_distribution },
       top_breeds: { data: graphResult.top_breeds },
       age_distribution: { data: graphResult.age_distribution },
+      documents_over_time: { data: graphResult.documents_over_time, granularity: graphResult.documents_granularity },
       token_over_time: { data: tokenResult.over_time, granularity: tokenResult.token_granularity },
       token_per_user: { data: tokenResult.per_user },
       per_model_over_time: { data: tokenResult.per_model_over_time, granularity: tokenResult.token_granularity },
@@ -229,6 +233,7 @@ function AdminDashboardPage() {
         result = await adminApi.getAdminChartData(chartKey, apiParams);
         const granKey = chartKey === 'user_registrations' ? 'user_registrations_granularity'
           : chartKey === 'vaccinations_over_time' ? 'vaccinations_granularity'
+          : chartKey === 'documents_over_time' ? 'documents_granularity'
           : null;
         setChartData((prev) => ({
           ...prev,
@@ -691,6 +696,18 @@ function AdminDashboardPage() {
             <div className="admin-stat-card__number">{stats.total_ai_calls || 0}</div>
             <div className="admin-stat-card__label">AI Calls Made</div>
           </div>
+          <div className="admin-stat-card">
+            <div className="admin-stat-card__icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </div>
+            <div className="admin-stat-card__number">{stats.total_documents || 0}</div>
+            <div className="admin-stat-card__label">Documents Uploaded</div>
+          </div>
         </div>
 
         <h3 className="admin-section__title">Charts</h3>
@@ -713,6 +730,10 @@ function AdminDashboardPage() {
 
           <ChartCard chartKey="top_breeds" onFilterChange={handleChartFilterChange} loading={chartLoading.top_breeds}>
             <TopBreedsChart data={chartData.top_breeds?.data} />
+          </ChartCard>
+
+          <ChartCard chartKey="documents_over_time" showGranularity showNavigation onFilterChange={handleChartFilterChange} loading={chartLoading.documents_over_time}>
+            <DocumentUploadsChart data={chartData.documents_over_time?.data} granularity={chartData.documents_over_time?.granularity} />
           </ChartCard>
         </div>
 

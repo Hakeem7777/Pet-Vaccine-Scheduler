@@ -1,4 +1,5 @@
 import {
+  AreaChart, Area,
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, ComposedChart,
@@ -324,6 +325,31 @@ export function TokenUsageByUserChart({ data }) {
           <Tooltip />
           <Bar dataKey="total_tokens" fill={COLORS.danger} name="Total Tokens" radius={[0, 6, 6, 0]} />
         </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function DocumentUploadsChart({ data, granularity = 'day' }) {
+  if (!data || data.length === 0) return <ChartEmptyState title="Document Uploads" />;
+  const formatted = data.map((d) => ({ ...d, label: formatChartDate(d.date, granularity) }));
+  return (
+    <div className="admin-chart-card">
+      <h4 className="admin-chart-card__title">Document Uploads ({GRANULARITY_LABEL[granularity]})</h4>
+      <ResponsiveContainer width="100%" height={280}>
+        <AreaChart data={formatted}>
+          <defs>
+            <linearGradient id="docGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={COLORS.accent} stopOpacity={0.3} />
+              <stop offset="95%" stopColor={COLORS.accent} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke={GRID_STYLE.stroke} strokeDasharray="4 4" />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+          <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={AXIS_TICK} />
+          <Tooltip />
+          <Area type="natural" dataKey="count" stroke={COLORS.accent} strokeWidth={3} fill="url(#docGradient)" name="Documents" activeDot={{ r: 5, fill: 'white', stroke: COLORS.accent, strokeWidth: 2 }} />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

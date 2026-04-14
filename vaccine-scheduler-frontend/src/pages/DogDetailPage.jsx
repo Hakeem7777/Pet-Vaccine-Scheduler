@@ -6,6 +6,7 @@ import { useChat } from '../context/ChatContext';
 import useGuestStore from '../store/useGuestStore';
 import DogForm from '../components/dogs/DogForm';
 import DocumentUploadModal from '../components/dogs/DocumentUploadModal';
+import DogDocumentsSection from '../components/dogs/DogDocumentsSection';
 import ScheduleView from '../components/schedule/ScheduleView';
 import GuestScheduleView from '../components/schedule/GuestScheduleView';
 import VaccinationList from '../components/vaccinations/VaccinationList';
@@ -370,6 +371,17 @@ function DogDetailPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Documents Section (paid users only, not guest) */}
+      {!isGuestDog && (
+        <DogDocumentsSection
+          dogId={parseInt(dogId, 10)}
+          documents={dog.documents || []}
+          onDocumentsChange={() => {
+            fetchDog();
+          }}
+        />
       )}
 
       <div className="dog-detail-content">

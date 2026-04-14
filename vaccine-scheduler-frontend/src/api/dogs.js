@@ -100,6 +100,25 @@ export async function resolveVaccines(vaccineNames) {
   return response.data.results;
 }
 
+export async function getDogDocuments(dogId) {
+  const response = await client.get(`/dogs/${dogId}/documents/`);
+  return response.data;
+}
+
+export async function uploadDogDocument(dogId, file) {
+  const formData = new FormData();
+  formData.append('document', file);
+  const response = await client.post(`/dogs/${dogId}/documents/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+export async function deleteDogDocument(dogId, documentId, revertExtraction = false) {
+  const params = revertExtraction ? '?revert_extraction=true' : '';
+  await client.delete(`/dogs/${dogId}/documents/${documentId}/${params}`);
+}
+
 export async function createDogFromExtraction(extractionData, additionalData) {
   // Merge extracted data with user-provided data
   const dogData = {

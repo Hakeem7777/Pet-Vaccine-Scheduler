@@ -15,6 +15,10 @@ function UpgradePrompt({ feature, currentLimit, onClose }) {
       title: 'AI Chatbot',
       description: 'Subscribe to Pro Care to access the AI-powered vaccine assistant.',
     },
+    documents: {
+      title: 'Document Storage',
+      description: 'Subscribe to Pro Care to upload and download documents for your dogs.',
+    },
     default: {
       title: 'Upgrade Required',
       description: 'Subscribe to Pro Care to unlock this feature.',
