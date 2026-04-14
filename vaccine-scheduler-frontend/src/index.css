@@ -3319,7 +3319,7 @@ a:hover {
 }
 
 .dog-document-meta {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted);
 }
 
@@ -3380,6 +3380,73 @@ a:hover {
 .btn-danger:hover {
   background: #C53030;
   border-color: #C53030;
+}
+
+/* Download All Button */
+.doc-download-all-btn {
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+  justify-content: center;
+}
+
+/* Document Viewer Modal -- widen the modal */
+.modal-content:has(.doc-viewer) {
+  max-width: 900px;
+  width: 95%;
+}
+
+.doc-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.doc-viewer__iframe {
+  width: 100%;
+  height: 70vh;
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.doc-viewer__image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+
+.doc-viewer--fallback {
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+}
+
+.doc-viewer--fallback p {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 600px) {
+  .dog-document-item {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .dog-document-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .doc-viewer__iframe {
+    height: 50vh;
+  }
+
+  .doc-delete-modal__actions {
+    flex-direction: column;
+  }
+
+  .doc-delete-modal__actions .btn {
+    width: 100%;
+  }
 }
 
 /* Vaccination Progress Card */

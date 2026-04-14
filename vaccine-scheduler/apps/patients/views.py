@@ -1,8 +1,13 @@
 """
 Views for patient (dog) management.
 """
+import io
+import zipfile
+
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
+from rest_framework.decorators import api_view, permission_classes as perm_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -188,3 +193,37 @@ class DogDocumentViewSet(viewsets.ModelViewSet):
 
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@perm_classes([IsAuthenticated, HasActiveSubscription])
+def download_all_documents(request, dog_id):
+    """Stream a zip of all documents for a dog."""
+    dog = get_object_or_404(Dog.objects.filter(owner=request.user), pk=dog_id)
+    docs = DogDocument.objects.filter(dog=dog)
+
+    if not docs.exists():
+        return Response({'error': 'No documents to download.'}, status=status.HTTP_404_NOT_FOUND)
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        seen_names = {}
+        for doc in docs:
+            try:
+                data = doc.file.read()
+                # Deduplicate filenames within the zip
+                name = doc.original_filename
+                if name in seen_names:
+                    seen_names[name] += 1
+                    base, _, ext = name.rpartition('.')
+                    name = f'{base}_{seen_names[name]}.{ext}' if ext else f'{name}_{seen_names[name]}'
+                else:
+                    seen_names[name] = 0
+                zf.writestr(name, data)
+            except Exception:
+                continue
+
+    buf.seek(0)
+    response = HttpResponse(buf.read(), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="documents-{dog.name}.zip"'
+    return response

@@ -1,19 +1,14 @@
 import { useState, useRef } from 'react';
-import { uploadDogDocument, deleteDogDocument } from '../../api/dogs';
+import { uploadDogDocument, deleteDogDocument, downloadAllDocuments } from '../../api/dogs';
 import { useAuth } from '../../context/AuthContext';
 import UpgradePrompt from '../subscription/UpgradePrompt';
 import Modal from '../common/Modal';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const MAX_DOCUMENTS = 10;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-
-function formatFileSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString(undefined, {
@@ -31,7 +26,6 @@ function getFileIcon(contentType) {
         <polyline points="14 2 14 8 20 8" />
         <line x1="16" y1="13" x2="8" y2="13" />
         <line x1="16" y1="17" x2="8" y2="17" />
-        <polyline points="10 9 9 9 8 9" />
       </svg>
     );
   }
@@ -48,15 +42,16 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
   const { isPaid } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isZipping, setIsZipping] = useState(false);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const [deleteModal, setDeleteModal] = useState(null); // { id, filename, hasExtractionData }
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [viewDoc, setViewDoc] = useState(null);
   const fileInputRef = useRef(null);
 
   async function handleFileSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     e.target.value = '';
 
     if (file.size > MAX_FILE_SIZE) {
@@ -75,8 +70,7 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
       setIsOpen(true);
       onDocumentsChange();
     } catch (err) {
-      const msg = err.response?.data?.error || 'Failed to upload document.';
-      setError(msg);
+      setError(err.response?.data?.error || 'Failed to upload document.');
     } finally {
       setIsUploading(false);
     }
@@ -92,7 +86,6 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
 
   async function handleDelete(revertExtraction) {
     if (!deleteModal) return;
-
     setDeletingId(deleteModal.id);
     setDeleteModal(null);
     setError(null);
@@ -106,10 +99,70 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
     }
   }
 
+  async function handleDownloadAll() {
+    if (documents.length === 0) return;
+    setIsZipping(true);
+    setError(null);
+    try {
+      const response = await downloadAllDocuments(dogId);
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `documents-${dogId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Failed to download documents.');
+    } finally {
+      setIsZipping(false);
+    }
+  }
+
+  function renderViewer() {
+    if (!viewDoc) return null;
+    const { content_type, download_url, original_filename } = viewDoc;
+
+    if (content_type === 'application/pdf') {
+      return (
+        <div className="doc-viewer">
+          <iframe
+            src={download_url}
+            title={original_filename}
+            className="doc-viewer__iframe"
+          />
+        </div>
+      );
+    }
+
+    if (IMAGE_TYPES.has(content_type)) {
+      return (
+        <div className="doc-viewer">
+          <img
+            src={download_url}
+            alt={original_filename}
+            className="doc-viewer__image"
+          />
+        </div>
+      );
+    }
+
+    // Unsupported type fallback
+    return (
+      <div className="doc-viewer doc-viewer--fallback">
+        <p>Preview is not available for this file type.</p>
+        <a href={download_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+          Download File
+        </a>
+      </div>
+    );
+  }
+
   const count = documents.length;
   const isFull = count >= MAX_DOCUMENTS;
 
-  // If user is not paid, show a collapsed accordion with upgrade prompt inside
   if (!isPaid) {
     return (
       <div className="dog-documents-section">
@@ -134,27 +187,6 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
       <div className="dog-documents-accordion-toggle" onClick={() => setIsOpen(!isOpen)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsOpen(!isOpen); }}>
         <h3>Documents <span className="doc-count">({count}/{MAX_DOCUMENTS})</span></h3>
         <div className="dog-documents-header-actions">
-          {/* <button
-            className="btn btn-outline btn-pill btn-sm"
-            onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-            disabled={isFull || isUploading}
-            title={isFull ? 'Maximum documents reached' : 'Upload a document'}
-          >
-            {isUploading ? (
-              <>
-                <LoadingSpinner size="small" /> Uploading...
-              </>
-            ) : (
-              <>
-                Upload
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '5px' }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-              </>
-            )}
-          </button> */}
           <svg className={`accordion-chevron ${isOpen ? 'accordion-chevron--open' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -174,6 +206,28 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
         <div className="dog-documents-body">
           {error && <div className="error-message" style={{ marginBottom: 'var(--spacing-sm)' }}>{error}</div>}
 
+          {/* Download All button */}
+          {count > 0 && (
+            <button
+              className="btn btn-outline btn-pill doc-download-all-btn"
+              onClick={handleDownloadAll}
+              disabled={isZipping}
+            >
+              {isZipping ? (
+                <><LoadingSpinner size="small" /> Generating zip...</>
+              ) : (
+                <>
+                  Download All (.zip)
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </>
+              )}
+            </button>
+          )}
+
           {count === 0 ? (
             <p className="dog-documents-empty">No documents uploaded yet. Upload vaccination records, health certificates, or other documents.</p>
           ) : (
@@ -188,10 +242,22 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
                       {doc.original_filename}
                     </span>
                     <span className="dog-document-meta">
-                      {formatFileSize(doc.file_size)} &middot; {formatDate(doc.uploaded_at)}
+                      {formatDate(doc.uploaded_at)}
                     </span>
                   </div>
                   <div className="dog-document-actions">
+                    {/* View */}
+                    <button
+                      className="btn btn-outline btn-pill btn-sm"
+                      onClick={() => setViewDoc(doc)}
+                      title="View"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                    {/* Download */}
                     <a
                       href={doc.download_url}
                       target="_blank"
@@ -205,6 +271,7 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
                     </a>
+                    {/* Delete */}
                     <button
                       className="btn btn-outline-danger btn-pill btn-sm"
                       onClick={() => openDeleteModal(doc)}
@@ -231,6 +298,15 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
           )}
         </div>
       )}
+
+      {/* View Document Modal */}
+      <Modal
+        isOpen={!!viewDoc}
+        onClose={() => setViewDoc(null)}
+        title={viewDoc?.original_filename || 'View Document'}
+      >
+        {renderViewer()}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal

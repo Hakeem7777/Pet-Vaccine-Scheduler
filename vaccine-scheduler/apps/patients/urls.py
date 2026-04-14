@@ -4,7 +4,7 @@ URL configuration for patients app.
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import DogViewSet, DogDocumentViewSet
+from .views import DogViewSet, DogDocumentViewSet, download_all_documents
 
 app_name = 'patients'
 
@@ -24,5 +24,10 @@ urlpatterns = [
         'dogs/<int:dog_id>/documents/<int:pk>/',
         DogDocumentViewSet.as_view({'get': 'retrieve', 'delete': 'destroy'}),
         name='dog-documents-detail',
+    ),
+    path(
+        'dogs/<int:dog_id>/documents/download-all/',
+        download_all_documents,
+        name='dog-documents-download-all',
     ),
 ]

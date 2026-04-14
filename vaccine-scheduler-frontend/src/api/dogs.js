@@ -114,6 +114,13 @@ export async function uploadDogDocument(dogId, file) {
   return response.data;
 }
 
+export async function downloadAllDocuments(dogId) {
+  const response = await client.get(`/dogs/${dogId}/documents/download-all/`, {
+    responseType: 'blob',
+  });
+  return response;
+}
+
 export async function deleteDogDocument(dogId, documentId, revertExtraction = false) {
   const params = revertExtraction ? '?revert_extraction=true' : '';
   await client.delete(`/dogs/${dogId}/documents/${documentId}/${params}`);
