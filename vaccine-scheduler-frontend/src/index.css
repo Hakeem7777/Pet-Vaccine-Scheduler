@@ -3242,7 +3242,23 @@ a:hover {
   transform: rotate(180deg);
 }
 
-.dog-documents-body {
+.dog-documents-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.dog-documents-collapse--open {
+  grid-template-rows: 1fr;
+}
+
+.dog-documents-collapse > .dog-documents-body {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0;
+}
+
+.dog-documents-collapse--open > .dog-documents-body {
   padding: 0 var(--spacing-lg) var(--spacing-lg);
 }
 

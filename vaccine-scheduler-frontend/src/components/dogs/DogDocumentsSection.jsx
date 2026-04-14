@@ -172,11 +172,11 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
-        {isOpen && (
+        <div className={`dog-documents-collapse ${isOpen ? 'dog-documents-collapse--open' : ''}`}>
           <div className="dog-documents-body">
             <UpgradePrompt feature="documents" />
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -202,7 +202,7 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
       />
 
       {/* Accordion Body */}
-      {isOpen && (
+      <div className={`dog-documents-collapse ${isOpen ? 'dog-documents-collapse--open' : ''}`}>
         <div className="dog-documents-body">
           {error && <div className="error-message" style={{ marginBottom: 'var(--spacing-sm)' }}>{error}</div>}
 
@@ -297,7 +297,7 @@ function DogDocumentsSection({ dogId, documents = [], onDocumentsChange }) {
             <p className="dog-documents-limit-note">Maximum of {MAX_DOCUMENTS} documents reached. Delete a document to upload a new one.</p>
           )}
         </div>
-      )}
+      </div>
 
       {/* View Document Modal */}
       <Modal
