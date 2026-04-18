@@ -27,8 +27,6 @@ function cleanQuillHtml(html = '') {
     .replace(/<\/b>\s*<b/gi, '</b> <b')
     .replace(/<\/i>\s*<i/gi, '</i> <i')
 
-    // Clean up repeated spaces between tags
-    .replace(/>\s+</g, '><');
 }
 
 function BlogDetailPage() {
