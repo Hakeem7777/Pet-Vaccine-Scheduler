@@ -13,15 +13,22 @@ function cleanQuillHtml(html = '') {
     // Remove zero-width characters that can cause weird rendering
     .replace(/[\u200B\u2060\uFEFF]/g, '')
 
-    // Remove all span tags but keep their text/content
+    // Remove empty Quill paragraphs that create huge vertical gaps
+    .replace(/<p><br><\/p>/gi, '')
+    .replace(/<p>\s*<\/p>/gi, '')
+
+    // Remove spans but keep inner content
     .replace(/<span\b[^>]*>/gi, '')
     .replace(/<\/span>/gi, '')
 
     // Add a normal space between adjacent inline tags when needed
-    .replace(/<\/strong>\s*<strong/g, '</strong> <strong')
-    .replace(/<\/em>\s*<em/g, '</em> <em')
-    .replace(/<\/b>\s*<b/g, '</b> <b')
-    .replace(/<\/i>\s*<i/g, '</i> <i');
+    .replace(/<\/strong>\s*<strong/gi, '</strong> <strong')
+    .replace(/<\/em>\s*<em/gi, '</em> <em')
+    .replace(/<\/b>\s*<b/gi, '</b> <b')
+    .replace(/<\/i>\s*<i/gi, '</i> <i')
+
+    // Clean up repeated spaces between tags
+    .replace(/>\s+</g, '><');
 }
 
 function BlogDetailPage() {
