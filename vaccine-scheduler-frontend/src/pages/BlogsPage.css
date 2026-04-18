@@ -208,7 +208,8 @@
 }
 
 .blog-detail__content p {
-  margin: 0 0 1em;
+  margin: 0 0 0.75em;
+  line-height: 1.7;
 }
 
 .blog-detail__content img {
@@ -243,7 +244,8 @@
 }
 
 .blog-detail__content li {
-  margin-bottom: 0.25em;
+  margin-bottom: 0.15em;
+  line-height: 1.7;
 }
 
 .blog-detail__content pre {
@@ -337,4 +339,24 @@
 .blog-detail__content li {
   overflow-wrap: break-word;
   word-break: normal !important;
+}
+/* Remove huge gaps caused by empty Quill paragraphs */
+.blog-detail__content p:empty {
+  display: none;
+}
+
+/* Hide Quill blank lines like <p><br></p> */
+.blog-detail__content p br:only-child {
+  display: none;
+}
+
+.blog-detail__content p:has(br:only-child) {
+  display: none;
+}
+
+/* Tighten heading spacing */
+.blog-detail__content h1,
+.blog-detail__content h2,
+.blog-detail__content h3 {
+  margin: 1.1em 0 0.45em;
 }
