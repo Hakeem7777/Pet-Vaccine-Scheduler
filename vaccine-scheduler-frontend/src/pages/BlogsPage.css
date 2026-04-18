@@ -187,8 +187,7 @@
 }
 
 .blog-detail__content a {
-  color: var(--color-primary);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .blog-detail__content iframe,
@@ -234,8 +233,7 @@
 }
 
 .blog-detail__content a {
-  color: var(--color-primary);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .blog-detail__content ul,
@@ -302,4 +300,41 @@
     flex-direction: column;
     gap: var(--spacing-xs);
   }
+}
+/* ===== QUILL HARD FIX (FINAL OVERRIDE) ===== */
+
+.blog-detail__content {
+  overflow-x: hidden;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
+}
+
+.blog-detail__content * {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  white-space: normal !important;
+}
+
+/* Prevent inline elements from breaking words */
+.blog-detail__content span,
+.blog-detail__content strong,
+.blog-detail__content em,
+.blog-detail__content b,
+.blog-detail__content i,
+.blog-detail__content a {
+  display: inline !important;
+}
+
+/* Fix Quill inline stacking issues */
+.blog-detail__content p span,
+.blog-detail__content li span {
+  display: inline !important;
+}
+
+/* Ensure paragraphs wrap properly */
+.blog-detail__content p,
+.blog-detail__content li {
+  overflow-wrap: break-word;
+  word-break: normal !important;
 }
