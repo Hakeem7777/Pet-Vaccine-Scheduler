@@ -10,10 +10,10 @@ import './BlogsPage.css';
 // there is no whitespace, preventing the browser from breaking mid-word.
 function cleanQuillHtml(html = '') {
   return html
-    // Remove zero-width characters that can cause weird rendering
+    // Remove zero-width characters
     .replace(/[\u200B\u2060\uFEFF]/g, '')
 
-    // Remove empty Quill paragraphs that create huge vertical gaps
+    // Remove empty Quill paragraphs
     .replace(/<p><br><\/p>/gi, '')
     .replace(/<p>\s*<\/p>/gi, '')
 
@@ -21,12 +21,11 @@ function cleanQuillHtml(html = '') {
     .replace(/<span\b[^>]*>/gi, '')
     .replace(/<\/span>/gi, '')
 
-    // Add a normal space between adjacent inline tags when needed
-    .replace(/<\/strong>\s*<strong/gi, '</strong> <strong')
-    .replace(/<\/em>\s*<em/gi, '</em> <em')
-    .replace(/<\/b>\s*<b/gi, '</b> <b')
-    .replace(/<\/i>\s*<i/gi, '</i> <i')
-
+    // Prevent words from splitting across inline formatting tags
+    .replace(/([A-Za-z0-9])<\/strong>\s*<strong>([A-Za-z0-9])/gi, '$1&#8288;</strong><strong>&#8288;$2')
+    .replace(/([A-Za-z0-9])<\/em>\s*<em>([A-Za-z0-9])/gi, '$1&#8288;</em><em>&#8288;$2')
+    .replace(/([A-Za-z0-9])<\/b>\s*<b>([A-Za-z0-9])/gi, '$1&#8288;</b><b>&#8288;$2')
+    .replace(/([A-Za-z0-9])<\/i>\s*<i>([A-Za-z0-9])/gi, '$1&#8288;</i><i>&#8288;$2');
 }
 
 function BlogDetailPage() {
