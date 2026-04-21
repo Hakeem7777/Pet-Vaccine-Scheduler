@@ -186,10 +186,6 @@
   overflow-wrap: break-word;
 }
 
-.blog-detail__content a {
-  overflow-wrap: break-word;
-}
-
 .blog-detail__content iframe,
 .blog-detail__content video,
 .blog-detail__content audio,
@@ -231,10 +227,6 @@
   margin: var(--spacing-lg) 0;
   color: var(--color-text-muted);
   font-style: italic;
-}
-
-.blog-detail__content a {
-  overflow-wrap: break-word;
 }
 
 .blog-detail__content ul,
@@ -303,64 +295,77 @@
     gap: var(--spacing-xs);
   }
 }
-/* ===== QUILL HARD FIX (FINAL OVERRIDE) ===== */
+/* ── Clean Blog Detail Content Fix ───────────────────────────── */
+
+.blog-detail__article {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
 
 .blog-detail__content {
-  overflow-x: hidden;
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
-  white-space: normal !important;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--color-text-main);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
+  hyphens: none;
 }
 
 .blog-detail__content * {
-  word-break: normal !important;
-  overflow-wrap: normal !important;
-  white-space: normal !important;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  word-break: normal;
+  white-space: normal;
+  hyphens: none;
 }
 
-/* Prevent inline elements from breaking words */
-.blog-detail__content span,
 .blog-detail__content strong,
 .blog-detail__content em,
 .blog-detail__content b,
 .blog-detail__content i,
+.blog-detail__content span,
 .blog-detail__content a {
-  display: inline !important;
+  display: inline;
 }
 
-/* Fix Quill inline stacking issues */
-.blog-detail__content p span,
-.blog-detail__content li span {
-  display: inline !important;
-}
-
-/* Ensure paragraphs wrap properly */
 .blog-detail__content p,
-.blog-detail__content li {
-  overflow-wrap: break-word;
-  word-break: normal !important;
-}
-/* Remove huge gaps caused by empty Quill paragraphs */
-.blog-detail__content p:empty {
-  display: none;
-}
-
-/* Hide Quill blank lines like <p><br></p> */
-.blog-detail__content p br:only-child {
-  display: none;
-}
-
-.blog-detail__content p:has(br:only-child) {
-  display: none;
-}
-
-/* Tighten heading spacing */
+.blog-detail__content li,
+.blog-detail__content blockquote,
 .blog-detail__content h1,
 .blog-detail__content h2,
-.blog-detail__content h3 {
-  margin: 1.1em 0 0.45em;
+.blog-detail__content h3,
+.blog-detail__content h4,
+.blog-detail__content h5,
+.blog-detail__content h6 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
-/* Remove blank Quill paragraphs */
+
+.blog-detail__content a {
+  color: var(--color-primary);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.blog-detail__content iframe,
+.blog-detail__content video,
+.blog-detail__content audio,
+.blog-detail__content table,
+.blog-detail__content pre,
+.blog-detail__content img {
+  max-width: 100%;
+}
+
 .blog-detail__content p:empty {
   display: none;
 }
