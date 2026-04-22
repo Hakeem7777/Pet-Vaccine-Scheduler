@@ -111,7 +111,7 @@ function Header() {
           <Link to="/blogs" className="header-nav-link" onClick={closeMenu}>
             Blog
           </Link>
-          <Link to="/help" className="header-nav-link" onClick={closeMenu}>
+          <Link to="/help" className="header-nav-link" data-tour="help-link" onClick={closeMenu}>
             Help
           </Link>
           <Link to="/faq" className="header-nav-link" data-tour="faq-link" onClick={closeMenu}>

@@ -39,6 +39,15 @@ export function getDashboardTourSteps({ hasAiChat } = {}) {
   }
 
   steps.push({
+    selector: '[data-tour="help-link"]',
+    content: {
+      title: 'Help Videos',
+      description: 'Need a walkthrough? Visit our Help section for video tutorials that explain how to use every feature of the app.',
+    },
+    position: 'bottom',
+  });
+
+  steps.push({
     selector: '[data-tour="faq-link"]',
     content: {
       title: 'Learn More',

@@ -78,7 +78,7 @@
 
 /* ── Responsive ────────────────────────────────────────────── */
 
-@media (max-width: 1400px) {
+@media (max-width: 1024px) {
   .ad-banner--left,
   .ad-banner--right {
     display: none;
