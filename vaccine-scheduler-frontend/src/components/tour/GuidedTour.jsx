@@ -10,8 +10,8 @@ import { getDashboardTourSteps, getDogDetailTourSteps } from './TourSteps';
 import './GuidedTour.css';
 
 // Tour controller component - syncs our store with reactour
-function TourController() {
-  const { setIsOpen, setCurrentStep } = useTour();
+function TourController({ steps }) {
+  const { setIsOpen, setCurrentStep, setSteps } = useTour();
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const dogs = useDogStore((state) => state.dogs);
@@ -20,6 +20,15 @@ function TourController() {
     startTour,
     stopTour,
   } = useTourStore();
+
+  // TourProvider caches its `steps` prop in useState, so later prop changes
+  // (e.g. route change from dashboard to dog detail) don't propagate. Push
+  // updates through setSteps so reactour's internal state stays current.
+  useEffect(() => {
+    if (setSteps && steps) {
+      setSteps(steps);
+    }
+  }, [steps, setSteps]);
 
   // When our store says to start, open reactour
   // For dashboard, only open if user has at least one dog
@@ -203,7 +212,7 @@ function GuidedTour() {
       disableFocusLock={true}
       scrollSmooth
     >
-      <TourController />
+      <TourController steps={steps} />
     </TourProvider>
   );
 }

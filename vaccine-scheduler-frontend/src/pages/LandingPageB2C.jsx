@@ -195,7 +195,8 @@ export default function LandingPageB2C() {
         { q: "Is PetVaxCalendar free to use?", a: "Yes. PetVaxCalendar offers a free version to track schedules and receive reminders." },
         { q: "Does it replace my veterinarian?", a: "No. We help you stay organized but do not dispense medical advice." },
         { q: "How accurate is the schedule?", a: "It's based on widely accepted veterinary guidelines, but your vet may adjust it." },
-        { q: "Is my data secure?", a: "Yes. We use secure data storage practices and do not sell your information." }
+        { q: "Is my data secure?", a: "Yes. We use secure data storage practices and do not sell your information." },
+        { q: "Does PetVaxCalendar support animals other than dogs?", a: "Currently, PetVaxCalendar is designed specifically for dogs to ensure the most accurate and reliable vaccination tracking experience. However, we know many pet owners care for multiple types of animals, and expanding support to include cats and other pets is something we’re actively exploring for the near future. Stay tuned for updates as we continue to grow!" }
     ];
 
     return (

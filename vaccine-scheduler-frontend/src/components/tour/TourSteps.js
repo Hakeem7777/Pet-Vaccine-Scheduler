@@ -106,6 +106,21 @@ export function getDogDetailTourSteps({ isPro, canExportPdf, hasAiChat } = {}) {
       },
       position: 'top',
       bypassElem: true,
+      action: () => {
+        // Ensure the accordion is expanded so the Mark-as-Done button is visible.
+        // Needed when navigating BACK from the export step — the forward
+        // transition collapsed it via actionAfter below.
+        const scheduleItem = document.querySelector('[data-tour="schedule-item"]');
+        if (scheduleItem) {
+          const header = scheduleItem.querySelector('.schedule-accordion__header');
+          if (header && header.getAttribute('aria-expanded') !== 'true') {
+            header.click();
+            setTimeout(() => {
+              window.dispatchEvent(new Event('resize'));
+            }, 350);
+          }
+        }
+      },
       actionAfter: () => {
         // Collapse the accordion back when leaving this step
         const scheduleItem = document.querySelector('[data-tour="schedule-item"]');
@@ -128,6 +143,21 @@ export function getDogDetailTourSteps({ isPro, canExportPdf, hasAiChat } = {}) {
         description: 'Export your vaccination schedule to Apple Calendar, Google Calendar, PDF, or share it via email with your vet or family members.',
       },
       position: 'left',
+      action: (elem) => {
+        // Snap the page so the export button is on-screen BEFORE reactour
+        // measures getBoundingClientRect. An instant scroll avoids racing
+        // reactour's own smoothScroll, which otherwise uses stale dimensions.
+        const target = elem || document.querySelector('[data-tour="export-btn"]');
+        if (target) {
+          target.scrollIntoView({ behavior: 'auto', block: 'center' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+        // Kick reactour to recompute mask position against the new scroll offset.
+        requestAnimationFrame(() => {
+          window.dispatchEvent(new Event('resize'));
+        });
+      },
     });
   }
 

@@ -282,6 +282,11 @@ Important Reminder:
 This schedule is a guideline based on standard protocols. Your veterinarian knows your dog's individual health history and may recommend adjustments. Always consult with your vet before making vaccination decisions.`,
   },
   {
+    id: 'supported-animals',
+    question: 'Does PetVaxCalendar support animals other than dogs?',
+    answer: `Currently, PetVaxCalendar is designed specifically for dogs to ensure the most accurate and reliable vaccination tracking experience. However, we know many pet owners care for multiple types of animals, and expanding support to include cats and other pets is something we’re actively exploring for the near future. Stay tuned for updates as we continue to grow!`,
+  },
+  {
     id: 'legal-requirements',
     question: 'Is the Rabies vaccine legally required?',
     answer: `In most jurisdictions, yes. Rabies vaccination is required by law because:
