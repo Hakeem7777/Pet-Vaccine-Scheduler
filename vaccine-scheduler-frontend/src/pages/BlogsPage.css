@@ -157,33 +157,50 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+/* ── Blog Detail Page Content ────────────────────────��───────────── */
+
 .blog-detail__content {
   font-size: 1rem;
   line-height: 1.8;
   color: var(--color-text-main);
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
+  word-break: normal;
+  overflow-wrap: normal;
   white-space: normal;
   hyphens: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .blog-detail__content * {
-  word-break: normal !important;
+  word-break: normal;
+  overflow-wrap: normal;
   white-space: normal;
   hyphens: none;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .blog-detail__content strong,
 .blog-detail__content em,
 .blog-detail__content b,
-.blog-detail__content i {
-  display: inline !important;
+.blog-detail__content i,
+.blog-detail__content span {
+  display: inline;
 }
 
 .blog-detail__content p,
 .blog-detail__content li,
 .blog-detail__content blockquote {
-  overflow-wrap: break-word;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.blog-detail__content a {
+  color: var(--color-primary);
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .blog-detail__content iframe,
@@ -197,10 +214,15 @@
 
 .blog-detail__content h1,
 .blog-detail__content h2,
-.blog-detail__content h3 {
+.blog-detail__content h3,
+.blog-detail__content h4,
+.blog-detail__content h5,
+.blog-detail__content h6 {
   font-family: var(--font-heading);
-  margin: 1.1em 0 0.45em;
+  word-break: normal;
+  overflow-wrap: normal;
   line-height: 1.3;
+  margin: 1.1em 0 0.45em;
 }
 
 .blog-detail__content p {
@@ -249,127 +271,8 @@
   font-size: 0.875rem;
 }
 
-.blog-detail__error {
-  text-align: center;
-  padding: var(--spacing-xxl);
-}
-
-.blog-detail__error p {
-  color: var(--color-text-muted);
-  margin-bottom: var(--spacing-lg);
-  font-size: 1.1rem;
-}
-
-/* ── Responsive ──────────────────────────────────────────────── */
-
-@media (max-width: 768px) {
-  .blog-detail-page {
-  padding: var(--spacing-md) var(--spacing-sm);
-}
-  .blogs-page {
-    padding: var(--spacing-md) var(--spacing-sm);
-  }
-
-  .blogs-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .blogs-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .blogs-header {
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .blog-card__image {
-    height: 160px;
-  }
-
-  .blog-detail__title {
-    font-size: 1.5rem;
-  }
-
-  .blog-detail__meta {
-    flex-direction: column;
-    gap: var(--spacing-xs);
-  }
-}
-/* ── Clean Blog Detail Content Fix ───────────────────────────── */
-
 .blog-detail__article {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-}
-
-.blog-detail__content {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: var(--color-text-main);
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  word-break: normal;
-  overflow-wrap: break-word;
-  white-space: normal;
-  hyphens: none;
-}
-
-.blog-detail__content * {
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  word-break: normal;
-  white-space: normal;
-  hyphens: none;
-}
-
-.blog-detail__content strong,
-.blog-detail__content em,
-.blog-detail__content b,
-.blog-detail__content i,
-.blog-detail__content span,
-.blog-detail__content a {
-  display: inline;
-}
-
-.blog-detail__content p,
-.blog-detail__content li,
-.blog-detail__content blockquote,
-.blog-detail__content h1,
-.blog-detail__content h2,
-.blog-detail__content h3,
-.blog-detail__content h4,
-.blog-detail__content h5,
-.blog-detail__content h6 {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  word-break: normal;
-  overflow-wrap: break-word;
-  white-space: normal;
-}
-
-.blog-detail__content a {
-  color: var(--color-primary);
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.blog-detail__content iframe,
-.blog-detail__content video,
-.blog-detail__content audio,
-.blog-detail__content table,
-.blog-detail__content pre,
-.blog-detail__content img {
-  max-width: 100%;
-}
-
-.blog-detail__content p:empty {
-  display: none;
-}
-
-.blog-detail__content p br:only-child {
-  display: none;
 }
