@@ -1,0 +1,9 @@
+.blog-detail__content {
+    word-break: normal;
+    overflow-wrap: normal;
+}
+
+.blog-detail__content a {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
