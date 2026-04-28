@@ -6,17 +6,11 @@ import PageTransition from '../components/common/PageTransition';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import './BlogsPage.css';
 
-// Remove Quill artifacts and zero-width characters
 function cleanQuillHtml(html = '') {
   return html
-    // Remove zero-width characters
     .replace(/[\u200B\u2060\uFEFF]/g, '')
-
-    // Remove empty Quill paragraphs
     .replace(/<p><br><\/p>/gi, '')
     .replace(/<p>\s*<\/p>/gi, '')
-
-    // Remove spans but keep inner content
     .replace(/<span\b[^>]*>/gi, '')
     .replace(/<\/span>/gi, '');
 }
@@ -80,24 +74,26 @@ function BlogDetailPage() {
           })}</span>
         </div>
         <div
-  className="blog-detail__content"
-  dangerouslySetInnerHTML={{
-    __html: DOMPurify.sanitize(cleanQuillHtml(post.content), {
-      ALLOWED_TAGS: [
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
-        'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
-        'a', 'img', 'video', 'audio', 'source', 'iframe',
-        'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
-        'div', 'figure', 'figcaption', 'sub', 'sup'
-      ],
-      ALLOWED_ATTR: [
-        'href', 'target', 'rel', 'src', 'alt', 'width', 'height',
-        'controls', 'autoplay', 'loop', 'muted', 'preload', 'type',
-        'frameborder', 'allowfullscreen',
-      ],
-    }),
-  }}
-/>
+          className="blog-detail__content"
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(cleanQuillHtml(post.content), {
+              ALLOWED_TAGS: [
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr',
+                'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
+                'a', 'img', 'video', 'audio', 'source', 'iframe',
+                'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
+                'div', 'figure', 'figcaption', 'sub', 'sup',
+                'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th', 'caption', 'col', 'colgroup'
+              ],
+              ALLOWED_ATTR: [
+                'href', 'target', 'rel', 'src', 'alt', 'width', 'height',
+                'controls', 'autoplay', 'loop', 'muted', 'preload', 'type',
+                'frameborder', 'allowfullscreen',
+                'colspan', 'rowspan', 'align', 'valign', 'scope', 'border', 'cellpadding', 'cellspacing'
+              ],
+            }),
+          }}
+        />
       </article>
     </PageTransition>
   );
