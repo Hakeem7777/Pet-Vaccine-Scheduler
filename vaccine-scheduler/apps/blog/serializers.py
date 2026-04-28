@@ -40,7 +40,7 @@ class BlogPostAdminSerializer(serializers.ModelSerializer):
             'author', 'author_email', 'author_display_name', 'status',
             'published_at', 'created_at', 'updated_at',
         ]
-        read_only_fields = ['slug', 'author', 'published_at', 'created_at', 'updated_at']
+        read_only_fields = ['author', 'published_at', 'created_at', 'updated_at']
 
     def get_featured_image_url(self, obj):
         return get_file_url(obj.featured_image, self.context.get('request'))
