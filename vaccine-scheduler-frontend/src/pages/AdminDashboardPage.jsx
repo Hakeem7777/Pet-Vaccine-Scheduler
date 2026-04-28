@@ -1580,18 +1580,19 @@ function AdminDashboardPage() {
     }
   }
 
-  function handleNewBlog() {
-    setBlogFormData({
-      title: '',
-      author_display_name: user?.username || '',
-      excerpt: '',
-      content: '',
-      status: 'draft',
-      featured_image: null,
-      existing_image_url: null,
-    });
-    setBlogFormOpen(true);
-  }
+ function handleNewBlog() {
+  setBlogFormData({
+    title: '',
+    slug: '',
+    author_display_name: user?.username || '',
+    excerpt: '',
+    content: '',
+    status: 'draft',
+    featured_image: null,
+    existing_image_url: null,
+  });
+  setBlogFormOpen(true);
+}
 
   async function handleBlogFormSubmit(e) {
     e.preventDefault();
