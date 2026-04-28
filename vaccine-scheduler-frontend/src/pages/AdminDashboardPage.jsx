@@ -1596,18 +1596,34 @@ function AdminDashboardPage() {
 }
 
   async function handleBlogFormSubmit(e) {
-    e.preventDefault();
-    setBlogFormLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('title', blogFormData.title);
-      formData.append('author_display_name', blogFormData.author_display_name);
-      formData.append('excerpt', blogFormData.excerpt);
-      formData.append('content', blogFormData.content);
-      formData.append('status', blogFormData.status);
-      if (blogFormData.featured_image instanceof File) {
-        formData.append('featured_image', blogFormData.featured_image);
-      }
+  e.preventDefault();
+  setBlogFormLoading(true);
+  try {
+    const formData = new FormData();
+    formData.append('title', blogFormData.title);
+    formData.append('slug', blogFormData.slug);
+    formData.append('author_display_name', blogFormData.author_display_name);
+    formData.append('excerpt', blogFormData.excerpt);
+    formData.append('content', blogFormData.content);
+    formData.append('status', blogFormData.status);
+    if (blogFormData.featured_image instanceof File) {
+      formData.append('featured_image', blogFormData.featured_image);
+    }
+
+    if (blogFormData.id) {
+      await adminApi.updateAdminBlog(blogFormData.id, formData);
+    } else {
+      await adminApi.createAdminBlog(formData);
+    }
+    setBlogFormOpen(false);
+    setBlogFormData(null);
+    fetchTabData('blogs', search, 1, filters.blogs || {}, ordering);
+  } catch (err) {
+    alert(err.response?.data?.detail || 'Failed to save blog post.');
+  } finally {
+    setBlogFormLoading(false);
+  }
+}
 
       if (blogFormData.id) {
         await adminApi.updateAdminBlog(blogFormData.id, formData);
@@ -1737,6 +1753,22 @@ function AdminDashboardPage() {
             <button className="btn btn-outline btn-sm" onClick={() => { setBlogFormOpen(false); setBlogFormData(null); }}>
               &larr; Back to List
             </button>
+            <div className="blog-form__field">
+  <label className="blog-form__label">
+    URL Slug 
+    <span className="blog-form__label-hint"> (auto-generated from title if empty)</span>
+  </label>
+  <input
+    className="blog-form__input"
+    type="text"
+    value={fd.slug}
+    onChange={(e) => setBlogFormData({ ...fd, slug: e.target.value.toLowerCase().trim().replace(/[^a-z0-9-]/g, '') })}
+    placeholder="auto-slug-from-title"
+  />
+  <small className="blog-form__hint">
+    SEO-friendly URL slug. Letters, numbers, hyphens only. Leave blank to auto-generate from title.
+  </small>
+</div>
             <h2 className="admin-tab-card__title" style={{ marginLeft: '1rem' }}>
               {fd.id ? 'Edit Post' : 'New Post'}
             </h2>
