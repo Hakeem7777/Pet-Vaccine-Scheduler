@@ -1561,24 +1561,25 @@ function AdminDashboardPage() {
     }
   }
 
-  async function handleEditBlog(id) {
-    try {
-      const post = await adminApi.getAdminBlog(id);
-      setBlogFormData({
-        id: post.id,
-        title: post.title,
-        author_display_name: post.author_display_name || '',
-        excerpt: post.excerpt || '',
-        content: post.content || '',
-        status: post.status,
-        featured_image: null,
-        existing_image_url: post.featured_image_url,
-      });
-      setBlogFormOpen(true);
-    } catch {
-      alert('Failed to load blog post.');
-    }
+ async function handleEditBlog(id) {
+  try {
+    const post = await adminApi.getAdminBlog(id);
+    setBlogFormData({
+      id: post.id,
+      title: post.title,
+      slug: post.slug || '',
+      author_display_name: post.author_display_name || '',
+      excerpt: post.excerpt || '',
+      content: post.content || '',
+      status: post.status,
+      featured_image: null,
+      existing_image_url: post.featured_image_url,
+    });
+    setBlogFormOpen(true);
+  } catch {
+    alert('Failed to load blog post.');
   }
+}
 
  function handleNewBlog() {
   setBlogFormData({
