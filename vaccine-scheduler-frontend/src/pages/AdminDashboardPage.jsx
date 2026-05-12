@@ -1625,21 +1625,6 @@ function AdminDashboardPage() {
   }
 }
 
-      if (blogFormData.id) {
-        await adminApi.updateAdminBlog(blogFormData.id, formData);
-      } else {
-        await adminApi.createAdminBlog(formData);
-      }
-      setBlogFormOpen(false);
-      setBlogFormData(null);
-      fetchTabData('blogs', search, 1, filters.blogs || {}, ordering);
-    } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to save blog post.');
-    } finally {
-      setBlogFormLoading(false);
-    }
-  }
-
   const quillModules = useMemo(() => ({
     toolbar: {
       container: [
