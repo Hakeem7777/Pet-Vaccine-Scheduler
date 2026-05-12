@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import * as blogsApi from '../api/blogs';
 import PageTransition from '../components/common/PageTransition';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { getMediaUrl } from '../utils/mediaUrls';
 import './BlogsPage.css';
 
 function cleanQuillHtml(html = '') {
@@ -62,7 +63,11 @@ function BlogDetailPage() {
       <Link to="/blogs" className="blog-detail__back">&larr; Back to Blog</Link>
 
       {post.featured_image_url && (
-        <img className="blog-detail__hero" src={post.featured_image_url} alt={post.title} />
+        <img
+          className="blog-detail__hero"
+          src={getMediaUrl(post.featured_image_url)}
+          alt={post.title}
+        />
       )}
 
       <article className="blog-detail__article">

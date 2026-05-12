@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import * as blogsApi from '../api/blogs';
 import PageTransition from '../components/common/PageTransition';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { getMediaUrl, handleImageError } from '../utils/mediaUrls';
 import './BlogsPage.css';
 
 function BlogsPage() {
@@ -51,7 +52,15 @@ function BlogsPage() {
                 <Link to={`/blogs/${post.slug}`} key={post.id} className="blog-card">
                   <div className="blog-card__image">
                     {post.featured_image_url ? (
-                      <img src={post.featured_image_url} alt={post.title} />
+                      <>
+                        <img
+                          src={getMediaUrl(post.featured_image_url)}
+                          alt={post.title}
+                          loading="lazy"
+                          onError={handleImageError}
+                        />
+                        <div className="blog-card__image-placeholder" hidden />
+                      </>
                     ) : (
                       <div className="blog-card__image-placeholder" />
                     )}
