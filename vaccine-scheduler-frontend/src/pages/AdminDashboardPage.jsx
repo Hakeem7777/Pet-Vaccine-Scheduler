@@ -1611,7 +1611,7 @@ function AdminDashboardPage() {
     }
 
     if (blogFormData.id) {
-      await adminApi.updateAdminBlog(blogFormData.id, formData);
+      async adminApi.updateAdminBlog(blogFormData.id, formData);
     } else {
       await adminApi.createAdminBlog(formData);
     }
