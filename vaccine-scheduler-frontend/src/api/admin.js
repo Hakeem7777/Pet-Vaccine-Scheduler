@@ -121,18 +121,12 @@ export async function getAdminBlog(id) {
 }
 
 export async function createAdminBlog(data) {
-  const isFormData = data instanceof FormData;
-  const response = await client.post('/admin-panel/blogs/', data, {
-    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
-  });
+  const response = await client.post('/admin-panel/blogs/', data);
   return response.data;
 }
 
 export async function updateAdminBlog(id, data) {
-  const isFormData = data instanceof FormData;
-  const response = await client.put(`/admin-panel/blogs/${id}/`, data, {
-    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
-  });
+  const response = await client.put(`/admin-panel/blogs/${id}/`, data);
   return response.data;
 }
 
@@ -143,9 +137,7 @@ export async function deleteAdminBlog(id) {
 export async function uploadBlogMedia(file) {
   const formData = new FormData();
   formData.append('file', file);
-  const response = await client.post('/admin-panel/blogs/upload-media/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const response = await client.post('/admin-panel/blogs/upload-media/', formData);
   return response.data;
 }
 
