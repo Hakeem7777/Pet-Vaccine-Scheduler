@@ -154,18 +154,12 @@ export async function getAdminAd(id) {
 }
 
 export async function createAdminAd(data) {
-  const isFormData = data instanceof FormData;
-  const response = await client.post('/admin-panel/advertisements/', data, {
-    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
-  });
+  const response = await client.post('/admin-panel/advertisements/', data);
   return response.data;
 }
 
 export async function updateAdminAd(id, data) {
-  const isFormData = data instanceof FormData;
-  const response = await client.put(`/admin-panel/advertisements/${id}/`, data, {
-    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
-  });
+  const response = await client.put(`/admin-panel/advertisements/${id}/`, data);
   return response.data;
 }
 
