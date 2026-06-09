@@ -159,7 +159,7 @@ export async function createAdminAd(data) {
 }
 
 export async function updateAdminAd(id, data) {
-  const response = await client.put(`/admin-panel/advertisements/${id}/`, data);
+  const response = await client.patch(`/admin-panel/advertisements/${id}/`, data);
   return response.data;
 }
 
