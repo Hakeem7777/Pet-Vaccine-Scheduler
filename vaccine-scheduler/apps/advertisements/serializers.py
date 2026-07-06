@@ -18,7 +18,7 @@ class AdvertisementAdminSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'click_count']
 
     def get_image_url(self, obj):
-        return get_file_url(obj.image, self.context.get('request'))
+        return get_file_url(obj.image, self.context.get('request'), prefer_public=True)
 
 
 class AdvertisementPublicSerializer(serializers.ModelSerializer):
@@ -29,4 +29,4 @@ class AdvertisementPublicSerializer(serializers.ModelSerializer):
         fields = ['id', 'image_url', 'link_url', 'position']
 
     def get_image_url(self, obj):
-        return get_file_url(obj.image, self.context.get('request'))
+        return get_file_url(obj.image, self.context.get('request'), prefer_public=True)
