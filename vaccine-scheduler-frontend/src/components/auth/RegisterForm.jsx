@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 function RegisterForm({ onSuccess }) {
   const { register } = useAuth();
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -15,16 +16,76 @@ function RegisterForm({ onSuccess }) {
     phone: '',
     referral_code: '',
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    let existingAttribution = {};
+
+    try {
+      existingAttribution = JSON.parse(
+        localStorage.getItem('pvc_marketing_attribution') || '{}'
+      );
+    } catch {
+      existingAttribution = {};
+    }
+
+    const attribution = {
+      utm_source:
+        params.get('utm_source') ||
+        existingAttribution.utm_source ||
+        '',
+      utm_medium:
+        params.get('utm_medium') ||
+        existingAttribution.utm_medium ||
+        '',
+      utm_campaign:
+        params.get('utm_campaign') ||
+        existingAttribution.utm_campaign ||
+        '',
+      utm_content:
+        params.get('utm_content') ||
+        existingAttribution.utm_content ||
+        '',
+      landing_page:
+        existingAttribution.landing_page ||
+        '',
+      captured_at:
+        existingAttribution.captured_at ||
+        new Date().toISOString(),
+    };
+
+    if (
+      attribution.utm_source ||
+      attribution.utm_medium ||
+      attribution.utm_campaign ||
+      attribution.utm_content
+    ) {
+      localStorage.setItem(
+        'pvc_marketing_attribution',
+        JSON.stringify(attribution)
+      );
+    }
+  }, []);
+
   function handleChange(e) {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: null,
+      }));
     }
   }
 
@@ -35,17 +96,58 @@ function RegisterForm({ onSuccess }) {
 
     try {
       await register(formData);
-      navigate('/verify-otp', { state: { email: formData.email } });
+
+      let attribution = {};
+
+      try {
+        attribution = JSON.parse(
+          localStorage.getItem('pvc_marketing_attribution') || '{}'
+        );
+      } catch {
+        attribution = {};
+      }
+
+      if (window.gtag) {
+        window.gtag('event', 'registration_submitted', {
+          method: 'email',
+          source: attribution.utm_source || 'direct',
+          medium: attribution.utm_medium || '',
+          campaign: attribution.utm_campaign || '',
+          content: attribution.utm_content || '',
+        });
+      }
+
+      localStorage.setItem(
+        'pvc_registration_attribution',
+        JSON.stringify({
+          ...attribution,
+          email: formData.email,
+          registration_submitted_at: new Date().toISOString(),
+        })
+      );
+
+      navigate('/verify-otp', {
+        state: {
+          email: formData.email,
+          attribution,
+        },
+      });
+
     } catch (err) {
       if (err.response?.data) {
         const data = err.response.data;
+
         if (data.detail) {
-          setErrors({ general: data.detail });
+          setErrors({
+            general: data.detail,
+          });
         } else {
           setErrors(data);
         }
       } else {
-        setErrors({ general: 'Registration failed. Please try again.' });
+        setErrors({
+          general: 'Registration failed. Please try again.',
+        });
       }
     } finally {
       setIsLoading(false);
@@ -53,21 +155,35 @@ function RegisterForm({ onSuccess }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="auth-form auth-form--register">
+    <form
+      onSubmit={handleSubmit}
+      className="auth-form auth-form--register"
+    >
       <div className="auth-form-logo" height="55px">
-        <img src="/logoBanner.png" alt="PetVaxCalendar" />
+        <img
+          src="/logoBanner.png"
+          alt="PetVaxCalendar"
+        />
       </div>
 
       <h2>Sign Up</h2>
+
       <p className="auth-form-subtitle">
         Join PetVaxCalendar to manage pet vaccinations easily and securely.
       </p>
 
-      {errors.general && <div className="error-message">{errors.general}</div>}
+      {errors.general && (
+        <div className="error-message">
+          {errors.general}
+        </div>
+      )}
 
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="username">Username*</label>
+          <label htmlFor="username">
+            Username*
+          </label>
+
           <input
             type="text"
             id="username"
@@ -77,11 +193,19 @@ function RegisterForm({ onSuccess }) {
             onChange={handleChange}
             required
           />
-          {errors.username && <span className="field-error">{errors.username}</span>}
+
+          {errors.username && (
+            <span className="field-error">
+              {errors.username}
+            </span>
+          )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="email">Email*</label>
+          <label htmlFor="email">
+            Email*
+          </label>
+
           <input
             type="email"
             id="email"
@@ -91,13 +215,21 @@ function RegisterForm({ onSuccess }) {
             onChange={handleChange}
             required
           />
-          {errors.email && <span className="field-error">{errors.email}</span>}
+
+          {errors.email && (
+            <span className="field-error">
+              {errors.email}
+            </span>
+          )}
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="first_name">First name</label>
+          <label htmlFor="first_name">
+            First name
+          </label>
+
           <input
             type="text"
             id="first_name"
@@ -109,7 +241,10 @@ function RegisterForm({ onSuccess }) {
         </div>
 
         <div className="form-group">
-          <label htmlFor="last_name">Last name</label>
+          <label htmlFor="last_name">
+            Last name
+          </label>
+
           <input
             type="text"
             id="last_name"
@@ -123,7 +258,10 @@ function RegisterForm({ onSuccess }) {
 
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="password">Password*</label>
+          <label htmlFor="password">
+            Password*
+          </label>
+
           <div className="input-password-wrapper">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -135,13 +273,21 @@ function RegisterForm({ onSuccess }) {
               required
               minLength={8}
             />
+
             <button
               type="button"
               className="input-password-toggle"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                width="18"
+                height="18"
+              >
                 {showPassword ? (
                   <>
                     <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
@@ -157,11 +303,19 @@ function RegisterForm({ onSuccess }) {
               </svg>
             </button>
           </div>
-          {errors.password && <span className="field-error">{errors.password}</span>}
+
+          {errors.password && (
+            <span className="field-error">
+              {errors.password}
+            </span>
+          )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="password_confirm">Confirm Password</label>
+          <label htmlFor="password_confirm">
+            Confirm Password
+          </label>
+
           <div className="input-password-wrapper">
             <input
               type={showConfirmPassword ? 'text' : 'password'}
@@ -172,13 +326,23 @@ function RegisterForm({ onSuccess }) {
               onChange={handleChange}
               required
             />
+
             <button
               type="button"
               className="input-password-toggle"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              onClick={() =>
+                setShowConfirmPassword(!showConfirmPassword)
+              }
               tabIndex={-1}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                width="18"
+                height="18"
+              >
                 {showConfirmPassword ? (
                   <>
                     <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
@@ -194,15 +358,26 @@ function RegisterForm({ onSuccess }) {
               </svg>
             </button>
           </div>
-          {errors.password_confirm && <span className="field-error">{errors.password_confirm}</span>}
+
+          {errors.password_confirm && (
+            <span className="field-error">
+              {errors.password_confirm}
+            </span>
+          )}
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="phone">Phone (optional)</label>
+          <label htmlFor="phone">
+            Phone (optional)
+          </label>
+
           <div className="input-phone-wrapper">
-            <span className="input-phone-prefix">US</span>
+            <span className="input-phone-prefix">
+              US
+            </span>
+
             <input
               type="tel"
               id="phone"
@@ -215,7 +390,10 @@ function RegisterForm({ onSuccess }) {
         </div>
 
         <div className="form-group">
-          <label htmlFor="referral_code">Referral Code (optional)</label>
+          <label htmlFor="referral_code">
+            Referral Code (optional)
+          </label>
+
           <input
             type="text"
             id="referral_code"
@@ -224,17 +402,27 @@ function RegisterForm({ onSuccess }) {
             value={formData.referral_code}
             onChange={handleChange}
             maxLength={8}
-            style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            style={{
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+            }}
           />
         </div>
       </div>
 
-      <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+      <button
+        type="submit"
+        className="btn btn-primary btn-full"
+        disabled={isLoading}
+      >
         {isLoading ? 'Signing up...' : 'Sign Up'}
       </button>
 
       <p className="auth-link">
-        Already have an account? <Link to="/login">Sign In</Link>
+        Already have an account?{' '}
+        <Link to="/login">
+          Sign In
+        </Link>
       </p>
     </form>
   );
