@@ -139,6 +139,9 @@
     line-height: 1.12;
     letter-spacing: -.025em;
 }
+.pinterest-final-cta h2 {
+    color: #ffffff;
+}
 
 .pinterest-problem > .pinterest-container > p,
 .pinterest-trust p {
