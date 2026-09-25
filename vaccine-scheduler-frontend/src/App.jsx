@@ -96,7 +96,14 @@ function App() {
                 path="/free-dog-vaccine-schedule"
                 element={<PinterestLandingPage />}
               />
-
+<Route
+  path="/pinterest-test"
+  element={
+    <div style={{ padding: '100px', fontSize: '40px' }}>
+      Pinterest Test Page Works
+    </div>
+  }
+/>
 
               {/* =====================================================
                   AUTH ROUTES
