@@ -104,26 +104,29 @@ export default function PinterestLandingPage() {
 
                     </div>
 
-                    <div className="pinterest-hero-image">
+                    <<div className="pinterest-hero-image">
+
     <Link
         to={signupUrl}
         onClick={() => trackCTA('hero_image')}
+        className="pinterest-hero-image-link"
     >
-        <div className="pinterest-product-preview">
-            <img
-                src="/Images/landing_page/Petvaxcalendar-Langing-page-Hero.png"
-                alt="PetVaxCalendar personalized dog vaccine schedule dashboard showing upcoming and future vaccines"
-                loading="eager"
-                fetchPriority="high"
-                width="1672"
-                height="941"
-            />
+        <img
+            src="/Images/landing_page/petvaxcalendar-langing-page-hero.png"
+            alt="PetVaxCalendar personalized dog vaccine schedule dashboard showing upcoming and future vaccines"
+            loading="eager"
+            fetchPriority="high"
+            width="1672"
+            height="941"
+        />
+    </Link>
 
-            <p className="pinterest-hero-caption">
-                Your personalized vaccination schedule is created automatically
-                after you add your dog.
-            </p>
-        </div>
+    <p className="pinterest-hero-caption">
+        Your personalized vaccination schedule is created automatically
+        after you add your dog.
+    </p>
+
+</div>
     </Link>
 </div>
 
