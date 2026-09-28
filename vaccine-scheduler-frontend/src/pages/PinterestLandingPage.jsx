@@ -105,33 +105,27 @@ export default function PinterestLandingPage() {
                     </div>
 
                     <div className="pinterest-hero-image">
-                        <Link
-                            to={signupUrl}
-                            onClick={() => trackCTA('hero_image')}
-                        >
-                            <picture>
-                                <source
-                                    type="image/webp"
-                                    srcSet="
-                                        /Images/landing_page/puppy-vaccine-reminder-480w.webp 480w,
-                                        /Images/landing_page/puppy-vaccine-reminder-768w.webp 768w,
-                                        /Images/landing_page/puppy-vaccine-reminder-1024w.webp 1024w,
-                                        /Images/landing_page/puppy-vaccine-reminder-1440w.webp 1440w
-                                    "
-                                    sizes="(max-width: 900px) 90vw, 45vw"
-                                />
+    <Link
+        to={signupUrl}
+        onClick={() => trackCTA('hero_image')}
+    >
+        <div className="pinterest-product-preview">
+            <img
+                src="/Images/landing_page/Petvaxcalendar-Langing-page-Hero.png"
+                alt="PetVaxCalendar personalized dog vaccine schedule dashboard showing upcoming and future vaccines"
+                loading="eager"
+                fetchPriority="high"
+                width="1672"
+                height="941"
+            />
 
-                                <img
-                                    src="/Images/landing_page/puppy-vaccine-reminder-1440w.jpg"
-                                    alt="PetVaxCalendar dog vaccine schedule and reminder"
-                                    loading="eager"
-                                    fetchPriority="high"
-                                    width="1440"
-                                    height="960"
-                                />
-                            </picture>
-                        </Link>
-                    </div>
+            <p className="pinterest-hero-caption">
+                Your personalized vaccination schedule is created automatically
+                after you add your dog.
+            </p>
+        </div>
+    </Link>
+</div>
 
                 </div>
             </section>
