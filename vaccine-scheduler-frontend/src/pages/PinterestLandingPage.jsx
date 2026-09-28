@@ -105,7 +105,6 @@ export default function PinterestLandingPage() {
                     </div>
 
                     <div className="pinterest-hero-image">
-
     <Link
         to={signupUrl}
         onClick={() => trackCTA('hero_image')}
@@ -125,9 +124,6 @@ export default function PinterestLandingPage() {
         Your personalized vaccination schedule is created automatically
         after you add your dog.
     </p>
-
-</div>
-    </Link>
 </div>
 
                 </div>
