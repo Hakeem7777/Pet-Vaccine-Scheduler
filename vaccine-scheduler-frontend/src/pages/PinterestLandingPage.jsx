@@ -78,13 +78,13 @@ export default function PinterestLandingPage() {
                         </h1>
 
                         <p className="pinterest-subheadline">
-                            Create a personalized dog vaccination schedule,
+                            Create a free personalized dog vaccination schedule,
                             track upcoming booster dates, and keep important
                             vaccine information organized in one place.
                         </p>
 
                         <div className="pinterest-benefits">
-                            <div>✓ Personalized vaccine schedule</div>
+                            <div>✓ Free personalized vaccine schedule</div>
                             <div>✓ Track upcoming booster dates</div>
                             <div>✓ Organize vaccination records</div>
                             <div>✓ Built specifically for dog owners</div>
