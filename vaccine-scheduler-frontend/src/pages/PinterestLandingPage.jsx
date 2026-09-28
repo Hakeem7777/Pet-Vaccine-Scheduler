@@ -104,7 +104,7 @@ export default function PinterestLandingPage() {
 
                     </div>
 
-                    <<div className="pinterest-hero-image">
+                    <div className="pinterest-hero-image">
 
     <Link
         to={signupUrl}
@@ -112,7 +112,7 @@ export default function PinterestLandingPage() {
         className="pinterest-hero-image-link"
     >
         <img
-            src="/Images/landing_page/petvaxcalendar-langing-page-hero.png"
+            src="/Images/landing_page/petvaxcalendar-hero-dashboard.png"
             alt="PetVaxCalendar personalized dog vaccine schedule dashboard showing upcoming and future vaccines"
             loading="eager"
             fetchPriority="high"
