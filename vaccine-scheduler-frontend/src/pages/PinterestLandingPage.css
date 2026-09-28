@@ -1,3 +1,34 @@
+.pinterest-product-preview {
+    width: 100%;
+}
+
+.pinterest-product-preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 22px;
+    box-shadow: 0 24px 65px rgba(21, 34, 56, 0.15);
+}
+
+.pinterest-hero-image a {
+    text-decoration: none;
+}
+
+.pinterest-hero-caption {
+    margin: 14px auto 0;
+    max-width: 520px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.55;
+    font-weight: 500;
+}
+@media (max-width: 850px) {
+    .pinterest-hero-caption {
+        font-size: 13px;
+        max-width: 90%;
+    }
+}
 .pinterest-landing {
     background: #ffffff;
     color: #152238;
