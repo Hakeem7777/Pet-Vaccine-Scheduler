@@ -1,34 +1,12 @@
-.pinterest-product-preview {
-    width: 100%;
-}
+/* =========================================================
+   PETVAXCALENDAR – PINTEREST CONVERSION LANDING PAGE
+   ========================================================= */
 
-.pinterest-product-preview img {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: 22px;
-    box-shadow: 0 24px 65px rgba(21, 34, 56, 0.15);
-}
 
-.pinterest-hero-image a {
-    text-decoration: none;
-}
+/* =========================================================
+   BASE
+   ========================================================= */
 
-.pinterest-hero-caption {
-    margin: 14px auto 0;
-    max-width: 520px;
-    text-align: center;
-    color: #64748b;
-    font-size: 14px;
-    line-height: 1.55;
-    font-weight: 500;
-}
-@media (max-width: 850px) {
-    .pinterest-hero-caption {
-        font-size: 13px;
-        max-width: 90%;
-    }
-}
 .pinterest-landing {
     background: #ffffff;
     color: #152238;
@@ -43,6 +21,11 @@
 .pinterest-narrow {
     max-width: 900px;
 }
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
 
 .pinterest-header {
     min-height: 76px;
@@ -67,16 +50,35 @@
     text-decoration: none;
 }
 
+.pinterest-login-link:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
 .pinterest-hero {
     padding: 72px 0 78px;
+
     background:
-        radial-gradient(circle at 10% 15%, rgba(55, 181, 120, .13), transparent 30%),
-        linear-gradient(135deg, #f4fff9 0%, #ffffff 55%, #f6fbff 100%);
+        radial-gradient(
+            circle at 10% 15%,
+            rgba(55, 181, 120, 0.13),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #f4fff9 0%,
+            #ffffff 55%,
+            #f6fbff 100%
+        );
 }
 
 .pinterest-hero-grid {
     display: grid;
-    grid-template-columns: 1.05fr .95fr;
+    grid-template-columns: 1.05fr 0.95fr;
     align-items: center;
     gap: 60px;
 }
@@ -88,7 +90,7 @@
     color: #168153;
     font-size: 13px;
     font-weight: 800;
-    letter-spacing: .08em;
+    letter-spacing: 0.08em;
 }
 
 .pinterest-hero h1 {
@@ -96,7 +98,7 @@
     max-width: 660px;
     font-size: clamp(42px, 6vw, 66px);
     line-height: 1.02;
-    letter-spacing: -.045em;
+    letter-spacing: -0.045em;
 }
 
 .pinterest-subheadline {
@@ -115,24 +117,46 @@
     font-weight: 650;
 }
 
+
+/* =========================================================
+   PRIMARY CTA BUTTON
+   ========================================================= */
+
 .pinterest-primary-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     padding: 17px 27px;
+
     border-radius: 12px;
+
     background: #168153;
     color: #ffffff;
+
     text-decoration: none;
+
     font-size: 17px;
     font-weight: 800;
-    box-shadow: 0 12px 30px rgba(22, 129, 83, .22);
-    transition: transform .2s ease, box-shadow .2s ease;
+
+    box-shadow: 0 12px 30px rgba(22, 129, 83, 0.22);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .pinterest-primary-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 16px 36px rgba(22, 129, 83, .29);
+
+    box-shadow:
+        0 16px 36px
+        rgba(22, 129, 83, 0.29);
+}
+
+.pinterest-primary-btn:focus-visible {
+    outline: 3px solid rgba(22, 129, 83, 0.25);
+    outline-offset: 4px;
 }
 
 .pinterest-no-card {
@@ -141,13 +165,63 @@
     font-size: 13px;
 }
 
+
+/* =========================================================
+   HERO PRODUCT SCREENSHOT
+   ========================================================= */
+
+.pinterest-hero-image {
+    width: 100%;
+}
+
+.pinterest-hero-image-link {
+    display: block;
+    text-decoration: none;
+}
+
 .pinterest-hero-image img {
+    display: block;
+
     width: 100%;
     height: auto;
-    display: block;
+
     border-radius: 22px;
-    box-shadow: 0 24px 65px rgba(21, 34, 56, .15);
+
+    box-shadow:
+        0 24px 65px
+        rgba(21, 34, 56, 0.15);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
 }
+
+.pinterest-hero-image-link:hover img {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 30px 75px
+        rgba(21, 34, 56, 0.19);
+}
+
+.pinterest-hero-caption {
+    margin: 14px auto 0;
+
+    max-width: 520px;
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 14px;
+    line-height: 1.55;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   STANDARD SECTIONS
+   ========================================================= */
 
 .pinterest-problem,
 .pinterest-how,
@@ -155,6 +229,11 @@
 .pinterest-trust {
     padding: 85px 0;
 }
+
+
+/* =========================================================
+   PROBLEM SECTION
+   ========================================================= */
 
 .pinterest-problem {
     text-align: center;
@@ -166,17 +245,16 @@
 .pinterest-trust h2,
 .pinterest-final-cta h2 {
     margin: 0;
+
     font-size: clamp(31px, 4vw, 46px);
     line-height: 1.12;
-    letter-spacing: -.025em;
-}
-.pinterest-final-cta h2 {
-    color: #ffffff;
+    letter-spacing: -0.025em;
 }
 
 .pinterest-problem > .pinterest-container > p,
 .pinterest-trust p {
     color: #627083;
+
     font-size: 17px;
     line-height: 1.7;
 }
@@ -184,17 +262,25 @@
 .pinterest-problem-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+
     gap: 22px;
+
     margin-top: 42px;
 }
 
 .pinterest-card {
     padding: 29px 25px;
+
     text-align: left;
+
     border: 1px solid #e8edf2;
     border-radius: 18px;
+
     background: #ffffff;
-    box-shadow: 0 12px 35px rgba(21, 34, 56, .05);
+
+    box-shadow:
+        0 12px 35px
+        rgba(21, 34, 56, 0.05);
 }
 
 .pinterest-icon {
@@ -209,9 +295,16 @@
 
 .pinterest-card p {
     margin: 0;
+
     color: #687689;
+
     line-height: 1.6;
 }
+
+
+/* =========================================================
+   HOW IT WORKS
+   ========================================================= */
 
 .pinterest-how {
     background: #f7faf9;
@@ -225,25 +318,33 @@
 .pinterest-steps {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+
     gap: 24px;
 }
 
 .pinterest-step {
     padding: 31px;
+
     border: 1px solid #e3ebe7;
     border-radius: 18px;
+
     background: #ffffff;
 }
 
 .pinterest-step > span {
     display: grid;
     place-items: center;
+
     width: 44px;
     height: 44px;
+
     margin-bottom: 18px;
+
     border-radius: 50%;
+
     background: #e0f6eb;
     color: #168153;
+
     font-weight: 900;
 }
 
@@ -253,7 +354,9 @@
 
 .pinterest-step p {
     margin: 0;
+
     color: #687689;
+
     line-height: 1.65;
 }
 
@@ -264,9 +367,16 @@
 
 .pinterest-center-cta p {
     margin-top: 11px;
+
     color: #738092;
+
     font-size: 13px;
 }
+
+
+/* =========================================================
+   FEATURES
+   ========================================================= */
 
 .pinterest-features {
     text-align: center;
@@ -275,64 +385,114 @@
 .pinterest-feature-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+
     gap: 18px;
+
     margin-top: 40px;
+
     text-align: left;
 }
 
 .pinterest-feature-list > div {
     padding: 25px;
+
     border-radius: 16px;
+
     background: #f8fafc;
 }
 
 .pinterest-feature-list strong {
     color: #168153;
+
     font-size: 17px;
 }
 
 .pinterest-feature-list p {
     margin: 8px 0 0;
+
     color: #687689;
+
     line-height: 1.6;
 }
 
+
+/* =========================================================
+   TRUST / DISCLAIMER
+   ========================================================= */
+
 .pinterest-trust {
     background: #f8fafc;
+
     text-align: center;
 }
 
 .pinterest-disclaimer {
     margin-top: 25px;
+
     font-size: 14px !important;
 }
 
+
+/* =========================================================
+   FINAL CTA
+   ========================================================= */
+
 .pinterest-final-cta {
     padding: 80px 20px;
+
     text-align: center;
-    color: white;
-    background: linear-gradient(135deg, #106e47, #168153);
+
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #106e47,
+            #168153
+        );
+}
+
+.pinterest-final-cta h2 {
+    color: #ffffff;
 }
 
 .pinterest-final-cta p {
     max-width: 650px;
+
     margin: 18px auto 28px;
+
+    color: #ffffff;
+
     font-size: 18px;
     line-height: 1.65;
-    opacity: .92;
+
+    opacity: 0.92;
 }
 
-.pinterest-final-cta > .pinterest-container > span {
+.pinterest-final-cta
+    > .pinterest-container
+    > span {
+
     display: block;
+
     margin-top: 13px;
+
+    color: #ffffff;
+
     font-size: 13px;
-    opacity: .85;
+
+    opacity: 0.85;
 }
 
 .pinterest-white-btn {
-    background: white;
+    background: #ffffff;
     color: #168153;
 }
+
+
+/* =========================================================
+   TABLET + MOBILE
+   ========================================================= */
 
 @media (max-width: 850px) {
 
@@ -381,15 +541,30 @@
     }
 
     .pinterest-hero-image {
-        max-width: 600px;
+        max-width: 650px;
         margin: 0 auto;
     }
+
+    .pinterest-hero-caption {
+        max-width: 90%;
+
+        font-size: 13px;
+    }
 }
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
 
 @media (max-width: 480px) {
 
     .pinterest-container {
         width: min(100% - 30px, 1120px);
+    }
+
+    .pinterest-hero {
+        padding-top: 38px;
     }
 
     .pinterest-hero h1 {
@@ -407,5 +582,20 @@
     .pinterest-card,
     .pinterest-step {
         padding: 23px;
+    }
+
+    .pinterest-hero-image img {
+        border-radius: 16px;
+    }
+
+    .pinterest-hero-caption {
+        margin-top: 12px;
+
+        font-size: 12.5px;
+        line-height: 1.5;
+    }
+
+    .pinterest-final-cta {
+        padding: 60px 15px;
     }
 }
