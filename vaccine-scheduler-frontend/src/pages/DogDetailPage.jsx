@@ -18,6 +18,7 @@ import { SEX_CHOICES } from '../utils/constants';
 import { MEDICAL_CONDITIONS, MEDICATION_CATALOG } from '../utils/medicalConstants';
 import { getDogImageUrl } from '../utils/breedImageUtils';
 import { formatDogAge } from '../utils/dateUtils';
+import { trackEvent } from '../utils/analytics';
 
 function DogDetailPage() {
   const { dogId } = useParams();
@@ -160,15 +161,28 @@ function DogDetailPage() {
     'your dog\'s next vaccine';
 
   function handleProUpgradeClick() {
-    if (window.gtag) {
-      window.gtag('event', 'pro_upgrade_click', {
-        source: 'dog_schedule',
-        feature: 'reminders',
-        dog_id: dogId,
-      });
-    }
+    trackEvent('pro_upgrade_click', {
+      source: 'dog_schedule',
+      feature: 'reminders',
+      dog_id: dogId,
+    });
 
     navigate('/pricing?feature=reminders&source=dog_schedule');
+  }
+
+  function handleUploadDocumentClick() {
+    if (!isPaid) {
+      trackEvent('pro_upgrade_click', {
+        source: 'upload_document',
+        feature: 'documents',
+        dog_id: dogId,
+      });
+
+      navigate('/pricing?feature=documents&source=upload_document');
+      return;
+    }
+
+    setShowUploadModal(true);
   }
 
   return (
@@ -199,7 +213,10 @@ function DogDetailPage() {
             </button>
           )}
           {!isGuestDog && (
-            <button className="btn btn-outline btn-pill" onClick={() => setShowUploadModal(true)}>
+            <button
+              className="btn btn-outline btn-pill"
+              onClick={handleUploadDocumentClick}
+            >
               Upload Document <img src="/Images/generic_icons/export-icon.svg" alt="" width="16" height="16" style={{marginLeft:"5px"}} />
             </button>
           )}
