@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../common/Modal';
-import { exportAllToICS, exportToGoogleCalendar, exportSingleToICS, generateGoogleCalendarUrl } from '../../utils/calendarExport';
+import {
+  exportAllToICS,
+  exportToGoogleCalendar,
+  exportSingleToICS,
+  generateGoogleCalendarUrl,
+} from '../../utils/calendarExport';
 import { sendScheduleEmail } from '../../api/email';
 import { downloadSchedulePdf } from '../../api/vaccines';
 import { useAuth } from '../../context/AuthContext';
@@ -26,16 +31,37 @@ const SINGLE_TABS = [
  *
  * @param {boolean} isOpen - Whether modal is open
  * @param {function} onClose - Close handler
- * @param {object} schedule - Full schedule with overdue/upcoming/future arrays (for all export)
+ * @param {object} schedule - Full schedule with overdue/upcoming/future arrays
  * @param {string} dogName - Dog's name
  * @param {object} dogInfo - Dog info for email
- * @param {object} singleItem - Optional: single vaccine item to export (excludes PDF tab)
+ * @param {object} singleItem - Optional single vaccine item to export
+ * @param {number|string} dogId - Dog ID
+ * @param {array} selectedNoncore - Selected non-core vaccines
  */
-function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem = null, dogId, selectedNoncore }) {
-  const { isPro, pdfExportsUsed, refreshUser } = useAuth();
+function ExportModal({
+  isOpen,
+  onClose,
+  schedule,
+  dogName,
+  dogInfo,
+  singleItem = null,
+  dogId,
+  selectedNoncore,
+}) {
+  const {
+    isPro,
+    pdfExportsUsed,
+    refreshUser,
+  } = useAuth();
+
   const navigate = useNavigate();
+
   const isSingleMode = singleItem !== null;
-  const TABS = isSingleMode ? SINGLE_TABS : ALL_TABS;
+
+  const TABS = isSingleMode
+    ? SINGLE_TABS
+    : ALL_TABS;
+
   const [activeTab, setActiveTab] = useState('apple');
   const [emails, setEmails] = useState(['']);
   const [emailError, setEmailError] = useState('');
@@ -43,40 +69,81 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pdfError, setPdfError] = useState(null);
 
+  /*
+   * Send free users to Pricing with the feature they
+   * were trying to use. PricingPage will use the
+   * feature parameter to display the appropriate
+   * contextual Pro Care banner.
+   */
+  function goToPricing(feature) {
+    onClose();
+
+    navigate(
+      `/pricing?feature=${encodeURIComponent(
+        feature
+      )}&source=export_modal`
+    );
+  }
+
+  /*
+   * APPLE / ICS EXPORT
+   */
   function handleExportICS() {
     if (!isPro) {
-      onClose();
-      navigate('/pricing');
+      goToPricing('calendar');
       return;
     }
+
     if (isSingleMode) {
-      exportSingleToICS(singleItem, dogName || 'Dog');
+      exportSingleToICS(
+        singleItem,
+        dogName || 'Dog'
+      );
     } else {
-      exportAllToICS(schedule, dogName || 'Dog');
+      exportAllToICS(
+        schedule,
+        dogName || 'Dog'
+      );
     }
   }
 
+  /*
+   * GOOGLE CALENDAR EXPORT
+   */
   function handleExportGoogle() {
     if (!isPro) {
-      onClose();
-      navigate('/pricing');
+      goToPricing('calendar');
       return;
     }
+
     if (isSingleMode) {
-      const url = generateGoogleCalendarUrl(singleItem, dogName || 'Dog');
+      const url = generateGoogleCalendarUrl(
+        singleItem,
+        dogName || 'Dog'
+      );
+
       window.open(url, '_blank');
     } else {
-      exportToGoogleCalendar(schedule, dogName || 'Dog');
+      exportToGoogleCalendar(
+        schedule,
+        dogName || 'Dog'
+      );
     }
   }
 
+  /*
+   * PDF EXPORT
+   */
   async function handleExportPDF() {
-    if (isSingleMode) return;
+    if (isSingleMode) {
+      return;
+    }
 
-    // Free users who already used their 1 free export go to pricing
+    // Free users get their allowed free PDF export.
+    // Once the free allowance has been used,
+    // send them to the contextual Pro Care page.
     if (!isPro && pdfExportsUsed >= 1) {
-      onClose();
-      navigate('/pricing');
+      goToPricing('pdf');
       return;
     }
 
@@ -84,297 +151,618 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
     setPdfExporting(true);
 
     try {
-      const response = await downloadSchedulePdf(dogId, selectedNoncore || []);
+      const response =
+        await downloadSchedulePdf(
+          dogId,
+          selectedNoncore || []
+        );
 
-      // Create blob URL and trigger download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      // Create blob URL and trigger download.
+      const blob = new Blob(
+        [response.data],
+        {
+          type: 'application/pdf',
+        }
+      );
+
+      const url =
+        window.URL.createObjectURL(blob);
+
+      const link =
+        document.createElement('a');
+
       link.href = url;
-      link.download = `${(dogName || 'Dog').replace(/\s+/g, '_')}_vaccination_schedule.pdf`;
+
+      link.download =
+        `${(dogName || 'Dog')
+          .replace(/\s+/g, '_')}_vaccination_schedule.pdf`;
+
       document.body.appendChild(link);
+
       link.click();
+
       document.body.removeChild(link);
+
       window.URL.revokeObjectURL(url);
 
-      refreshUser();
+      await refreshUser();
+
       onClose();
+
     } catch (error) {
+
       if (error.response?.status === 403) {
-        onClose();
-        navigate('/pricing');
+        goToPricing('pdf');
       } else {
-        setPdfError('Failed to export PDF. Please try again.');
+        setPdfError(
+          'Failed to export PDF. Please try again.'
+        );
       }
+
     } finally {
       setPdfExporting(false);
     }
   }
 
+  /*
+   * MAIN EXPORT BUTTON
+   */
   function handleMainExport() {
     switch (activeTab) {
       case 'apple':
         handleExportICS();
         break;
+
       case 'google':
         handleExportGoogle();
         break;
+
       case 'pdf':
         handleExportPDF();
         break;
+
       default:
         break;
     }
   }
 
-  // Email handling
+  /*
+   * EMAIL HELPERS
+   */
   function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      email
+    );
   }
 
-  function handleEmailChange(index, value) {
+  function handleEmailChange(
+    index,
+    value
+  ) {
     const newEmails = [...emails];
+
     newEmails[index] = value;
+
     setEmails(newEmails);
+
     setEmailError('');
   }
 
   function handleAddEmail() {
     if (emails.length < 10) {
-      setEmails([...emails, '']);
+      setEmails([
+        ...emails,
+        '',
+      ]);
     }
   }
 
   function handleRemoveEmail(index) {
     if (emails.length > 1) {
-      const newEmails = emails.filter((_, i) => i !== index);
+      const newEmails =
+        emails.filter(
+          (_, i) => i !== index
+        );
+
       setEmails(newEmails);
     }
   }
 
+  /*
+   * EMAIL EXPORT
+   */
   async function handleSendEmail(e) {
     e.preventDefault();
 
     if (!isPro) {
-      onClose();
-      navigate('/pricing');
+      goToPricing('email');
       return;
     }
 
-    const validEmails = emails.filter(email => email.trim() !== '');
+    const validEmails =
+      emails.filter(
+        (email) =>
+          email.trim() !== ''
+      );
 
     if (validEmails.length === 0) {
-      setEmailError('Please enter at least one email address');
+      setEmailError(
+        'Please enter at least one email address'
+      );
+
       return;
     }
 
-    const invalidEmails = validEmails.filter(email => !validateEmail(email));
+    const invalidEmails =
+      validEmails.filter(
+        (email) =>
+          !validateEmail(email)
+      );
+
     if (invalidEmails.length > 0) {
-      setEmailError(`Invalid email address: ${invalidEmails[0]}`);
+      setEmailError(
+        `Invalid email address: ${invalidEmails[0]}`
+      );
+
       return;
     }
 
     setIsEmailSending(true);
+
     try {
-      // For single item mode, create a schedule with just that item in 'upcoming'
-      const emailSchedule = isSingleMode
-        ? { overdue: [], upcoming: [singleItem], future: [] }
-        : schedule;
+
+      // For single vaccine exports, create a
+      // schedule containing only that vaccine.
+      const emailSchedule =
+        isSingleMode
+          ? {
+              overdue: [],
+              upcoming: [singleItem],
+              future: [],
+            }
+          : schedule;
 
       await sendScheduleEmail({
         emails: validEmails,
-        dogName: dogName || 'Dog',
+        dogName:
+          dogName || 'Dog',
         dogInfo,
         schedule: emailSchedule,
       });
-      alert('Email sent successfully!');
+
+      alert(
+        'Email sent successfully!'
+      );
+
       setEmails(['']);
+
       onClose();
+
     } catch (error) {
-      console.error('Failed to send email:', error);
-      alert(error.response?.data?.error || 'Failed to send email. Please try again.');
+
+      console.error(
+        'Failed to send email:',
+        error
+      );
+
+      alert(
+        error.response?.data?.error ||
+          'Failed to send email. Please try again.'
+      );
+
     } finally {
       setIsEmailSending(false);
     }
   }
 
+  /*
+   * CLOSE MODAL
+   */
   function handleClose() {
     setEmails(['']);
     setEmailError('');
     setPdfError(null);
+
     onClose();
   }
 
+  /*
+   * BUTTON LABEL
+   */
   function getActionButtonLabel() {
     switch (activeTab) {
       case 'apple':
       case 'google':
         return 'Download .ics file';
+
       case 'pdf':
         return 'Download PDF file';
+
       default:
         return null;
     }
   }
 
+  /*
+   * TAB ICONS
+   */
   function renderTabIcon(iconType) {
     switch (iconType) {
+
       case 'apple':
         return (
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
           </svg>
         );
+
       case 'google':
         return (
           <svg viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            />
+
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            />
+
           </svg>
         );
+
       case 'pdf':
         return (
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
-            <path d="M8 12h8v1.5H8zm0 3h8v1.5H8zm0-6h5v1.5H8z"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" />
+
+            <path d="M8 12h8v1.5H8zm0 3h8v1.5H8zm0-6h5v1.5H8z" />
           </svg>
         );
+
       case 'email':
         return (
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
           </svg>
         );
+
       default:
         return null;
     }
   }
 
+  /*
+   * TAB CONTENT
+   */
   function renderTabContent() {
+
     switch (activeTab) {
+
+      /*
+       * APPLE CALENDAR
+       */
       case 'apple':
         return (
           <div className="export-tab-content">
-            <h4>Import to Apple Calendar</h4>
+
+            <h4>
+              Import to Apple Calendar
+            </h4>
+
             <ol className="export-steps">
-              <li>Click the &quot;Download&quot; button at the above</li>
-              <li>Open the downloaded .ics file</li>
-              <li>Apple Calendar will prompt you to add the events</li>
-              <li>Click &quot;Add&quot; to confirm</li>
+
+              <li>
+                Click the &quot;Download&quot; button above
+              </li>
+
+              <li>
+                Open the downloaded .ics file
+              </li>
+
+              <li>
+                Apple Calendar will prompt you to add the events
+              </li>
+
+              <li>
+                Click &quot;Add&quot; to confirm
+              </li>
+
             </ol>
+
           </div>
         );
 
+      /*
+       * GOOGLE CALENDAR
+       */
       case 'google':
         return (
           <div className="export-tab-content">
-            <h4>Import to Google Calendar</h4>
+
+            <h4>
+              Import to Google Calendar
+            </h4>
+
             <div className="export-steps-with-screenshots">
+
               <div className="export-step-item">
-                <div className="export-step-number">1</div>
-                <div className="export-step-content">
-                  <p>Click the &quot;Download&quot; button above. The .ics file will download automatically and Google Calendar will open.</p>
-                  <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 1.png" alt="Step 1: Click the download button" />
-                  </div>
+
+                <div className="export-step-number">
+                  1
                 </div>
+
+                <div className="export-step-content">
+
+                  <p>
+                    Click the &quot;Download&quot; button above.
+                    The .ics file will download automatically
+                    and Google Calendar will open.
+                  </p>
+
+                  <div className="export-screenshot">
+
+                    <img
+                      src="/exportSteps/Google/step 1.png"
+                      alt="Step 1: Click the download button"
+                    />
+
+                  </div>
+
+                </div>
+
               </div>
 
               <div className="export-step-item">
-                <div className="export-step-number">2</div>
-                <div className="export-step-content">
-                  <p>Click &quot;Select file from your computer&quot; and select the downloaded .ics file</p>
-                  <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 2.png" alt="Step 2: Select file from computer" />
-                  </div>
+
+                <div className="export-step-number">
+                  2
                 </div>
+
+                <div className="export-step-content">
+
+                  <p>
+                    Click &quot;Select file from your computer&quot;
+                    and select the downloaded .ics file.
+                  </p>
+
+                  <div className="export-screenshot">
+
+                    <img
+                      src="/exportSteps/Google/step 2.png"
+                      alt="Step 2: Select file from computer"
+                    />
+
+                  </div>
+
+                </div>
+
               </div>
 
               <div className="export-step-item">
-                <div className="export-step-number">3</div>
-                <div className="export-step-content">
-                  <p>Choose which calendar to add events to</p>
-                  <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 3.png" alt="Step 3: Choose calendar" />
-                  </div>
+
+                <div className="export-step-number">
+                  3
                 </div>
+
+                <div className="export-step-content">
+
+                  <p>
+                    Choose which calendar to add events to.
+                  </p>
+
+                  <div className="export-screenshot">
+
+                    <img
+                      src="/exportSteps/Google/step 3.png"
+                      alt="Step 3: Choose calendar"
+                    />
+
+                  </div>
+
+                </div>
+
               </div>
 
               <div className="export-step-item">
-                <div className="export-step-number">4</div>
-                <div className="export-step-content">
-                  <p>Click &quot;Import&quot;</p>
-                  <div className="export-screenshot">
-                    <img src="/exportSteps/Google/step 4.png" alt="Step 4: Click Import" />
-                  </div>
+
+                <div className="export-step-number">
+                  4
                 </div>
+
+                <div className="export-step-content">
+
+                  <p>
+                    Click &quot;Import&quot;.
+                  </p>
+
+                  <div className="export-screenshot">
+
+                    <img
+                      src="/exportSteps/Google/step 4.png"
+                      alt="Step 4: Click Import"
+                    />
+
+                  </div>
+
+                </div>
+
               </div>
+
             </div>
+
           </div>
         );
 
+      /*
+       * PDF
+       */
       case 'pdf':
         return (
           <div className="export-tab-content">
-            <h4>Save as PDF</h4>
-            {pdfError && <p style={{ color: 'var(--color-danger)', marginBottom: 'var(--spacing-sm)', fontSize: '0.9rem' }}>{pdfError}</p>}
+
+            <h4>
+              Save as PDF
+            </h4>
+
+            {pdfError && (
+              <p
+                style={{
+                  color: 'var(--color-danger)',
+                  marginBottom: 'var(--spacing-sm)',
+                  fontSize: '0.9rem',
+                }}
+              >
+                {pdfError}
+              </p>
+            )}
+
             <ol className="export-steps">
-              <li>Click the &quot;Download PDF file&quot; button at the bottom</li>
-              <li>Select your preferred save location on your device.</li>
-              <li>Click &quot;Save&quot; to download the file.</li>
+
+              <li>
+                Click the &quot;Download PDF file&quot; button at the bottom
+              </li>
+
+              <li>
+                Select your preferred save location on your device.
+              </li>
+
+              <li>
+                Click &quot;Save&quot; to download the file.
+              </li>
+
             </ol>
+
           </div>
         );
 
+      /*
+       * EMAIL
+       */
       case 'email':
         return (
           <div className="export-tab-content">
-            <h4>Send Schedule via Email</h4>
+
+            <h4>
+              Send Schedule via Email
+            </h4>
+
             <p className="export-email-description">
+
               {isSingleMode ? (
-                <>Send a reminder for {dogName}&apos;s {singleItem?.vaccine} vaccination to one or more email addresses.
-                Recipients will receive the vaccine details along with a PDF attachment,
-                calendar invite (ICS file), and a Google Calendar link.</>
+                <>
+                  Send a reminder for {dogName}&apos;s{' '}
+                  {singleItem?.vaccine} vaccination to one or
+                  more email addresses. Recipients will receive
+                  the vaccine details along with a PDF attachment,
+                  calendar invite (ICS file), and a Google Calendar
+                  link.
+                </>
               ) : (
-                <>Send {dogName}&apos;s vaccination schedule to one or more email addresses.
-                Recipients will receive the schedule details along with a PDF attachment,
-                calendar invite (ICS file), and a Google Calendar link.</>
+                <>
+                  Send {dogName}&apos;s vaccination schedule to
+                  one or more email addresses. Recipients will
+                  receive the schedule details along with a PDF
+                  attachment, calendar invite (ICS file), and a
+                  Google Calendar link.
+                </>
               )}
+
             </p>
 
             <form onSubmit={handleSendEmail}>
+
               <div className="email-list">
-                {emails.map((email, index) => (
-                  <div key={index}>
-                    {index === 0 && <label className="email-field-label">Email</label>}
-                    <div className="email-input-row">
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => handleEmailChange(index, e.target.value)}
-                        placeholder="Enter Email Address"
-                        className="email-input"
-                        disabled={isEmailSending}
-                      />
-                      {emails.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveEmail(index)}
-                          className="email-remove-btn"
-                          disabled={isEmailSending}
-                          aria-label="Remove email"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
-                        </button>
+
+                {emails.map(
+                  (email, index) => (
+                    <div key={index}>
+
+                      {index === 0 && (
+                        <label className="email-field-label">
+                          Email
+                        </label>
                       )}
+
+                      <div className="email-input-row">
+
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) =>
+                            handleEmailChange(
+                              index,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Enter Email Address"
+                          className="email-input"
+                          disabled={isEmailSending}
+                        />
+
+                        {emails.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleRemoveEmail(index)
+                            }
+                            className="email-remove-btn"
+                            disabled={isEmailSending}
+                            aria-label="Remove email"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <line
+                                x1="18"
+                                y1="6"
+                                x2="6"
+                                y2="18"
+                              />
+
+                              <line
+                                x1="6"
+                                y1="6"
+                                x2="18"
+                                y2="18"
+                              />
+
+                            </svg>
+                          </button>
+                        )}
+
+                      </div>
+
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
+
               </div>
 
               {emails.length < 10 && (
@@ -388,25 +776,35 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
                 </button>
               )}
 
-              {emailError && <div className="email-error">{emailError}</div>}
+              {emailError && (
+                <div className="email-error">
+                  {emailError}
+                </div>
+              )}
 
               <div className="export-action export-action--right">
+
                 <button
                   type="submit"
                   className="btn btn-primary"
                   disabled={isEmailSending}
                 >
+
                   {isEmailSending ? (
                     <>
-                      <span className="btn-spinner"></span>
+                      <span className="btn-spinner" />
                       Sending...
                     </>
                   ) : (
                     'Send Email'
                   )}
+
                 </button>
+
               </div>
+
             </form>
+
           </div>
         );
 
@@ -415,51 +813,105 @@ function ExportModal({ isOpen, onClose, schedule, dogName, dogInfo, singleItem =
     }
   }
 
-  const titleText = isSingleMode
-    ? `Export ${singleItem?.vaccine || 'Vaccine'}`
-    : 'Export Vaccination Schedule';
+  /*
+   * MODAL TITLE
+   */
+  const titleText =
+    isSingleMode
+      ? `Export ${singleItem?.vaccine || 'Vaccine'}`
+      : 'Export Vaccination Schedule';
 
   const modalTitle = (
     <span className="export-modal-title">
+
       <span className="export-modal-title-icon">
-        <img src="/Images/generic_icons/export-icon.svg" alt="" width="20" height="20" />
+
+        <img
+          src="/Images/generic_icons/export-icon.svg"
+          alt=""
+          width="20"
+          height="20"
+        />
+
       </span>
+
       {titleText}
+
     </span>
   );
 
-  const actionLabel = getActionButtonLabel();
+  const actionLabel =
+    getActionButtonLabel();
 
+  /*
+   * MODAL
+   */
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={modalTitle}
+    >
+
       <div className="export-modal">
+
         {actionLabel && (
           <div className="export-action-top">
+
             <button
               className="btn btn-primary btn-pill"
               onClick={handleMainExport}
               disabled={pdfExporting}
             >
-              {pdfExporting && activeTab === 'pdf' ? 'Exporting...' : actionLabel}
+
+              {pdfExporting &&
+              activeTab === 'pdf'
+                ? 'Exporting...'
+                : actionLabel}
+
             </button>
+
           </div>
         )}
 
         <nav className="export-tabs">
+
           {TABS.map((tab) => (
+
             <button
               key={tab.id}
-              className={`export-tab ${activeTab === tab.id ? 'export-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              className={
+                `export-tab ${
+                  activeTab === tab.id
+                    ? 'export-tab--active'
+                    : ''
+                }`
+              }
+              onClick={() =>
+                setActiveTab(tab.id)
+              }
             >
-              <span className="export-tab-icon">{renderTabIcon(tab.icon)}</span>
-              <span className="export-tab-label">{tab.label}</span>
+
+              <span className="export-tab-icon">
+                {renderTabIcon(
+                  tab.icon
+                )}
+              </span>
+
+              <span className="export-tab-label">
+                {tab.label}
+              </span>
+
             </button>
+
           ))}
+
         </nav>
 
         {renderTabContent()}
+
       </div>
+
     </Modal>
   );
 }
