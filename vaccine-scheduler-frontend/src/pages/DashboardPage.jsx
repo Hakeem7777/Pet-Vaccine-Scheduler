@@ -12,14 +12,37 @@ import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageTransition from '../components/common/PageTransition';
 import UpgradePrompt from '../components/subscription/UpgradePrompt';
+import { trackEventOnce } from '../utils/analytics';
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin, isLoading: isAuthLoading, enterGuestMode, hasActiveSubscription, dogLimit } = useAuth();
+  const {
+    isAuthenticated,
+    isAdmin,
+    isLoading: isAuthLoading,
+    enterGuestMode,
+    hasActiveSubscription,
+    dogLimit,
+  } = useAuth();
+
   const { setAllDogsContext } = useChat();
-  const { dogs, isLoading, error, fetchDogs, addDog, clearError } = useDogStore();
+  const {
+    dogs,
+    isLoading,
+    error,
+    fetchDogs,
+    addDog,
+    clearError,
+  } = useDogStore();
+
   const { guestDog, addGuestDog } = useGuestStore();
-  const { isRunning, currentStep, pauseTour, resumeTour, pausedAtStep } = useTourStore();
+
+  const {
+    isRunning,
+    pauseTour,
+    resumeTour,
+    pausedAtStep,
+  } = useTourStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -34,17 +57,18 @@ function DashboardPage() {
     }
   }, [isAuthenticated, fetchDogs]);
 
-  // Set all-dogs context for chat when on dashboard (authenticated users only)
+  // Set all-dogs context for chat when on dashboard
   useEffect(() => {
     if (isAuthenticated && dogs && dogs.length > 0) {
-      // Filter out optimistic dogs that haven't been confirmed yet
-      const confirmedDogs = dogs.filter((d) => !d._isOptimistic);
+      const confirmedDogs = dogs.filter(
+        (dog) => !dog._isOptimistic
+      );
+
       if (confirmedDogs.length > 0) {
         setAllDogsContext(confirmedDogs);
       }
     }
 
-    // Cleanup: clear context when leaving dashboard
     return () => {
       if (isAuthenticated) {
         setAllDogsContext(null);
@@ -52,47 +76,77 @@ function DashboardPage() {
     };
   }, [isAuthenticated, dogs, setAllDogsContext]);
 
-  // Determine which dogs to show
   const displayDogs = isAuthenticated
     ? dogs
     : guestDog
       ? [guestDog]
       : [];
 
-  const showLoading = isAuthenticated && isLoading;
+  const showLoading =
+    isAuthenticated && isLoading;
+
+  const confirmedDogCount = dogs.filter(
+    (dog) => !dog._isOptimistic
+  ).length;
 
   async function handleAddDog(formData) {
     setIsSubmitting(true);
 
     if (isAuthenticated) {
-      // Authenticated user - use API
+      const isFirstRegisteredDog =
+        confirmedDogCount === 0;
+
       try {
         await addDog(formData);
+
+        // Track the first free schedule created by a registered free user.
+        if (
+          !hasActiveSubscription &&
+          isFirstRegisteredDog
+        ) {
+          trackEventOnce(
+            'free_schedule_created',
+            'registered_first_schedule',
+            {
+              account_type: 'registered',
+              creation_method: 'manual',
+              schedule_type: 'personalized',
+            }
+          );
+        }
+
         setShowAddModal(false);
-        // Resume tour if it was paused
+
         if (pausedAtStep !== null) {
           resumeTour();
         }
       } catch (err) {
-        // Error is handled by the store
+        // Error is handled by the store.
       } finally {
         setIsSubmitting(false);
       }
     } else {
-      // Guest user - check if they already have a dog
       if (guestDog) {
-        // Already has a guest dog - show signup prompt
         setShowSignupPrompt(true);
         setIsSubmitting(false);
         return;
       }
 
-      // Create guest dog locally
       const newDog = addGuestDog(formData);
+
+      trackEventOnce(
+        'free_schedule_created',
+        'guest_first_schedule',
+        {
+          account_type: 'guest',
+          creation_method: 'manual',
+          schedule_type: 'personalized',
+        }
+      );
+
       setIsSubmitting(false);
       setShowAddModal(false);
 
-      // Enter guest mode and navigate to dog detail
       enterGuestMode();
       navigate(`/dogs/${newDog.id}`);
     }
@@ -100,51 +154,69 @@ function DashboardPage() {
 
   function handleUploadSuccess(newDog) {
     if (isAuthenticated) {
+      if (
+        !hasActiveSubscription &&
+        confirmedDogCount === 0
+      ) {
+        trackEventOnce(
+          'free_schedule_created',
+          'registered_first_schedule',
+          {
+            account_type: 'registered',
+            creation_method: 'document_upload',
+            schedule_type: 'personalized',
+          }
+        );
+      }
+
       fetchDogs();
     }
   }
 
   function handleAddDogClick() {
-    // If guest already has a dog, show signup prompt
     if (!isAuthenticated && guestDog) {
       setShowSignupPrompt(true);
       return;
     }
-    // If authenticated, check dog limit
-    if (isAuthenticated && dogLimit !== null && dogs.length >= dogLimit) {
+
+    if (
+      isAuthenticated &&
+      dogLimit !== null &&
+      dogs.length >= dogLimit
+    ) {
       setShowUpgradePrompt(true);
       return;
     }
-    // Pause tour if running while opening modal
+
     if (isRunning) {
       pauseTour();
     }
+
     setShowAddModal(true);
   }
 
   function handleAddModalClose() {
     setShowAddModal(false);
-    // Resume tour if it was paused
+
     if (pausedAtStep !== null) {
       resumeTour();
     }
   }
 
   function handleUploadClick() {
-    // If guest already has a dog, show signup prompt
     if (!isAuthenticated && guestDog) {
       setShowSignupPrompt(true);
       return;
     }
-    // Document upload requires authentication (needs API)
+
     if (!isAuthenticated) {
       setShowSignupPrompt(true);
       return;
     }
+
     setShowUploadModal(true);
   }
 
-  // Show spinner while auth is still resolving to prevent flash of guest UI
   if (isAuthLoading) {
     return (
       <div className="page-loading">
@@ -153,7 +225,6 @@ function DashboardPage() {
     );
   }
 
-  // Admin users should only see the admin dashboard
   if (isAdmin) {
     return <Navigate to="/admin-panel" replace />;
   }
@@ -166,15 +237,22 @@ function DashboardPage() {
     );
   }
 
-  // Show inline form when no dogs exist
   if (displayDogs.length === 0) {
     return (
-      <PageTransition className="dashboard-page" data-tour="welcome">
+      <PageTransition
+        className="dashboard-page"
+        data-tour="welcome"
+      >
         <div className="page-header">
           <p>Welcome to Petvax Calendar!</p>
+
           {isAuthenticated && (
             <div className="page-header-actions">
-              <button className="btn btn-secondary" onClick={handleUploadClick} data-tour="upload-doc-btn">
+              <button
+                className="btn btn-secondary"
+                onClick={handleUploadClick}
+                data-tour="upload-doc-btn"
+              >
                 Upload Document
               </button>
             </div>
@@ -183,21 +261,35 @@ function DashboardPage() {
 
         {!isAuthenticated && (
           <div className="guest-banner">
-            <p>Try it free! Create your first dog's vaccine schedule - no account needed.</p>
+            <p>
+              Try it free! Create your first dog's vaccine
+              schedule - no account needed.
+            </p>
           </div>
         )}
 
         {error && (
           <div className="error-message">
             {error}
-            <button className="btn btn-sm btn-outline" onClick={clearError} style={{ marginLeft: '1rem' }}>
+
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={clearError}
+              style={{ marginLeft: '1rem' }}
+            >
               Dismiss
             </button>
           </div>
         )}
 
-        <div className="first-dog-form-container" data-tour="first-dog-form">
-          <DogForm onSubmit={handleAddDog} isLoading={isSubmitting} />
+        <div
+          className="first-dog-form-container"
+          data-tour="first-dog-form"
+        >
+          <DogForm
+            onSubmit={handleAddDog}
+            isLoading={isSubmitting}
+          />
         </div>
 
         {isAuthenticated && (
@@ -218,16 +310,31 @@ function DashboardPage() {
   }
 
   return (
-    <PageTransition className="dashboard-page" data-tour="welcome">
+    <PageTransition
+      className="dashboard-page"
+      data-tour="welcome"
+    >
       <div className="page-header">
-        <h2>{isAuthenticated ? 'My Pets' : 'Your Pet'}</h2>
+        <h2>
+          {isAuthenticated ? 'My Pets' : 'Your Pet'}
+        </h2>
+
         <div className="page-header-actions">
           {isAuthenticated && (
-            <button className="btn btn-outline btn-pill" onClick={handleUploadClick} data-tour="upload-doc-btn">
+            <button
+              className="btn btn-outline btn-pill"
+              onClick={handleUploadClick}
+              data-tour="upload-doc-btn"
+            >
               Quick Add
             </button>
           )}
-          <button className="btn btn-primary btn-pill" onClick={handleAddDogClick} data-tour="add-dog-btn">
+
+          <button
+            className="btn btn-primary btn-pill"
+            onClick={handleAddDogClick}
+            data-tour="add-dog-btn"
+          >
             Add New Pet
           </button>
         </div>
@@ -236,9 +343,15 @@ function DashboardPage() {
       {!isAuthenticated && guestDog && (
         <div className="guest-banner guest-banner--info">
           <p>
-            <strong>You're in guest mode.</strong> Sign up to save your data, add more dogs, send email reminders and much more.
+            <strong>You're in guest mode.</strong>{' '}
+            Sign up to save your data, add more dogs,
+            send email reminders and much more.
           </p>
-          <button className="btn btn-primary btn-sm" onClick={() => navigate('/signup')}>
+
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => navigate('/signup')}
+          >
             Sign Up Free
           </button>
         </div>
@@ -247,14 +360,22 @@ function DashboardPage() {
       {error && (
         <div className="error-message">
           {error}
-          <button className="btn btn-sm btn-outline" onClick={clearError} style={{ marginLeft: '1rem' }}>
+
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={clearError}
+            style={{ marginLeft: '1rem' }}
+          >
             Dismiss
           </button>
         </div>
       )}
 
       <div data-tour="dog-list">
-        <DogList dogs={displayDogs} isGuestMode={!isAuthenticated} />
+        <DogList
+          dogs={displayDogs}
+          isGuestMode={!isAuthenticated}
+        />
       </div>
 
       <Modal
@@ -292,16 +413,25 @@ function DashboardPage() {
       >
         <div className="signup-prompt">
           <div className="signup-prompt-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
               <path d="M12 6v6l4 2" />
             </svg>
           </div>
+
           <h3>You've used your free trial!</h3>
+
           <p>
-            Create a free account to add more dogs, access vaccination history,
-            get AI-powered recommendations, and save your data securely.
+            Create a free account to add more dogs, access
+            vaccination history, get AI-powered recommendations,
+            and save your data securely.
           </p>
+
           <div className="signup-prompt-actions">
             <button
               className="btn btn-outline"
@@ -309,6 +439,7 @@ function DashboardPage() {
             >
               Maybe Later
             </button>
+
             <button
               className="btn btn-primary"
               onClick={() => navigate('/signup')}
@@ -316,8 +447,10 @@ function DashboardPage() {
               Sign Up Free
             </button>
           </div>
+
           <p className="signup-prompt-login">
             Already have an account?{' '}
+
             <button
               className="btn-link"
               onClick={() => navigate('/login')}
@@ -328,7 +461,7 @@ function DashboardPage() {
         </div>
       </Modal>
 
-      {/* Upgrade Prompt Modal (for authenticated users hitting limits) */}
+      {/* Upgrade Prompt Modal */}
       <Modal
         isOpen={showUpgradePrompt}
         onClose={() => setShowUpgradePrompt(false)}
