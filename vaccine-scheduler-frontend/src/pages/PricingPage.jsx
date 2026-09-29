@@ -61,6 +61,12 @@ const FEATURE_PROMPTS = {
     description:
       'Multi-pet tracking is included with Pro Care so you can manage multiple vaccination schedules from one dashboard.',
   },
+  documents: {
+    icon: '📁',
+    title: 'Store Your Dog’s Important Records',
+    description:
+      'Document storage is included with Pro Care. Upload and keep vaccination records, pet health certificates, and other important documents organized with your dog’s profile.',
+  },
 };
 
 function PricingPage() {
@@ -427,6 +433,10 @@ function PricingPage() {
             </li>
 
             <li className="pricing-feature pricing-feature--disabled">
+              {X_ICON} No document storage
+            </li>
+
+            <li className="pricing-feature pricing-feature--disabled">
               {X_ICON} No AI assistant
             </li>
 
@@ -507,6 +517,10 @@ function PricingPage() {
 
             <li className="pricing-feature">
               {CHECK_ICON} Vaccine history storage
+            </li>
+
+            <li className="pricing-feature">
+              {CHECK_ICON} Document storage for vaccination records
             </li>
 
             <li className="pricing-feature">
@@ -908,6 +922,16 @@ function PricingPage() {
 
               <tr>
                 <td>
+                  Document storage
+                </td>
+                <td>{X_ICON}</td>
+                <td className="pricing-table--highlight">
+                  {CHECK_ICON}
+                </td>
+              </tr>
+
+              <tr>
+                <td>
                   Schedule regeneration
                 </td>
                 <td>{X_ICON}</td>
@@ -971,8 +995,8 @@ function PricingPage() {
               Pro Care is a monthly subscription at
               $19.99/month that unlocks every feature
               including PDF downloads, calendar sync,
-              email reminders, multi-pet support, and our
-              AI vaccine assistant.
+              email reminders, document storage, multi-pet
+              support, and our AI vaccine assistant.
             </p>
           </div>
 
@@ -994,9 +1018,10 @@ function PricingPage() {
             <p>
               When you cancel, you&apos;ll revert to the
               Free plan. You&apos;ll keep access to your
-              on-screen schedule but will lose PDF
-              downloads, calendar export, reminders,
-              and AI assistant access.
+              on-screen schedule but will lose access to
+              Pro features such as PDF downloads, calendar
+              export, reminders, document storage, and the
+              AI assistant.
             </p>
           </div>
         </div>
