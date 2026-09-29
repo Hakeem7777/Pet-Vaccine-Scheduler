@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { useAuth } from '../context/AuthContext';
 import * as subscriptionsApi from '../api/subscriptions';
@@ -20,8 +20,54 @@ const X_ICON = (
   </svg>
 );
 
+
+const FEATURE_PROMPTS = {
+  calendar: {
+    icon: '📅',
+    title: 'Add Your Dog’s Vaccine Schedule to Your Calendar',
+    description:
+      'Calendar sync is included with Pro Care. Upgrade to add upcoming vaccine dates to Google, Apple, or Outlook and keep important appointments on your calendar.',
+  },
+  pdf: {
+    icon: '📄',
+    title: 'Download Your Dog’s Vaccine Schedule',
+    description:
+      'Printable PDF vaccine schedules are included with Pro Care. Upgrade to save, print, and share your dog’s personalized vaccination plan.',
+  },
+  email: {
+    icon: '✉️',
+    title: 'Send Your Dog’s Vaccine Schedule by Email',
+    description:
+      'Email delivery is included with Pro Care. Upgrade to send your dog’s vaccination plan directly from PetVaxCalendar.',
+  },
+  reminders: {
+    icon: '🔔',
+    title: 'Never Miss Your Dog’s Next Vaccine',
+    description:
+      'Automatic vaccine reminders are included with Pro Care. Upgrade to stay ahead of upcoming vaccines and boosters.',
+  },
+  ai: {
+    icon: '✨',
+    title: 'Unlock the PetVaxCalendar AI Assistant',
+    description:
+      'The AI vaccine assistant is included with Pro Care and helps you understand your dog’s personalized schedule.',
+  },
+  multipet: {
+    icon: '🐕',
+    title: 'Track All of Your Dogs in One Place',
+    description:
+      'Multi-pet tracking is included with Pro Care so you can manage multiple vaccination schedules from one dashboard.',
+  },
+};
+
 function PricingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const queryParams = new URLSearchParams(location.search);
+  const requestedFeature = queryParams.get('feature');
+  const upgradeSource = queryParams.get('source') || 'pricing';
+  const featurePrompt = FEATURE_PROMPTS[requestedFeature] || null;
   const { isAuthenticated, isPaid, refreshUser } = useAuth();
   const [plans, setPlans] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +89,17 @@ function PricingPage() {
   useEffect(() => {
     loadPlans();
   }, []);
+
+  useEffect(() => {
+    if (!featurePrompt || isPaid) return;
+
+    if (window.gtag) {
+      window.gtag('event', 'pro_upgrade_view', {
+        feature: requestedFeature,
+        source: upgradeSource,
+      });
+    }
+  }, [featurePrompt, requestedFeature, upgradeSource, isPaid]);
 
   async function loadPlans() {
     try {
@@ -137,6 +194,29 @@ function PricingPage() {
         <button className="btn btn-outline btn-pill back-btn" onClick={() => navigate(-1)}>
           &larr; Back
         </button>
+
+        {featurePrompt && !isPaid && (
+          <div className="pricing-context-banner">
+            <div className="pricing-context-banner__icon" aria-hidden="true">
+              {featurePrompt.icon}
+            </div>
+
+            <div className="pricing-context-banner__content">
+              <span className="pricing-context-banner__label">
+                PRO CARE FEATURE
+              </span>
+
+              <h2>{featurePrompt.title}</h2>
+
+              <p>{featurePrompt.description}</p>
+            </div>
+
+            <div className="pricing-context-banner__price">
+              <strong>$19.99</strong>
+              <span>/month</span>
+            </div>
+          </div>
+        )}
 
         <div className="pricing-header">
           <h1>Your Dog Deserves a Smart Vaccine Plan</h1>
