@@ -25,29 +25,29 @@ function ExportDropdown({ schedule, dogName, dogInfo }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function redirectIfNotPro() {
+  function redirectIfNotPro(feature) {
     if (!isPro) {
       setIsOpen(false);
-      navigate('/pricing');
+      navigate(`/pricing?feature=${encodeURIComponent(feature)}&source=export`);
       return true;
     }
     return false;
   }
 
   function handleExportApple() {
-    if (redirectIfNotPro()) return;
+    if (redirectIfNotPro('calendar')) return;
     exportAllToICS(schedule, dogName || 'Dog');
     setIsOpen(false);
   }
 
   function handleExportGoogle() {
-    if (redirectIfNotPro()) return;
+    if (redirectIfNotPro('calendar')) return;
     exportToGoogleCalendar(schedule, dogName || 'Dog');
     setIsOpen(false);
   }
 
   function handleExportPDF() {
-    if (redirectIfNotPro()) return;
+    if (redirectIfNotPro('pdf')) return;
     setIsOpen(false);
     setTimeout(() => {
       window.print();
@@ -55,14 +55,14 @@ function ExportDropdown({ schedule, dogName, dogInfo }) {
   }
 
   function handleOpenEmailModal() {
-    if (redirectIfNotPro()) return;
+    if (redirectIfNotPro('email')) return;
     setIsOpen(false);
     setIsEmailModalOpen(true);
   }
 
   async function handleSendEmail(emails) {
     if (!isPro) {
-      navigate('/pricing');
+      navigate('/pricing?feature=email&source=export');
       return;
     }
     setIsEmailSending(true);
