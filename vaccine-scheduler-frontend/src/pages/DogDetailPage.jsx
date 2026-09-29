@@ -22,7 +22,7 @@ import { formatDogAge } from '../utils/dateUtils';
 function DogDetailPage() {
   const { dogId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, isPaid } = useAuth();
   const { setDogContext } = useChat();
   const { guestDog, updateGuestDog, deleteGuestDog } = useGuestStore();
 
@@ -155,6 +155,22 @@ function DogDetailPage() {
 
   const sexLabel = SEX_CHOICES.find((s) => s.value === dog.sex)?.label || dog.sex_display;
 
+  const nextVaccineName =
+    dog.vaccination_summary?.next_upcoming?.vaccine ||
+    'your dog\'s next vaccine';
+
+  function handleProUpgradeClick() {
+    if (window.gtag) {
+      window.gtag('event', 'pro_upgrade_click', {
+        source: 'dog_schedule',
+        feature: 'reminders',
+        dog_id: dogId,
+      });
+    }
+
+    navigate('/pricing?feature=reminders&source=dog_schedule');
+  }
+
   return (
     <PageTransition className="dog-detail-page">
       {/* Breadcrumb */}
@@ -278,6 +294,54 @@ function DogDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Pro Care upgrade prompt - authenticated free users only */}
+      {!isGuestDog && isAuthenticated && !isPaid && (
+        <section className="dog-pro-upgrade-card">
+          <div className="dog-pro-upgrade-content">
+            <div className="dog-pro-upgrade-icon" aria-hidden="true">
+              🔔
+            </div>
+
+            <div className="dog-pro-upgrade-copy">
+              <span className="dog-pro-upgrade-label">
+                PRO CARE
+              </span>
+
+              <h3>
+                Never miss {dog.name}&apos;s next vaccine
+              </h3>
+
+              <p>
+                Your personalized schedule is ready. Pro Care helps you stay
+                ahead of {nextVaccineName} with automatic reminders, calendar
+                sync, printable PDF reports, and more.
+              </p>
+
+              <div className="dog-pro-upgrade-benefits">
+                <span>✓ Automatic reminders</span>
+                <span>✓ Calendar sync</span>
+                <span>✓ PDF vaccine reports</span>
+                <span>✓ Multi-pet tracking</span>
+              </div>
+            </div>
+
+            <div className="dog-pro-upgrade-action">
+              <button
+                type="button"
+                className="btn btn-primary dog-pro-upgrade-btn"
+                onClick={handleProUpgradeClick}
+              >
+                Upgrade to Pro Care
+              </button>
+
+              <span className="dog-pro-upgrade-price">
+                $19.99/month · Cancel anytime
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Environment & Health Card */}
       {(dog.env_indoor_only || dog.env_dog_parks || dog.env_daycare_boarding || dog.env_travel_shows || dog.env_tick_exposure ||
