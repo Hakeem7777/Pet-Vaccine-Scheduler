@@ -5425,3 +5425,125 @@ a:hover {
     font-size: 1.1rem;
   }
 }
+/* =========================================================
+   DOG DETAIL - PRO CARE UPGRADE CARD
+   Append this block to src/index.css
+   ========================================================= */
+
+.dog-pro-upgrade-card {
+  margin: 22px 0 24px;
+  padding: 2px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #178453, #2fa876, #1976c9);
+  box-shadow: 0 12px 35px rgba(21, 34, 56, 0.08);
+}
+
+.dog-pro-upgrade-content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: center;
+  padding: 24px 26px;
+  background: linear-gradient(135deg, #f3fff8 0%, #ffffff 55%, #f3f9ff 100%);
+  border-radius: 16px;
+}
+
+.dog-pro-upgrade-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #dff7e9;
+  font-size: 25px;
+}
+
+.dog-pro-upgrade-copy {
+  min-width: 0;
+}
+
+.dog-pro-upgrade-label {
+  display: inline-block;
+  margin-bottom: 5px;
+  color: #188453;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.dog-pro-upgrade-copy h3 {
+  margin: 0 0 7px;
+  color: #293745;
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.dog-pro-upgrade-copy p {
+  max-width: 720px;
+  margin: 0;
+  color: #617083;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dog-pro-upgrade-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 12px;
+}
+
+.dog-pro-upgrade-benefits span {
+  color: #314052;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dog-pro-upgrade-action {
+  min-width: 190px;
+  text-align: center;
+}
+
+.dog-pro-upgrade-btn {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.dog-pro-upgrade-price {
+  display: block;
+  margin-top: 8px;
+  color: #738092;
+  font-size: 11px;
+}
+
+@media (max-width: 850px) {
+  .dog-pro-upgrade-content {
+    grid-template-columns: auto 1fr;
+  }
+
+  .dog-pro-upgrade-action {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .dog-pro-upgrade-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .dog-pro-upgrade-content {
+    grid-template-columns: 1fr;
+    padding: 21px;
+  }
+
+  .dog-pro-upgrade-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dog-pro-upgrade-benefits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
